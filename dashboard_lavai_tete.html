@@ -1216,7 +1216,7 @@ function desduplicarRows(rows) {
 let allRows=[], filtered=[], tableRows=[];
 let isFirstLoad=true;
 let tableSearch='', tablePage=0; const TABLE_PS=50;
-let tableSortCol=-1, tableSortDir=1;
+let tableSortCol=0, tableSortDir=-1;
 let chartCycles=null, chartPeak=null, chartPayment=null;
 let dtFrom=null, dtTo=null;
 let filterFonte='all'; // 'all' | 'vendtef' | 'vmpay' | 'vendpago' | 'sqi'
@@ -1966,7 +1966,13 @@ function renderTable(){
     tableRows.sort((a,b)=>{
       const va=a[ci]||'',vb=b[ci]||'';
       if(tableSortCol===5) return tableSortDir*(toNum(va)-toNum(vb));
-      if(tableSortCol===0){const da=parseDate(va),db=parseDate(vb);return tableSortDir*((da||0)-(db||0));}
+      if(tableSortCol===0){
+        const da=parseDate(va),db=parseDate(vb);
+        const diff=((da||0)-(db||0));
+        if(diff!==0) return tableSortDir*diff;
+        const ta=a[C.hora]||'',tb=b[C.hora]||'';
+        return tableSortDir*ta.localeCompare(tb);
+      }
       return tableSortDir*va.localeCompare(vb,'pt-BR');
     });
   }
