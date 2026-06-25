@@ -1491,7 +1491,7 @@ def publicar_dados_github():
         f_path = cwd_root / f
         if f_path.exists():
             try:
-                subprocess.run(["git", "add", f], cwd=str(cwd_root), check=True, capture_output=True, text=True)
+                subprocess.run(["git", "add", "-f", f], cwd=str(cwd_root), check=True, capture_output=True, text=True)
             except Exception as e:
                 log.error(f"Erro ao adicionar {f} no root: {e}")
                 
@@ -1532,7 +1532,7 @@ def publicar_dados_github():
             f_path = cwd_kpi / f
             if f_path.exists():
                 try:
-                    subprocess.run(["git", "add", f], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
+                    subprocess.run(["git", "add", "-f", f], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
                 except Exception as e:
                     log.error(f"Erro ao adicionar {f} no kpi: {e}")
                     
