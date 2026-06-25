@@ -9,6 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- Os arquivos de dados locais são carregados sob demanda na inicialização do dashboard -->
 <style>
 /* ── Reset & Tokens ─────────────────────────────── */
@@ -469,7 +470,7 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
 .fin-alert i{margin-top:1px;flex-shrink:0}
 
 /* Tabela resumo consolidado */
-.fin-table-wrapper{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+.fin-table-wrapper{width:100%;max-width:100%;overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
 .fin-table{width:100%;border-collapse:collapse;font-size:12px}
 .fin-table thead th{
   background:#f1f4f9;padding:10px 14px;text-align:left;
@@ -735,7 +736,7 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
       </div>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button id="btn-sync-api" class="btn-export" style="background-color: var(--cyan);"><i class="fas fa-rotate"></i> Atualizar VMPay</button>
-        <button class="btn-export" onclick="exportCSV()"><i class="fas fa-file-csv"></i> Exportar CSV</button>
+        <button class="btn-export" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Exportar Excel</button>
         <div class="search-wrapper">
           <i class="fas fa-search"></i>
           <input type="text" id="table-search" class="search-input" placeholder="Buscar transação..." oninput="doSearch(this.value)">
@@ -2331,16 +2332,34 @@ function loadScript(src) {
 }
 
 // ══════════════════════════════════════════════════════
-// EXPORT CSV
+// EXPORT EXCEL
 // ══════════════════════════════════════════════════════
-function exportCSV(){
-  const headers=['Data','Hora','PDV','Máquina','Pagamento','Total','Tipo','Bandeira','Autorização'];
-  const rows=filtered.map(r=>[fmtDate(r[C.data]),r[C.hora],r[C.maquina],isMaqWash(r)?'Lavagem':'Secagem',r[C.pagamento],
-    r[C.total],r[C.tipo],r[C.bandeira],r[C.auth]].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(','));
-  const csv=[headers.join(','),...rows].join('\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
-  a.download='relatorio_geral_vendas_lavai.csv'; a.click();
+function exportExcel(){
+  const headers = ['Data', 'Hora', 'PDV', 'Máquina', 'Pagamento', 'Total', 'Tipo', 'Bandeira', 'Autorização'];
+  
+  // Mapeia transações filtradas em arrays de valores simples
+  const data = filtered.map(r => [
+    fmtDate(r[C.data]),
+    r[C.hora],
+    r[C.maquina],
+    isMaqWash(r) ? 'Lavagem' : 'Secagem',
+    r[C.pagamento],
+    r[C.total],
+    r[C.tipo],
+    r[C.bandeira],
+    r[C.auth]
+  ]);
+  
+  // Adiciona cabeçalhos
+  data.unshift(headers);
+  
+  // Cria worksheet e workbook via SheetJS
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Transações");
+  
+  // Exporta o arquivo no formato Excel XLSX
+  XLSX.writeFile(wb, "relatorio_geral_vendas_lavai.xlsx");
 }
 
 // ══════════════════════════════════════════════════════
