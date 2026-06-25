@@ -1,11 +1,11 @@
-# Arquivos de dados gerados pelo robô (grandes e com dados sensíveis)
-vendtef_local.js
-vmpay_local.js
-payblu_local.js
-sqi_local.js
-vendpago_local.js
+# Arquivos de dados gerados pelo robô (removidos do ignore para publicar no GitHub Pages)
+# vendtef_local.js
+# vmpay_local.js
+# payblu_local.js
+# sqi_local.js
+# vendpago_local.js
 
-# Log do robô
+# Log do robô (não precisa publicar)
 robo_lavai.log
 
 # Planilha de custos
