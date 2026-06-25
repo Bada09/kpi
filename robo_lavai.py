@@ -1527,7 +1527,13 @@ async def coletar_tudo():
             
             await dispensar_modal(page)
             
-            # Clicar em Continuar para gerar o relatorio do mês corrente
+            # Definir data de início para 01/01/2026 para obter todo o histórico de 2026
+            log.info("Configurando data de início para 01/01/2026...")
+            await page.fill("input#inicio", "01/01/2026")
+            await page.press("input#inicio", "Tab")
+            await asyncio.sleep(1)
+            
+            # Clicar em Continuar para gerar o relatorio
             log.info("Clicando em 'Continuar'...")
             await page.locator("input[value='Continuar']").click(timeout=10000)
             await page.wait_for_load_state("networkidle", timeout=TIMEOUT_MS)
