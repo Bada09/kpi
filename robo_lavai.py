@@ -780,22 +780,20 @@ def coletar_vmpay_api():
                     has_more = False
                     break
         except urllib.error.HTTPError as e:
-            log.warning(f"Erro HTTP ao chamar a API VMPay na página {page} ({e.code} {e.reason}). Continuando com os dados coletados.")
+            log.error(f"Erro HTTP ao chamar a API VMPay na página {page} ({e.code} {e.reason}). Abortando coleta VMPay.")
             if e.code == 401:
                 log.warning("O token de acesso da API VMPay está expirado ou é inválido (401 Unauthorized).")
-            break
+            return None
         except Exception as e:
-            log.warning(f"Erro geral ao chamar a API VMPay na página {page} ({e}). Continuando com os dados coletados.")
-            break
+            log.error(f"Erro geral ao chamar a API VMPay na página {page} ({e}). Abortando coleta VMPay.")
+            return None
             
-    if all_txs:
-        log.info(f"API VMPay: total de {len(all_txs)} transações coletadas no mês atual.")
-        rows = []
-        for tx in all_txs:
-            if isinstance(tx, dict):
-                rows.append(map_vmpay_to_csv_row(tx))
-        return rows
-    return []
+    log.info(f"API VMPay: total de {len(all_txs)} transações coletadas no mês atual.")
+    rows = []
+    for tx in all_txs:
+        if isinstance(tx, dict):
+            rows.append(map_vmpay_to_csv_row(tx))
+    return rows
 
 
 def coletar_vmpay_excel():
@@ -1581,8 +1579,9 @@ async def coletar_tudo():
     vendpago_excel_rows = []  # VendPago removido
 
     # Deduplicar cada fonte antes de enviar (evitar duplicatas dentro do mesmo lote)
+    api_rows_to_merge = api_rows if api_rows is not None else []
     portal_rows_dedup   = merge_and_deduplicate(rows, [])
-    vmpay_rows_dedup    = merge_and_deduplicate(api_rows + excel_rows, [])
+    vmpay_rows_dedup    = merge_and_deduplicate(api_rows_to_merge + excel_rows, [])
     sq_rows_dedup       = merge_and_deduplicate(sq_rows, [])
     payblu_rows_dedup   = merge_and_deduplicate(payblu_rows, [])
 
@@ -1596,7 +1595,7 @@ async def coletar_tudo():
         "status": "ok" if total_count else "erro",
         "total_transacoes": total_count,
         "portal_transacoes": len(portal_rows_dedup),
-        "api_transacoes": len(api_rows),
+        "api_transacoes": len(api_rows_to_merge),
         "excel_transacoes": len(excel_rows),
         "sq_transacoes": len(sq_rows_dedup),
         "payblu_transacoes": len(payblu_rows_dedup)
@@ -1605,7 +1604,10 @@ async def coletar_tudo():
 
     # ── Todas as fontes salvas como JS local — zero envio para o Sheets ──────
     salvar_fonte_local(portal_rows_dedup,   CSV_VENDTEF_LOCAL,  "LAVAI_VENDTEF_DATA")
-    salvar_fonte_local(vmpay_rows_dedup,    CSV_VMPAY_LOCAL,    "LAVAI_VMPAY_DATA")
+    if api_rows is not None:
+        salvar_fonte_local(vmpay_rows_dedup,    CSV_VMPAY_LOCAL,    "LAVAI_VMPAY_DATA")
+    else:
+        log.warning("Falha na API VMPay. Mantendo arquivo vmpay_local.js intacto com dados anteriores para evitar perda de dados.")
     salvar_fonte_local(payblu_rows_dedup,   CSV_PAYBLU_LOCAL,   "LAVAI_PAYBLU_DATA")
     salvar_fonte_local(sq_rows_dedup,       CSV_SQI_LOCAL,      "LAVAI_SQI_DATA")
 
