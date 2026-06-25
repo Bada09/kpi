@@ -742,55 +742,44 @@ def coletar_vmpay_api():
     
     log.info(f"API VMPay: Filtro de período de {start_date_str} até {end_date_str}")
     
-    all_txs = []
-    per_page = 250
-    page = 1
-    has_more = True
-    
     import urllib.parse
     
-    while has_more:
-        api_url = f"{VMPAY_API_URL}?access_token={VMPAY_TOKEN}&start_date={urllib.parse.quote(start_date_str)}&end_date={urllib.parse.quote(end_date_str)}&per_page={per_page}&page={page}&contentType=json"
-        log.info(f"Buscando página {page} da API VMPay (url: {api_url})...")
-        req = urllib.request.Request(api_url, headers={"User-Agent": "Mozilla/5.0"})
-        
-        try:
-            with urllib.request.urlopen(req, timeout=40) as r:
-                res_data = r.read().decode("utf-8")
-                data = json.loads(res_data)
-                
-                tx_list = []
-                if isinstance(data, list):
-                    tx_list = data
-                elif isinstance(data, dict):
-                    for key in ("transactions", "data", "results", "items"):
-                        if key in data and isinstance(data[key], list):
-                            tx_list = data[key]
-                            break
-                
-                if tx_list:
-                    all_txs.extend(tx_list)
-                    log.info(f"API VMPay: página {page} — {len(tx_list)} transações.")
-                    if len(tx_list) < per_page:
-                        has_more = False
-                    else:
-                        page += 1
-                else:
-                    log.info(f"API VMPay: página {page} vazia ou fim dos dados.")
-                    has_more = False
-                    break
-        except urllib.error.HTTPError as e:
-            log.error(f"Erro HTTP ao chamar a API VMPay na página {page} ({e.code} {e.reason}). Abortando coleta VMPay.")
-            if e.code == 401:
-                log.warning("O token de acesso da API VMPay está expirado ou é inválido (401 Unauthorized).")
-            return None
-        except Exception as e:
-            log.error(f"Erro geral ao chamar a API VMPay na página {page} ({e}). Abortando coleta VMPay.")
-            return None
+    # Trazer tudo de uma vez sem paginação (per_page muito alto)
+    per_page = 100000
+    api_url = f"{VMPAY_API_URL}?access_token={VMPAY_TOKEN}&start_date={urllib.parse.quote(start_date_str)}&end_date={urllib.parse.quote(end_date_str)}&per_page={per_page}&page=1&contentType=json"
+    log.info(f"Buscando dados da API VMPay de uma vez só (url: {api_url})...")
+    req = urllib.request.Request(api_url, headers={"User-Agent": "Mozilla/5.0"})
+    
+    try:
+        with urllib.request.urlopen(req, timeout=90) as r:
+            res_data = r.read().decode("utf-8")
+            data = json.loads(res_data)
             
-    log.info(f"API VMPay: total de {len(all_txs)} transações coletadas no mês atual.")
+            tx_list = []
+            if isinstance(data, list):
+                tx_list = data
+            elif isinstance(data, dict):
+                for key in ("transactions", "data", "results", "items"):
+                    if key in data and isinstance(data[key], list):
+                        tx_list = data[key]
+                        break
+            
+            if tx_list:
+                log.info(f"API VMPay: {len(tx_list)} transações coletadas de uma vez só.")
+            else:
+                log.info("API VMPay: nenhum dado retornado.")
+                
+    except urllib.error.HTTPError as e:
+        log.error(f"Erro HTTP ao chamar a API VMPay ({e.code} {e.reason}). Abortando coleta VMPay.")
+        if e.code == 401:
+            log.warning("O token de acesso da API VMPay está expirado ou é inválido (401 Unauthorized).")
+        return None
+    except Exception as e:
+        log.error(f"Erro geral ao chamar a API VMPay ({e}). Abortando coleta VMPay.")
+        return None
+        
     rows = []
-    for tx in all_txs:
+    for tx in tx_list:
         if isinstance(tx, dict):
             rows.append(map_vmpay_to_csv_row(tx))
     return rows
