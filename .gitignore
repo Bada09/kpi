@@ -1,0 +1,18 @@
+# Arquivos de dados gerados pelo robô (grandes e com dados sensíveis)
+vendtef_local.js
+vmpay_local.js
+payblu_local.js
+sqi_local.js
+vendpago_local.js
+
+# Log do robô
+robo_lavai.log
+
+# Planilha de custos
+Custo operação.xlsx
+
+# Arquivo RTF de notas
+*.rtf
+
+# JSON de controle interno do robô
+dados_relatorios.json
