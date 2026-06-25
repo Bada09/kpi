@@ -852,6 +852,8 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
               <th>Margem Bruta</th>
               <th>Resultado Líq.</th>
               <th>Margem Líq.</th>
+              <th>Ciclos BE</th>
+              <th>Diferença BE</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -2494,11 +2496,26 @@ function calcCustoPDV(custo, washCycles, dryCycles, receita, diasPeriodo) {
   const resultado    = receita - totalCustos;
   const margemLiq    = receita > 0 ? (resultado / receita) * 100 : 0;
 
+  // CÁLCULO DE BREAK-EVEN OPERACIONAL EM CICLOS
+  const opexFixo = opexAluguel + opexInternet + opexTecnico + opexMP;
+  const mc = receita - totalCMV - opexComissao; // Margem de Contribuição Total
+  const totalCiclos = washCycles + dryCycles;
+  const mcPorCiclo = totalCiclos > 0 ? mc / totalCiclos : 0;
+
+  let ciclosBE = 0;
+  if (mcPorCiclo > 0) {
+    ciclosBE = opexFixo / mcPorCiclo;
+  } else {
+    ciclosBE = opexFixo > 0 ? Infinity : 0;
+  }
+  const varCiclosBE = totalCiclos - ciclosBE;
+
   return {
     cmvProduto, cmvAgua, cmvEnergia, totalCMV,
     opexAluguel, opexInternet, opexTecnico, opexMP, opexComissao, totalOPEX,
     totalCustos, margemBruta, resultado, margemLiq,
     receita, washCycles, dryCycles,
+    opexFixo, mc, ciclosBE, varCiclosBE
   };
 }
 
@@ -2737,14 +2754,27 @@ function renderFinanceiro() {
 
   // ── KPIs consolidados ──
   let totReceita=0, totCMV=0, totOPEX=0, totResultado=0;
+  let totOpexFixo=0, totMC=0, totCiclos=0;
   result.forEach(({calc}) => {
     totReceita   += calc.receita;
     totCMV       += calc.totalCMV;
     totOPEX      += calc.totalOPEX;
     totResultado += calc.resultado;
+    totOpexFixo  += calc.opexFixo;
+    totMC        += calc.mc;
+    totCiclos    += (calc.washCycles + calc.dryCycles);
   });
   const margemBruta = totReceita > 0 ? ((totReceita - totCMV) / totReceita)*100 : 0;
   const margemLiq   = totReceita > 0 ? (totResultado / totReceita)*100 : 0;
+
+  const totMcPorCiclo = totCiclos > 0 ? totMC / totCiclos : 0;
+  let totCiclosBE = 0;
+  if (totMcPorCiclo > 0) {
+    totCiclosBE = totOpexFixo / totMcPorCiclo;
+  } else {
+    totCiclosBE = totOpexFixo > 0 ? Infinity : 0;
+  }
+  const totVarCiclosBE = totCiclos - totCiclosBE;
 
   document.getElementById('fin-kpi-receita').textContent = fmtBRL(totReceita);
   document.getElementById('fin-kpi-cmv').textContent = fmtBRL(totCMV);
@@ -2834,6 +2864,19 @@ function renderFinanceiro() {
         <div class="fin-margin-bar" style="margin-top:10px"><div class="fin-margin-bar-fill ${barClass}" style="width:${Math.max(0,mlPct)}%"></div></div>
         <div class="fin-margin-labels"><span>Margem Líquida</span><span>${fmtN(calc.margemLiq,1)}%</span></div>
 
+        <!-- Break-Even Operacional -->
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin:12px 0 4px">Break-Even Operacional</div>
+        <div class="fin-cost-row">
+          <span class="fin-cost-label"><i class="fas fa-bullseye" style="color:var(--cyan)"></i> Ciclos para Break-Even</span>
+          <span class="fin-cost-value" style="font-family:var(--font-mono)">${calc.ciclosBE === Infinity ? 'Impossível' : Math.ceil(calc.ciclosBE).toLocaleString('pt-BR')}</span>
+        </div>
+        <div class="fin-cost-row">
+          <span class="fin-cost-label"><i class="fas fa-scale-balanced" style="color:#64748b"></i> Status vs Break-Even</span>
+          <span class="fin-cost-value ${calc.varCiclosBE >= 0 ? 'pos' : 'neg'}" style="font-weight:700">
+            ${calc.ciclosBE === Infinity ? '🔴 Abaixo' : calc.varCiclosBE >= 0 ? `+${Math.floor(calc.varCiclosBE)} ciclos (Acima)` : `${Math.ceil(calc.varCiclosBE)} ciclos (Abaixo)`}
+          </span>
+        </div>
+
         <!-- Alerta / Ação -->
         <div class="fin-alert ${alerta.cls}">
           <i class="fas ${alerta.icon}"></i>
@@ -2850,6 +2893,27 @@ function renderFinanceiro() {
       const res = calc.resultado;
       const statusCls = res >= 0 ? 'pos' : 'neg';
       const statusLabel = res >= 0 ? '✅ Lucro' : '🔴 Prejuízo';
+
+      const beLabel = calc.ciclosBE === Infinity ? 'Impossível' : Math.ceil(calc.ciclosBE).toLocaleString('pt-BR');
+      let diffCls = '';
+      let diffLabel = '';
+      if (calc.ciclosBE === Infinity) {
+        diffCls = 'neg';
+        diffLabel = 'N/A';
+      } else {
+        const diffVal = Math.round(calc.varCiclosBE);
+        if (diffVal > 0) {
+          diffCls = 'pos';
+          diffLabel = `+${diffVal.toLocaleString('pt-BR')}`;
+        } else if (diffVal < 0) {
+          diffCls = 'neg';
+          diffLabel = `${diffVal.toLocaleString('pt-BR')}`;
+        } else {
+          diffCls = 'warn-txt';
+          diffLabel = '0';
+        }
+      }
+
       return `<tr>
         <td style="font-weight:700">${custo.pdv}</td>
         <td><span class="op-pdv-badge ${custo.tipo.toLowerCase()}">${custo.tipo === 'RUA' ? '🏪 Rua' : '🏢 Condo'}</span></td>
@@ -2864,12 +2928,34 @@ function renderFinanceiro() {
         <td class="mono ${calc.margemBruta >= 30 ? 'pos' : 'warn-txt'}">${fmtN(calc.margemBruta,1)}%</td>
         <td class="mono ${statusCls}">${fmtBRL(res)}</td>
         <td class="mono ${calc.margemLiq >= 15 ? 'pos' : calc.margemLiq >= 0 ? 'warn-txt' : 'neg'}">${fmtN(calc.margemLiq,1)}%</td>
+        <td class="mono">${beLabel}</td>
+        <td class="mono ${diffCls}">${diffLabel}</td>
         <td>${statusLabel}</td>
       </tr>`;
     }).join('');
 
     const foot = document.getElementById('fin-table-foot');
     if (foot) {
+      const totBeLabel = totCiclosBE === Infinity ? 'Impossível' : Math.ceil(totCiclosBE).toLocaleString('pt-BR');
+      let totDiffCls = '';
+      let totDiffLabel = '';
+      if (totCiclosBE === Infinity) {
+        totDiffCls = 'neg';
+        totDiffLabel = 'N/A';
+      } else {
+        const totDiffVal = Math.round(totVarCiclosBE);
+        if (totDiffVal > 0) {
+          totDiffCls = 'pos';
+          totDiffLabel = `+${totDiffVal.toLocaleString('pt-BR')}`;
+        } else if (totDiffVal < 0) {
+          totDiffCls = 'neg';
+          totDiffLabel = `${totDiffVal.toLocaleString('pt-BR')}`;
+        } else {
+          totDiffCls = 'warn-txt';
+          totDiffLabel = '0';
+        }
+      }
+
       foot.innerHTML = `<tr>
         <td colspan="4" style="font-weight:800">TOTAL CONSOLIDADO</td>
         <td class="mono">${fmtBRL(totReceita)}</td>
@@ -2879,6 +2965,8 @@ function renderFinanceiro() {
         <td class="mono ${margemBruta>=30?'pos':'warn-txt'}">${fmtN(margemBruta,1)}%</td>
         <td class="mono ${totResultado>=0?'pos':'neg'}">${fmtBRL(totResultado)}</td>
         <td class="mono ${margemLiq>=15?'pos':margemLiq>=0?'warn-txt':'neg'}">${fmtN(margemLiq,1)}%</td>
+        <td class="mono">${totBeLabel}</td>
+        <td class="mono ${totDiffCls}">${totDiffLabel}</td>
         <td></td>
       </tr>`;
     }
