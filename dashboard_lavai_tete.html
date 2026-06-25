@@ -524,7 +524,7 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
       <div class="brand-logo"><i class="fas fa-soap"></i></div>
       <div class="brand-info">
         <h1>Dashboard LAVAí</h1>
-        <p>Todas as Unidades • Dashboard Consolidado</p>
+        <p style="display:flex;align-items:center;flex-wrap:wrap;gap:8px">Todas as Unidades • Dashboard Consolidado <span id="last-update" style="opacity:0.85;font-size:11px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);padding:2px 8px;border-radius:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px"><i class="fas fa-clock" style="font-size:10px"></i> Atualizando...</span></p>
       </div>
     </div>
     <div class="filter-bar">
@@ -2252,6 +2252,28 @@ async function integrarVmpayAPI() {
   // Todas as fontes vêm de arquivos JS locais gerados pelo robô.
   // allRows começa vazio — sem leitura do Sheets.
   allRows = [];
+
+  // Buscar data da última atualização
+  try {
+    const res = await fetch('dados_relatorios.json');
+    if (res.ok) {
+      const statusData = await res.json();
+      if (statusData.gerado_em) {
+        const dt = new Date(statusData.gerado_em);
+        if (!isNaN(dt.getTime())) {
+          const pad = (n) => String(n).padStart(2, '0');
+          const dateStr = `${pad(dt.getDate())}/${pad(dt.getMonth() + 1)}/${dt.getFullYear()}`;
+          const timeStr = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+          const span = document.getElementById('last-update');
+          if (span) {
+            span.innerHTML = `<i class="fas fa-clock" style="font-size:10px"></i> Atualizado em: ${dateStr} às ${timeStr}`;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Erro ao buscar dados_relatorios.json:', err);
+  }
 
   // Helper: tenta carregar script se variável ainda não existe
   async function tryLoad(varName, src) {
