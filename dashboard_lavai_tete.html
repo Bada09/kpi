@@ -666,12 +666,12 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
   <div class="section-label" style="margin-top:8px">Inteligência Operacional</div>
   <div class="kpi-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">
     <div class="kpi-insight ins-busiest-day">
-      <div class="kpi-content"><h3>Dia de Maior Movimento</h3><div class="kpi-value" id="kpi-busiest-day-val">--/--</div>
+      <div class="kpi-content"><h3>Dia de Maior Movimento</h3><div class="kpi-value" id="kpi-busiest-day-val" style="font-size:15px">--/--</div>
         <div class="kpi-subtext" id="kpi-busiest-day-sub">Carregando...</div></div>
       <div class="kpi-icon"><i class="fas fa-fire"></i></div>
     </div>
     <div class="kpi-insight ins-quiet-day">
-      <div class="kpi-content"><h3>Dia de Menor Movimento</h3><div class="kpi-value" id="kpi-quietest-day-val">--/--</div>
+      <div class="kpi-content"><h3>Dia de Menor Movimento</h3><div class="kpi-value" id="kpi-quietest-day-val" style="font-size:15px">--/--</div>
         <div class="kpi-subtext" id="kpi-quietest-day-sub">Carregando...</div></div>
       <div class="kpi-icon"><i class="fas fa-snowflake"></i></div>
     </div>
@@ -1750,9 +1750,10 @@ function renderInsights(){
   dayArr.sort((a,b)=>b[1].total-a[1].total);
   const busiest=dayArr[0], quietest=dayArr[dayArr.length-1];
   const bDate=busiest[1].date, qDate=quietest[1].date;
-  document.getElementById('kpi-busiest-day-val').textContent=bDate?`${String(bDate.getDate()).padStart(2,'0')}/${String(bDate.getMonth()+1).padStart(2,'0')}`:'--';
+  const WEEKDAYS_PT = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+  document.getElementById('kpi-busiest-day-val').textContent=bDate?`${String(bDate.getDate()).padStart(2,'0')}/${String(bDate.getMonth()+1).padStart(2,'0')} - ${WEEKDAYS_PT[bDate.getDay()]}`:'--';
   document.getElementById('kpi-busiest-day-sub').textContent=`${fmtBRL(busiest[1].total)} · ${busiest[1].count} transações`;
-  document.getElementById('kpi-quietest-day-val').textContent=qDate?`${String(qDate.getDate()).padStart(2,'0')}/${String(qDate.getMonth()+1).padStart(2,'0')}`:'--';
+  document.getElementById('kpi-quietest-day-val').textContent=qDate?`${String(qDate.getDate()).padStart(2,'0')}/${String(qDate.getMonth()+1).padStart(2,'0')} - ${WEEKDAYS_PT[qDate.getDay()]}`:'--';
   document.getElementById('kpi-quietest-day-sub').textContent=`${fmtBRL(quietest[1].total)} · ${quietest[1].count} transações`;
 
   // by hour
