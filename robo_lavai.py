@@ -1611,6 +1611,16 @@ async def coletar_tudo():
     salvar_fonte_local(payblu_rows_dedup,   CSV_PAYBLU_LOCAL,   "LAVAI_PAYBLU_DATA")
     salvar_fonte_local(sq_rows_dedup,       CSV_SQI_LOCAL,      "LAVAI_SQI_DATA")
 
+    # Também salvar na subpasta 'kpi' se ela existir (para manter a branch main de deploy atualizada)
+    kpi_dir = Path(__file__).parent / "kpi"
+    if kpi_dir.is_dir():
+        salvar_fonte_local(portal_rows_dedup,   kpi_dir / "vendtef_local.js",  "LAVAI_VENDTEF_DATA")
+        if api_rows is not None:
+            salvar_fonte_local(vmpay_rows_dedup,    kpi_dir / "vmpay_local.js",    "LAVAI_VMPAY_DATA")
+        salvar_fonte_local(payblu_rows_dedup,   kpi_dir / "payblu_local.js",   "LAVAI_PAYBLU_DATA")
+        salvar_fonte_local(sq_rows_dedup,       kpi_dir / "sqi_local.js",      "LAVAI_SQI_DATA")
+        log.info("Arquivos locais da pasta 'kpi' também foram atualizados automaticamente.")
+
     log.info("Todos os arquivos JS locais atualizados. Nenhum envio para o Google Sheets.")
     
     return payload
