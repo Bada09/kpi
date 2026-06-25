@@ -1473,6 +1473,80 @@ def salvar_fonte_local(rows, js_path, var_name):
     except Exception as e:
         log.error("Erro ao salvar " + js_path.name + ": " + str(e))
 
+def publicar_dados_github():
+    import subprocess
+    log.info("Iniciando publicação automática no GitHub...")
+    
+    cwd_root = Path(__file__).parent
+    files_root = [
+        "vmpay_local.js",
+        "vendtef_local.js",
+        "payblu_local.js",
+        "sqi_local.js",
+        "dados_relatorios.json"
+    ]
+    
+    # 1. Atualizar repositório root (branch master)
+    for f in files_root:
+        f_path = cwd_root / f
+        if f_path.exists():
+            try:
+                subprocess.run(["git", "add", f], cwd=str(cwd_root), check=True, capture_output=True, text=True)
+            except Exception as e:
+                log.error(f"Erro ao adicionar {f} no root: {e}")
+                
+    now_str = datetime.now(FUSO_SP).strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        status_res = subprocess.run(["git", "status", "--porcelain"], cwd=str(cwd_root), check=True, capture_output=True, text=True)
+        if status_res.stdout.strip():
+            subprocess.run(["git", "commit", "-m", f"Auto-update dashboard (root) - {now_str}"], cwd=str(cwd_root), check=True, capture_output=True, text=True)
+            log.info("Commit realizado no root.")
+            subprocess.run(["git", "push", "origin", "master"], cwd=str(cwd_root), check=True, capture_output=True, text=True)
+            log.info("Push realizado no root.")
+        else:
+            log.info("Sem alterações no root.")
+    except Exception as e:
+        log.error(f"Erro no git commit/push do root: {e}")
+        
+    # 2. Atualizar repositório subpasta kpi (branch main)
+    cwd_kpi = cwd_root / "kpi"
+    if cwd_kpi.is_dir():
+        files_kpi = [
+            "vmpay_local.js",
+            "vendtef_local.js",
+            "payblu_local.js",
+            "sqi_local.js",
+            "dados_relatorios.json"
+        ]
+        
+        # Copiar dados_relatorios.json para a pasta kpi
+        src_json = cwd_root / "dados_relatorios.json"
+        dest_json = cwd_kpi / "dados_relatorios.json"
+        if src_json.exists():
+            try:
+                dest_json.write_text(src_json.read_text(encoding="utf-8"), encoding="utf-8")
+            except Exception as e:
+                log.error(f"Erro ao copiar dados_relatorios.json para kpi: {e}")
+
+        for f in files_kpi:
+            f_path = cwd_kpi / f
+            if f_path.exists():
+                try:
+                    subprocess.run(["git", "add", f], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
+                except Exception as e:
+                    log.error(f"Erro ao adicionar {f} no kpi: {e}")
+                    
+        try:
+            status_res = subprocess.run(["git", "status", "--porcelain"], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
+            if status_res.stdout.strip():
+                subprocess.run(["git", "commit", "-m", f"Auto-update dashboard (kpi) - {now_str}"], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
+                log.info("Commit realizado no kpi.")
+                subprocess.run(["git", "push", "origin", "main"], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
+                log.info("Push realizado no kpi.")
+            else:
+                log.info("Sem alterações no kpi.")
+        except Exception as e:
+            log.error(f"Erro no git commit/push do kpi: {e}")
 
 
 async def coletar_tudo():
@@ -1622,6 +1696,12 @@ async def coletar_tudo():
         log.info("Arquivos locais da pasta 'kpi' também foram atualizados automaticamente.")
 
     log.info("Todos os arquivos JS locais atualizados. Nenhum envio para o Google Sheets.")
+    
+    # Publicar dados automaticamente no GitHub
+    try:
+        publicar_dados_github()
+    except Exception as e:
+        log.error(f"Erro ao publicar dados no GitHub: {e}")
     
     return payload
 
