@@ -1501,6 +1501,10 @@ def publicar_dados_github():
     try:
         status_res = subprocess.run(["git", "status", "--porcelain"], cwd=str(cwd_root), check=True, capture_output=True, text=True)
         if status_res.stdout.strip():
+            try:
+                subprocess.run(["git", "pull", "--rebase", "origin", "master"], cwd=str(cwd_root), check=True, capture_output=True, text=True)
+            except Exception as pe:
+                log.warning(f"Aviso ao dar pull --rebase no root: {pe}")
             subprocess.run(["git", "commit", "-m", f"Auto-update dashboard (root) - {now_str}"], cwd=str(cwd_root), check=True, capture_output=True, text=True)
             log.info("Commit realizado no root.")
             subprocess.run(["git", "push", "origin", "master"], cwd=str(cwd_root), check=True, capture_output=True, text=True)
@@ -1541,6 +1545,10 @@ def publicar_dados_github():
         try:
             status_res = subprocess.run(["git", "status", "--porcelain"], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
             if status_res.stdout.strip():
+                try:
+                    subprocess.run(["git", "pull", "--rebase", "origin", "main"], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
+                except Exception as pe:
+                    log.warning(f"Aviso ao dar pull --rebase no kpi: {pe}")
                 subprocess.run(["git", "commit", "-m", f"Auto-update dashboard (kpi) - {now_str}"], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
                 log.info("Commit realizado no kpi.")
                 subprocess.run(["git", "push", "origin", "main"], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
