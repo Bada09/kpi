@@ -570,10 +570,8 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
         <button class="btn-range active" id="btn-range-all" onclick="setRange('all')">Ver Tudo</button>
         <button class="btn-range" id="btn-range-15" onclick="setRange(15)">Últimos 15d</button>
         <button class="btn-range" id="btn-range-7" onclick="setRange(7)">Últimos 7d</button>
-        <span id="elapsed-time-badge" style="display:inline-flex;align-items:center;gap:10px;font-size:11px;font-weight:700;color:var(--text);background:#f8fafc;padding:5px 12px;border-radius:20px;border:1px solid var(--border);margin-left:6px">
-          <span style="color:#2563eb;display:inline-flex;align-items:center;gap:4px"><i class="fas fa-dollar-sign"></i> Venda: <span id="time-last-sale">...</span></span>
-          <span style="color:var(--border);font-weight:300">|</span>
-          <span style="color:#10b981;display:inline-flex;align-items:center;gap:4px"><i class="fas fa-soap"></i> Uso: <span id="time-last-use">...</span></span>
+        <span id="elapsed-time-badge" style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#2563eb;background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);padding:5px 12px;border-radius:20px;margin-left:6px">
+          <i class="fas fa-dollar-sign"></i> última venda há: <span id="time-last-sale">...</span>
         </span>
       </div>
     </div>
@@ -1634,12 +1632,10 @@ function renderAll(){
 function updateElapsedTimes() {
   if (!allRows || allRows.length === 0) {
     document.getElementById('time-last-sale').textContent = '–';
-    document.getElementById('time-last-use').textContent = '–';
     return;
   }
   
   let lastSaleMs = 0;
-  let lastUseMs = 0;
   
   allRows.forEach(r => {
     const dt = parseDate(r[C.data]);
@@ -1649,11 +1645,6 @@ function updateElapsedTimes() {
       if (parts.length >= 2) {
         dt.setHours(+parts[0], +parts[1], parts[2] ? +parts[2] : 0);
         const ms = dt.getTime();
-        
-        // Qualquer registro é uma utilização
-        if (ms > lastUseMs) {
-          lastUseMs = ms;
-        }
         
         // Se tem valor financeiro, é uma venda
         const totalVal = toNum(r[C.total]);
@@ -1685,7 +1676,6 @@ function updateElapsedTimes() {
   };
 
   document.getElementById('time-last-sale').textContent = fmtElapsed(lastSaleMs);
-  document.getElementById('time-last-use').textContent = fmtElapsed(lastUseMs);
 }
 
 // Retorna o número de dias no período filtrado atual
