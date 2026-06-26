@@ -660,6 +660,39 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
       </div>
       <div class="kpi-icon"><i class="fas fa-gears"></i></div>
     </div>
+    <div class="kpi-card kpi-pdvs">
+      <div class="kpi-content">
+        <h3>Quantidade de PDVs</h3>
+        <div class="kpi-value" id="kpi-pdvs-val">0</div>
+        <div class="kpi-subtext">
+          <i class="fas fa-store" style="color:var(--purple)"></i>
+          <span>PDVs ativos no período</span>
+        </div>
+      </div>
+      <div class="kpi-icon" style="background:rgba(139,92,246,.12);color:var(--purple)"><i class="fas fa-store"></i></div>
+    </div>
+    <div class="kpi-card kpi-torres">
+      <div class="kpi-content">
+        <h3>Quantidade de Torres</h3>
+        <div class="kpi-value" id="kpi-torres-val">0</div>
+        <div class="kpi-subtext">
+          <i class="fas fa-layer-group" style="color:var(--amber)"></i>
+          <span>Torres/Stacks ativas</span>
+        </div>
+      </div>
+      <div class="kpi-icon" style="background:rgba(245,158,11,.12);color:var(--amber)"><i class="fas fa-layer-group"></i></div>
+    </div>
+    <div class="kpi-card kpi-maquinas">
+      <div class="kpi-content">
+        <h3>Quantidade de Máquinas</h3>
+        <div class="kpi-value" id="kpi-maquinas-val">0</div>
+        <div class="kpi-subtext">
+          <i class="fas fa-soap" style="color:var(--green)"></i>
+          <span>Lavadoras + Secadoras</span>
+        </div>
+      </div>
+      <div class="kpi-icon" style="background:rgba(16,185,129,.12);color:var(--green)"><i class="fas fa-soap"></i></div>
+    </div>
   </div><!-- /kpi-grid -->
 
   <!-- DASHBOARD PAGE CONTENT -->
@@ -823,7 +856,7 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
         <div class="fin-kpi-sub" id="fin-kpi-resultado-sub">Lucro ou Prejuízo consolidado</div>
       </div>
       <div class="fin-kpi margin" style="--before-bg:linear-gradient(90deg,#0ea5e9,#38bdf8)">
-        <div class="fin-kpi-label">Margem Líquida</div>
+        <div class="fin-kpi-label">EBITDA</div>
         <div class="fin-kpi-value" id="fin-kpi-margem-liq">0,0%</div>
         <div class="fin-kpi-sub" id="fin-kpi-margem-liq-sub">Após todos os custos</div>
       </div>
@@ -854,7 +887,7 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
               <th>OPEX</th>
               <th>Margem Bruta</th>
               <th>Resultado Líq.</th>
-              <th>Margem Líq.</th>
+              <th>EBITDA</th>
               <th>Ciclos BE</th>
               <th>Diferença BE</th>
               <th>Status</th>
@@ -1442,7 +1475,6 @@ function buildFilters(){
     opt.textContent = y;
     selYear.appendChild(opt);
   });
-  // Restore selection after repopulating (or default to current month/year on first load)
   if (isFirstLoad) {
     const now = new Date();
     const curYearStr = String(now.getFullYear());
@@ -1463,7 +1495,6 @@ function buildFilters(){
       selYear.value = 'all';
     }
   }
-
   // Update source button counts
   updateSourceCounts();
 }
@@ -1752,39 +1783,83 @@ function renderKPIs(){
   document.getElementById('kpi-wash-val').textContent=washCycles.toLocaleString('pt-BR');
   document.getElementById('kpi-dry-val').textContent=dryCycles.toLocaleString('pt-BR');
 
-  // Projeção: média calculada até o dia anterior × (dias restantes incluindo hoje + 1)
+  // Calcular PDVs ativos e somar torres/máquinas a partir da planilha (CUSTOS_PDV)
+  const pdvsAtivos = new Set();
+  filtered.forEach(r => {
+    const pdv = (r[C.maquina] || '').trim();
+    if (pdv) pdvsAtivos.add(pdv);
+  });
+
+  let totalTorres = 0;
+  pdvsAtivos.forEach(pdvNome => {
+    const c = findCustoPDV(pdvNome);
+    totalTorres += c ? c.stack : 1;
+  });
+  
+  let totalMaquinas = totalTorres * 2;
+
+  document.getElementById('kpi-pdvs-val').textContent = pdvsAtivos.size.toLocaleString('pt-BR');
+  document.getElementById('kpi-torres-val').textContent = totalTorres.toLocaleString('pt-BR');
+  document.getElementById('kpi-maquinas-val').textContent = totalMaquinas.toLocaleString('pt-BR');
+
+  // Projeção: se o período for passado, a projeção é o próprio total faturado
   const now = new Date();
-  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const filterYear = document.getElementById('filter-year').value;
+  const filterMonth = document.getElementById('filter-month').value;
 
-  // Soma apenas transações até o dia anterior (exclusive hoje)
-  const totalAteOntem = filtered.reduce((s, r) => {
-    const d = parseDate(r[C.data]);
-    if (!d) return s;
-    const dDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    return dDay <= yesterday ? s + toNum(r[C.total]) : s;
-  }, 0);
+  let isPastPeriod = false;
+  if (filterYear !== 'all' && parseInt(filterYear, 10) < currentYear) {
+    isPastPeriod = true;
+  } else if (filterYear !== 'all' && parseInt(filterYear, 10) === currentYear) {
+    if (filterMonth !== 'all' && parseInt(filterMonth, 10) < currentMonth) {
+      isPastPeriod = true;
+    }
+  }
+  if (dtTo) {
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (dtTo < todayStart) {
+      isPastPeriod = true;
+    }
+  }
 
-  // Conta dias com transações até ontem para calcular média mais precisa
-  const diasComDados = new Set(
-    filtered
-      .map(r => r[C.data])
-      .filter(dt => {
-        const d = parseDate(dt);
-        if (!d) return false;
-        return new Date(d.getFullYear(), d.getMonth(), d.getDate()) <= yesterday;
-      })
-  ).size || 1;
+  if (isPastPeriod) {
+    document.getElementById('kpi-projection-val').textContent = fmtBRL(total);
+    document.getElementById('kpi-projection-sub').innerHTML = `<span>Período encerrado · Faturamento consolidado</span>`;
+  } else {
+    const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
 
-  const avgDay = totalAteOntem / diasComDados;
+    // Soma apenas transações até o dia anterior (exclusive hoje)
+    const totalAteOntem = filtered.reduce((s, r) => {
+      const d = parseDate(r[C.data]);
+      if (!d) return s;
+      const dDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      return dDay <= yesterday ? s + toNum(r[C.total]) : s;
+    }, 0);
 
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  // Dias restantes a partir de hoje até fim do mês + 1 dia de média adicional
-  const remaining = daysInMonth - now.getDate() + 1 + 1;
+    // Conta dias com transações até ontem para calcular média mais precisa
+    const diasComDados = new Set(
+      filtered
+        .map(r => r[C.data])
+        .filter(dt => {
+          const d = parseDate(dt);
+          if (!d) return false;
+          return new Date(d.getFullYear(), d.getMonth(), d.getDate()) <= yesterday;
+        })
+    ).size || 1;
 
-  const projection = total + avgDay * remaining;
+    const avgDay = totalAteOntem / diasComDados;
 
-  document.getElementById('kpi-projection-val').textContent = fmtBRL(projection);
-  document.getElementById('kpi-projection-sub').innerHTML = `<span>Média R$ ${fmtN(avgDay)}/dia (até ontem) · ${remaining} dias projetados</span>`;
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    // Dias restantes a partir de hoje até fim do mês + 1 dia de média adicional
+    const remaining = daysInMonth - now.getDate() + 1 + 1;
+
+    const projection = total + avgDay * remaining;
+
+    document.getElementById('kpi-projection-val').textContent = fmtBRL(projection);
+    document.getElementById('kpi-projection-sub').innerHTML = `<span>Média R$ ${fmtN(avgDay)}/dia (até ontem) · ${remaining} dias projetados</span>`;
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -2942,9 +3017,9 @@ function renderFinanceiro() {
           <span style="color:#8b5cf6;font-family:var(--font-mono)">${fmtBRL(calc.totalOPEX)}</span>
         </div>
 
-        <!-- Margem Líquida -->
+        <!-- EBITDA -->
         <div class="fin-margin-bar" style="margin-top:10px"><div class="fin-margin-bar-fill ${barClass}" style="width:${Math.max(0,mlPct)}%"></div></div>
-        <div class="fin-margin-labels"><span>Margem Líquida</span><span>${fmtN(calc.margemLiq,1)}%</span></div>
+        <div class="fin-margin-labels"><span>EBITDA</span><span>${fmtN(calc.margemLiq,1)}%</span></div>
 
         <!-- Break-Even Operacional -->
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin:12px 0 4px">Break-Even Operacional</div>

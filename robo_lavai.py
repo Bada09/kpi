@@ -798,9 +798,117 @@ def coletar_vmpay_api():
     return rows
 
 
+def is_june_2026(dt_val):
+    if not dt_val:
+        return False
+    if isinstance(dt_val, datetime):
+        return dt_val.year == 2026 and dt_val.month == 6
+    dt_str = str(dt_val).strip()
+    return "/06/2026" in dt_str or "2026-06" in dt_str
+
+def obter_caminho_excel(nome_arquivo):
+    p1 = Path(r"C:\Users\badad\OneDrive\Desktop\gateway LAVAI") / nome_arquivo
+    if p1.exists():
+        return p1
+    p2 = Path(__file__).parent / "kpi" / nome_arquivo
+    if p2.exists():
+        return p2
+    p3 = Path(__file__).parent / nome_arquivo
+    if p3.exists():
+        return p3
+    return None
+
+def map_vmpay_excel_row(row, headers_idx):
+    def get(col_name):
+        idx = headers_idx.get(col_name)
+        if idx is None or idx >= len(row):
+            return ""
+        val = row[idx]
+        return str(val).strip() if val is not None else ""
+
+    data_hora = get('Data/hora')
+    if " " in data_hora:
+        data_br, hora_br = data_hora.split(" ", 1)
+    else:
+        data_br = data_hora
+        hora_br = "12:00:00"
+
+    cliente = "Estoque - LAVAÍ"
+    maquina = get('PDV') or get('Local') or "VMPay - Máquina"
+    modelo = get('Modelo de máquina')
+    fabricante = "VMPay"
+    pagamento = "CASHLESS"
+    produto = get('Produto')
+    mola_id = ""
+    total_r = get('Valor (R$)')
+    try:
+        val_float = float(total_r)
+        total_r = f"{val_float:.2f}".replace('.', ',')
+        venda_r = total_r
+    except ValueError:
+        venda_r = "0,00"
+        total_r = "0,00"
+
+    preco_r = "Não Informado"
+    cod_promocional = "Não utilizado"
+    n_logico = get('VMbox')
+    nsu = get('Requisição') or get('Uuid')
+    auth = get('Código de Autorização')
+    tipo_cartao = get('Tipo de cartão')
+    rede = get('Provedor') or get('Adquirente') or "VMPay"
+    bandeira = get('Cartão')
+    usuario = get('Consumidor')
+    no_cartao = get('Número do cartão')
+    matricula = ""
+
+    return [
+        cliente, maquina, modelo, fabricante, pagamento, produto, mola_id,
+        venda_r, preco_r, total_r, cod_promocional, data_br, hora_br, n_logico,
+        nsu, auth, tipo_cartao, rede, bandeira, usuario, no_cartao, matricula
+    ]
+
 def coletar_vmpay_excel():
-    log.info("Sincronização do VMPay Excel desativada. Utilizando exclusivamente a API.")
-    return []
+    master_path = obter_caminho_excel("Vmpay 2025.xlsx")
+    all_rows = []
+    if not master_path or not master_path.exists():
+        log.warning("Arquivo Vmpay 2025.xlsx nao encontrado.")
+        return all_rows
+
+    log.info(f"Lendo dados de VMPay 2025 do arquivo: {master_path}")
+    try:
+        wb = openpyxl.load_workbook(master_path, read_only=True, data_only=True)
+        sheet = wb.active
+
+        headers = []
+        for row in sheet.iter_rows(max_row=1, values_only=True):
+            headers = [str(h).strip() if h else '' for h in row]
+
+        headers_idx = {h: i for i, h in enumerate(headers)}
+        date_idx = headers_idx.get('Data/hora', 0)
+        estado_idx = headers_idx.get('Estado')
+
+        count = 0
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            if not row or len(row) < 10:
+                continue
+
+            if estado_idx is not None and estado_idx < len(row):
+                if str(row[estado_idx]).strip().upper() != 'OK':
+                    continue
+
+            dt_val = row[date_idx] if date_idx < len(row) else None
+            if not dt_val or is_june_2026(dt_val):
+                continue
+
+            mapped_row = map_vmpay_excel_row(row, headers_idx)
+            all_rows.append(mapped_row)
+            count += 1
+
+        log.info(f"Processadas {count} transacoes de VMPay 2025 do arquivo.")
+    except Exception as e:
+        log.error(f"Erro ao ler arquivo Vmpay 2025 {master_path}: {e}")
+
+    return all_rows
 
 
 def merge_and_deduplicate(portal_rows, api_rows):
@@ -977,10 +1085,10 @@ def processar_csv_sq(csv_content, start_date):
 
 
 async def coletar_sq_excel():
-    master_path = Path(r"C:\Users\badad\OneDrive\Desktop\gateway LAVAI\SQI - Fichas e APP.xlsx")
+    master_path = obter_caminho_excel("SQI - Fichas e APP.xlsx")
     all_rows = []
     
-    if master_path.exists():
+    if master_path and master_path.exists():
         log.info(f"Lendo dados de SQInsights do arquivo mestre: {master_path}")
         try:
             wb = openpyxl.load_workbook(master_path, read_only=True, data_only=True)
@@ -1008,8 +1116,9 @@ async def coletar_sq_excel():
                 if not mapped_location:
                     continue
                     
-                if not is_recent_date(last_received, now):
-                    continue
+                # Permitir dados de junho no SQInsights (conforme solicitado pelo usuário)
+                # if is_june_2026(last_received):
+                #     continue
                     
                 if isinstance(last_received, datetime):
                     data_br = last_received.strftime("%d/%m/%Y")
@@ -1062,43 +1171,31 @@ async def coletar_sq_excel():
                     ))
                     count += 1
                     
-            log.info(f"Processadas {count} transações recentes de SQInsights do arquivo mestre.")
-            return all_rows
+            log.info(f"Processadas {count} transações de SQInsights do arquivo mestre.")
         except Exception as e:
             log.error(f"Erro ao ler arquivo mestre SQInsights {master_path}: {e}")
             
-    log.warning("Arquivo mestre do SQInsights não encontrado. Usando fallback para API/CDP.")
-    return await coletar_sq_api()
+    # Busca a API para obter dados recentes (mês atual e futuro)
+    log.info("Buscando dados recentes do SQInsights via API...")
+    try:
+        api_sq_rows = await coletar_sq_api()
+        if api_sq_rows:
+            all_rows.extend(api_sq_rows)
+            log.info(f"Adicionadas {len(api_sq_rows)} transações do SQInsights via API.")
+    except Exception as e:
+        log.error(f"Erro ao coletar dados do SQInsights via API: {e}")
+
+    return all_rows
 
 
 def coletar_vendpago_excel():
     """
     Le dados de VendPago (Credito Remoto/Cashless) do arquivo Excel especifico.
-    Layout Credito Remoto: Cliente, PDV, Torre, Produto, Pagamento(CASH), SemValor,
-                           [col6,7,8], TotalVenda, [10], Data, Hora, NLogico, NSU, ...
-    Mapeamento para CSV padrao: Cliente[0], Maquina[1], Modelo[2], Fabricante[3],
-                                Pagamento[4], Produtos[5], MolaID[6], Venda[7], Preco[8],
-                                Total[9], Codigo[10], Data[11], Hora[12], NLogico[13],
-                                NSU[14], Auth[15], TipoCartao[16], Rede[17], Bandeira[18],
-                                Usuario[19], NCartao[20], Matricula[21]
     """
     import datetime as dt_mod
 
-    gateway_dir = Path(r"C:\Users\badad\OneDrive\Desktop\gateway LAVAI")
+    master_path = obter_caminho_excel("vendpago 2026.xlsx")
     all_rows = []
-
-    if not gateway_dir.exists():
-        return all_rows
-
-    # Procura arquivo de credito remoto VendPago primeiro
-    master_path = None
-    for fname in gateway_dir.iterdir():
-        if fname.suffix.lower() == '.xlsx' and 'remoto' in fname.name.lower():
-            master_path = fname
-            break
-    # Fallback para o arquivo padrao
-    if not master_path:
-        master_path = gateway_dir / "vendpago 2026.xlsx"
 
     if not master_path or not master_path.exists():
         log.warning("Arquivo VendPago nao encontrado.")
@@ -1148,7 +1245,6 @@ def coletar_vendpago_excel():
                 date_idx = i
                 break
 
-        now = datetime.now(FUSO_SP)
         count = 0
 
         for row in sheet.iter_rows(min_row=header_row_num + 1, values_only=True):
@@ -1156,7 +1252,7 @@ def coletar_vendpago_excel():
                 continue
 
             dt_val = row[date_idx] if date_idx < len(row) else None
-            if not dt_val or not is_recent_date(dt_val, now):
+            if not dt_val or is_june_2026(dt_val):
                 continue
 
             def get(i):
@@ -1660,11 +1756,11 @@ async def coletar_tudo():
     api_rows = coletar_vmpay_api()
     excel_rows = coletar_vmpay_excel()
     sq_rows = await coletar_sq_excel()
-    vendpago_excel_rows = []  # VendPago removido
+    vendpago_excel_rows = coletar_vendpago_excel()
 
     # Deduplicar cada fonte antes de enviar (evitar duplicatas dentro do mesmo lote)
     api_rows_to_merge = api_rows if api_rows is not None else []
-    portal_rows_dedup   = merge_and_deduplicate(rows, [])
+    portal_rows_dedup   = merge_and_deduplicate(rows + vendpago_excel_rows, [])
     vmpay_rows_dedup    = merge_and_deduplicate(api_rows_to_merge + excel_rows, [])
     sq_rows_dedup       = merge_and_deduplicate(sq_rows, [])
     payblu_rows_dedup   = merge_and_deduplicate(payblu_rows, [])
@@ -1680,7 +1776,7 @@ async def coletar_tudo():
         "total_transacoes": total_count,
         "portal_transacoes": len(portal_rows_dedup),
         "api_transacoes": len(api_rows_to_merge),
-        "excel_transacoes": len(excel_rows),
+        "excel_transacoes": len(excel_rows) + len(vendpago_excel_rows),
         "sq_transacoes": len(sq_rows_dedup),
         "payblu_transacoes": len(payblu_rows_dedup)
     }
