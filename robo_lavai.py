@@ -807,16 +807,35 @@ def is_june_2026(dt_val):
     return "/06/2026" in dt_str or "2026-06" in dt_str
 
 def obter_caminho_excel(nome_arquivo):
+    # Fonte canônica: pasta gateway LAVAI (onde o usuário edita manualmente)
+    # Sempre tem prioridade sobre cópias em kpi/ ou na raiz do projeto.
     p1 = Path(r"C:\Users\badad\OneDrive\Desktop\gateway LAVAI") / nome_arquivo
-    if p1.exists():
-        return p1
     p2 = Path(__file__).parent / "kpi" / nome_arquivo
-    if p2.exists():
-        return p2
     p3 = Path(__file__).parent / nome_arquivo
-    if p3.exists():
-        return p3
-    return None
+
+    # Usar p1 se existir — independente de data de modificação
+    source_path = None
+    if p1.exists():
+        source_path = p1
+    elif p2.exists():
+        source_path = p2
+    elif p3.exists():
+        source_path = p3
+
+    if not source_path:
+        return None
+
+    # Criar uma cópia temporária para evitar erros de permissão se o arquivo estiver aberto no Excel
+    try:
+        import shutil
+        temp_path = Path(__file__).parent / f"temp_read_only_{nome_arquivo}"
+        shutil.copy2(source_path, temp_path)
+        log.info(f"Selecionado arquivo fonte: {source_path} (copiado temporariamente para {temp_path.name})")
+        return temp_path
+    except Exception as e:
+        log.warning(f"Falha ao criar cópia temporária de {source_path.name}: {e}. Retornando arquivo original.")
+        return source_path
+
 
 def map_vmpay_excel_row(row, headers_idx):
     def get(col_name):
@@ -1754,7 +1773,7 @@ async def coletar_tudo():
 
     # Coletar dados da API VMPay Cashless, SQInsights, VendPago Excel e unificar com os dados raspados
     api_rows = coletar_vmpay_api()
-    excel_rows = coletar_vmpay_excel()
+    excel_rows = []  # Desativado conforme solicitação do usuário (usar apenas API para VMPay)
     sq_rows = await coletar_sq_excel()
     vendpago_excel_rows = coletar_vendpago_excel()
 
