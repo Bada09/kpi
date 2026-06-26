@@ -566,10 +566,15 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
         <label>Até</label>
         <input type="text" id="date-end" placeholder="dd/mm/aaaa">
       </div>
-      <div class="quick-ranges">
+      <div class="quick-ranges" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <button class="btn-range active" id="btn-range-all" onclick="setRange('all')">Ver Tudo</button>
         <button class="btn-range" id="btn-range-15" onclick="setRange(15)">Últimos 15d</button>
         <button class="btn-range" id="btn-range-7" onclick="setRange(7)">Últimos 7d</button>
+        <span id="elapsed-time-badge" style="display:inline-flex;align-items:center;gap:10px;font-size:11px;font-weight:700;color:var(--text);background:#f8fafc;padding:5px 12px;border-radius:20px;border:1px solid var(--border);margin-left:6px">
+          <span style="color:#2563eb;display:inline-flex;align-items:center;gap:4px"><i class="fas fa-dollar-sign"></i> Venda: <span id="time-last-sale">...</span></span>
+          <span style="color:var(--border);font-weight:300">|</span>
+          <span style="color:#10b981;display:inline-flex;align-items:center;gap:4px"><i class="fas fa-soap"></i> Uso: <span id="time-last-use">...</span></span>
+        </span>
       </div>
     </div>
   </header>
@@ -1623,6 +1628,64 @@ function renderAll(){
   renderChartPayment();
   renderPdvList();
   renderTable();
+  updateElapsedTimes();
+}
+
+function updateElapsedTimes() {
+  if (!allRows || allRows.length === 0) {
+    document.getElementById('time-last-sale').textContent = '–';
+    document.getElementById('time-last-use').textContent = '–';
+    return;
+  }
+  
+  let lastSaleMs = 0;
+  let lastUseMs = 0;
+  
+  allRows.forEach(r => {
+    const dt = parseDate(r[C.data]);
+    if (dt) {
+      const hrStr = r[C.hora] || '00:00';
+      const parts = hrStr.split(':');
+      if (parts.length >= 2) {
+        dt.setHours(+parts[0], +parts[1], parts[2] ? +parts[2] : 0);
+        const ms = dt.getTime();
+        
+        // Qualquer registro é uma utilização
+        if (ms > lastUseMs) {
+          lastUseMs = ms;
+        }
+        
+        // Se tem valor financeiro, é uma venda
+        const totalVal = toNum(r[C.total]);
+        if (totalVal > 0 && ms > lastSaleMs) {
+          lastSaleMs = ms;
+        }
+      }
+    }
+  });
+
+  const fmtElapsed = (ms) => {
+    if (ms === 0) return '–';
+    const now = new Date();
+    const diffMs = now.getTime() - ms;
+    if (diffMs < 0) return 'Agora';
+    
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return 'menos de 1 min';
+    if (diffMin < 60) return `${diffMin} min`;
+    
+    const diffHr = Math.floor(diffMin / 60);
+    const remainingMin = diffMin % 60;
+    if (diffHr < 24) {
+      return `${diffHr}h e ${remainingMin}m`;
+    }
+    
+    const diffDays = Math.floor(diffHr / 24);
+    return `${diffDays}d`;
+  };
+
+  document.getElementById('time-last-sale').textContent = fmtElapsed(lastSaleMs);
+  document.getElementById('time-last-use').textContent = fmtElapsed(lastUseMs);
 }
 
 // Retorna o número de dias no período filtrado atual
