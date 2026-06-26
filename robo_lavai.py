@@ -1483,6 +1483,97 @@ async def coletar_payblu(page):
     return rows
 
 
+def coletar_yougo_excel():
+    """
+    Lê dados históricos do You Go (PayBlu Private Label) do arquivo Excel.
+    Mapeia cada linha para o mesmo formato de 22 colunas do PayBlu.
+    """
+    master_path = obter_caminho_excel("Vendas You Go 25.xlsx")
+    all_rows = []
+
+    if not master_path or not master_path.exists():
+        log.warning("Arquivo Vendas You Go 25.xlsx nao encontrado.")
+        return all_rows
+
+    log.info(f"Lendo dados historicos do You Go do arquivo: {master_path}")
+    try:
+        wb = openpyxl.load_workbook(master_path, read_only=True, data_only=True)
+        sheet = wb.active
+
+        # Colunas: Cliente[0]; N Serial[1]; MAC[2]; Matricula[3]; Nome Terminal[4];
+        #          Pagamento[5]; Produto[6]; Mola[7]; Preco[8]; Valor Pago[9];
+        #          Data[10]; Hora[11]; Usuario[12]; NSU[13]
+        count = 0
+        for idx, row in enumerate(sheet.iter_rows(values_only=True)):
+            if idx == 0:
+                continue
+            if not row or len(row) < 11:
+                continue
+            if row[0] is None:
+                continue
+
+            # Data
+            data_val = row[10]
+            if isinstance(data_val, datetime):
+                data_br = data_val.strftime("%d/%m/%Y")
+                hora_br = row[11].strftime("%H:%M:%S") if isinstance(row[11], datetime) else str(row[11] or "00:00:00").strip()
+            elif isinstance(data_val, str) and data_val.strip():
+                dt_str = data_val.strip()
+                try:
+                    # Formato ISO: '2025-03-01 00:00:00'
+                    dt = datetime.fromisoformat(dt_str.split(' ')[0])
+                    data_br = dt.strftime("%d/%m/%Y")
+                except:
+                    data_br = dt_str
+                hora_br = str(row[11] or "00:00:00").strip()
+            else:
+                continue
+
+            # Valor
+            valor_raw = str(row[9] or "0").replace("R$", "").replace(" ", "").strip()
+            try:
+                if "," in valor_raw:
+                    v = valor_raw.replace(".", "").replace(",", ".")
+                else:
+                    v = valor_raw
+                total_r = float(v)
+                if total_r >= 1000 and total_r == int(total_r):
+                    total_r = total_r / 100.0
+            except:
+                total_r = 0.0
+
+            serial    = str(row[1] or "").strip()
+            matricula = str(row[3] or "").strip()
+            nome_term = str(row[4] or serial).strip()
+            cliente   = str(row[0] or "LAVAÍ - You Go").strip()
+            pagamento = str(row[5] or "PRIVATE LABEL").strip()
+            produto   = str(row[6] or "1 Pulso(s)").strip()
+            mola_id   = str(row[7] or "").strip()
+            preco_r   = str(row[8] or "Não Informado").strip()
+            usuario   = str(row[12] or "").strip()
+
+            # NSU sintético idêntico ao gerado pelo portal ao vivo
+            nsu = f"PB-{serial}|{data_br}|{hora_br}" if serial else ""
+
+            mapped = [
+                cliente, nome_term, "PayBlu (Private Label)", "PayBlu",
+                pagamento, produto, mola_id,
+                str(total_r).replace(".", ","), preco_r, str(total_r).replace(".", ","),
+                "Não utilizado", data_br, hora_br, matricula,
+                nsu, "", "Private Label", "PayBlu",
+                "Private Label", usuario, "", matricula
+            ]
+            all_rows.append(mapped)
+            count += 1
+
+        log.info(f"Processadas {count} transacoes historicas do You Go do arquivo Excel.")
+        wb.close()
+    except Exception as e:
+        log.error(f"Erro ao ler arquivo You Go {master_path}: {e}")
+
+    return all_rows
+
+
 async def coletar_sq_api():
     log.info("Buscando dados de faturamento de moeda e aplicativo do SQInsights...")
     token = None
@@ -1600,7 +1691,10 @@ def publicar_dados_github():
         "vendtef_local.js",
         "payblu_local.js",
         "sqi_local.js",
-        "dados_relatorios.json"
+        "dados_relatorios.json",
+        "robo_lavai.py",
+        "dashboard_lavai_tete.html",
+        "dashboard_lavai.html",
     ]
     
     # 1. Atualizar repositório root (branch master)
@@ -1664,7 +1758,7 @@ def publicar_dados_github():
                     subprocess.run(["git", "pull", "--rebase", "origin", "main"], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
                 except Exception as pe:
                     log.warning(f"Aviso ao dar pull --rebase no kpi: {pe}")
-                subprocess.run(["git", "commit", "-m", f"Auto-update dashboard (kpi) - {now_str}"], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
+                subprocess.run(["git", "commit", "-m", f"Auto-update dados (kpi) - {now_str}"], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
                 log.info("Commit realizado no kpi.")
                 subprocess.run(["git", "push", "origin", "main"], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
                 log.info("Push realizado no kpi.")
@@ -1776,13 +1870,16 @@ async def coletar_tudo():
     excel_rows = []  # Desativado conforme solicitação do usuário (usar apenas API para VMPay)
     sq_rows = await coletar_sq_excel()
     vendpago_excel_rows = coletar_vendpago_excel()
+    yougo_excel_rows = coletar_yougo_excel()  # Dados históricos do You Go (PayBlu Excel)
 
     # Deduplicar cada fonte antes de enviar (evitar duplicatas dentro do mesmo lote)
     api_rows_to_merge = api_rows if api_rows is not None else []
     portal_rows_dedup   = merge_and_deduplicate(rows + vendpago_excel_rows, [])
     vmpay_rows_dedup    = merge_and_deduplicate(api_rows_to_merge + excel_rows, [])
     sq_rows_dedup       = merge_and_deduplicate(sq_rows, [])
-    payblu_rows_dedup   = merge_and_deduplicate(payblu_rows, [])
+    # You Go Excel histórico + dados ao vivo do portal (Excel primeiro para preservar dados manuais)
+    payblu_rows_dedup   = merge_and_deduplicate(yougo_excel_rows + payblu_rows, [])
+
 
     total_count = (len(portal_rows_dedup) + len(vmpay_rows_dedup) + len(sq_rows_dedup)
                    + len(payblu_rows_dedup))
