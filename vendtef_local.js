@@ -3073,4 +3073,508 @@ Estoque - LAVAI;31# Gestão PUQ - Perdizes;;;TEF;Indefinido;25006;7;Aguardando;7
 Estoque - LAVAI;10# Extra Vila Mariana;;;TEF;Indefinido;7009;14,99;Aguardando;14,99;Não utilizado;26/06/2026;10:39:03;CDCD8F7DB1E04F39BADFF0420B683805;61039653244;E9F9EFBDE4;Débito;PagSeguro;ELO;Andre;28434933829;123977165
 Estoque - LAVAI;3# Extra Rio Branco;;;PIX;Indefinido;11540 - LAVA 1;14,99;Aguardando;14,99;Não utilizado;26/06/2026;10:40:38;B49A81D7184155E3938C91B2A1A8F591;;B49A81D718;Pix;PagBank;Pix;;;123976325
 Estoque - LAVAI;21# Graça Teotônio;;;TEF;Indefinido;25471 - LAVA - 25471;14,99;Aguardando;14,99;Não utilizado;26/06/2026;10:49:44;29209217560A486E9B99B0270E5901EF;062603911003;486D3BE171;Débito;PagBank;MAESTRO;Idabella;51455594881;11122014151
-Estoque - LAVAI;40# AHI - Cunha Gago;;;TEF;Indefinido;7727 - LAVA - 1;16,98;Aguardando;16,98;Não utilizado;26/06/2026;10:52:45;5124DB7653DC467399D1080473E80CAE;617713531468;9F5FD0F433;Crédito;PagBank;VISA;;;2111202409175784`;
+Estoque - LAVAI;40# AHI - Cunha Gago;;;TEF;Indefinido;7727 - LAVA - 1;16,98;Aguardando;16,98;Não utilizado;26/06/2026;10:52:45;5124DB7653DC467399D1080473E80CAE;617713531468;9F5FD0F433;Crédito;PagBank;VISA;;;2111202409175784
+Estoque - LAVAI;20# Extra Belenzinho;;;TEF;Indefinido;11554;14,99;Aguardando;14,99;Não utilizado;26/06/2026;11:02:48;538470B27AB44158921798188A1C0654;062667327650;6DC75316C7;Crédito;PagSeguro;MASTER;;;123975163
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/04/2025;10:58:19;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/04/2025;12:21:49;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/04/2025;16:05:59;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;03/04/2025;14:50:21;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;05/04/2025;19:08:29;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;06/04/2025;11:07:44;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;07/04/2025;10:52:54;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;11/04/2025;11:19:35;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;15/04/2025;13:02:59;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;16/04/2025;09:42:01;;;;;VendPago;;;;1238670539
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;16/04/2025;13:54:19;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;16/04/2025;15:48:26;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;16/04/2025;18:09:13;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;06/03/2025;15:31:05;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;06/03/2025;15:32:03;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;06/03/2025;16:24:13;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;06/03/2025;16:24:54;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;06/03/2025;16:27:21;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;06/03/2025;16:33:33;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;06/03/2025;17:21:17;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;07/03/2025;17:03:46;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;07/03/2025;17:05:27;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;07/03/2025;18:17:03;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;08/03/2025;11:49:00;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;08/03/2025;11:55:43;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;1# Extra Itaquera;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;09/03/2025;11:09:50;;;;;VendPago;;;;140220251118
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;13/03/2025;12:55:50;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;14/03/2025;12:24:51;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;14/03/2025;12:28:16;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;14/03/2025;18:59:30;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;17/03/2025;15:19:08;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;18/03/2025;16:15:45;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;19/03/2025;07:34:41;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;19/03/2025;10:43:52;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;19/03/2025;12:08:02;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;19/03/2025;12:10:43;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;20/03/2025;11:52:49;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;20/03/2025;12:02:03;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/03/2025;16:10:45;;;;;VendPago;;;;123976325
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;24/03/2025;15:20:00;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;24/03/2025;18:56:56;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;26/03/2025;10:41:30;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;28/03/2025;11:42:44;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;28/03/2025;11:43:35;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/03/2025;11:10:32;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;31/03/2025;14:31:06;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;31/03/2025;14:50:32;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;01/02/2025;12:14:51;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;18# Merc. São Miguel;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;01/02/2025;13:05:41;;;;;VendPago;;;;1237378497
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;01/02/2025;13:13:41;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;02/02/2025;10:34:23;;;;;VendPago;;;;123976325
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;10/02/2025;12:48:58;;;;;VendPago;;;;123975390
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;10/02/2025;13:23:41;;;;;VendPago;;;;123975390
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;17/02/2025;10:47:26;;;;;VendPago;;;;123976325
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;17/02/2025;11:01:13;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;17/02/2025;13:33:40;;;;;VendPago;;;;123976325
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;17/02/2025;13:47:19;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;17/02/2025;14:42:04;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;18/02/2025;11:53:36;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;20/02/2025;15:59:36;;;;;VendPago;;;;150520241528
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;24/02/2025;16:53:18;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;12,99;Nao Informado;12,99;Nao utilizado;24/02/2025;19:45:15;;;;;VendPago;;;;123975707
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;27/02/2025;12:59:50;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;27/02/2025;17:21:09;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;06/01/2025;12:38:23;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;07/01/2025;13:03:59;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;08/01/2025;12:35:01;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;15/01/2025;13:50:03;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;16/01/2025;16:29:40;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;27/01/2025;15:29:44;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;27/01/2025;18:46:04;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;27/01/2025;19:11:37;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;27/01/2025;19:29:31;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;29/01/2025;13:48:58;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;29/01/2025;15:03:05;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;29/01/2025;16:12:12;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;29/01/2025;17:02:17;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;06/12/2024;08:02:12;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;10/12/2024;14:17:23;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;10/12/2024;14:18:06;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;10/12/2024;14:56:57;;;;;VendPago;;;;123976325
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;13/12/2024;14:19:49;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;14/12/2024;13:38:36;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;16/12/2024;11:51:34;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;16/12/2024;11:53:29;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;16/12/2024;12:37:52;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;16/12/2024;13:16:53;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;17/12/2024;15:28:34;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;21/12/2024;11:49:32;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;21/12/2024;12:46:42;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;21/12/2024;14:15:37;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;23/12/2024;18:01:37;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;27/12/2024;10:27:34;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;27/12/2024;11:00:03;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;14/11/2024;14:48:51;;;;;VendPago;;;;123975163
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;28/11/2024;19:02:08;;;;;VendPago;;;;123975390
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;12,99;Nao Informado;12,99;Nao utilizado;05/10/2024;11:29:35;;;;;VendPago;;;;123975707
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;14/10/2024;18:37:14;;;;;VendPago;;;;123975163
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;14/10/2024;19:33:24;;;;;VendPago;;;;123975163
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;14/10/2024;19:35:01;;;;;VendPago;;;;123975163
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;21/10/2024;12:37:09;;;;;VendPago;;;;1238670539
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;21/10/2024;13:16:54;;;;;VendPago;;;;1238670539
+Estoque - LAVAI;34# Gestão YOU Go Vila Mariana;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;23/10/2024;14:52:48;;;;;VendPago;;;;40920241459
+Estoque - LAVAI;34# Gestão YOU Go Vila Mariana;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;23/10/2024;18:30:52;;;;;VendPago;;;;40920241459
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;01/09/2024;13:38:29;;;;;VendPago;;;;123975390
+Estoque - LAVAI;10# Extra Vila Mariana;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;13/09/2024;08:24:27;;;;;VendPago;;;;123977165
+Estoque - LAVAI;10# Extra Vila Mariana;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;13/09/2024;09:04:23;;;;;VendPago;;;;123977165
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;13/09/2024;09:07:23;;;;;VendPago;;;;123976325
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;17/09/2024;17:07:55;;;;;VendPago;;;;123975163
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;20/09/2024;09:26:41;;;;;VendPago;;;;1238670539
+Estoque - LAVAI;10# Extra Vila Mariana;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;28/09/2024;09:20:41;;;;;VendPago;;;;123977165
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;19/04/2025;19:36:39;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/04/2025;13:45:42;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;26/04/2025;13:01:48;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;27/04/2025;14:44:12;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;27/04/2025;19:45:23;;;;;VendPago;;;;20924
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;01/05/2025;11:34:09;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;01/05/2025;12:25:19;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/05/2025;13:12:18;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/05/2025;14:50:07;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/05/2025;14:50:55;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/05/2025;15:42:22;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/05/2025;15:43:25;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/05/2025;15:44:46;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;03/05/2025;11:00:56;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;03/05/2025;17:14:37;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;05/05/2025;12:33:02;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;08/05/2025;12:11:23;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;08/05/2025;12:59:20;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;09/05/2025;17:00:23;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;10/05/2025;08:53:43;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;10/05/2025;09:55:22;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;13/05/2025;14:50:04;;;;;VendPago;;;;150520241528
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;14/05/2025;12:17:28;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;15/05/2025;14:58:32;;;;;VendPago;;;;150520241528
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;15/05/2025;15:17:21;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;15/05/2025;15:32:14;;;;;VendPago;;;;150520241528
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;15/05/2025;16:56:53;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;15/05/2025;18:37:06;;;;;VendPago;;;;20924
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;16/05/2025;13:40:56;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/05/2025;12:06:57;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/05/2025;14:15:37;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/05/2025;16:39:20;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;10# Extra Vila Mariana;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;06/03/2024;20:04:15;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;10# Extra Vila Mariana;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;08/03/2024;15:40:12;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;10# Extra Vila Mariana;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;26/03/2024;15:23:26;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;10# Extra Vila Mariana;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;26/03/2024;15:57:04;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;09/04/2024;15:04:47;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;22/05/2024;16:18:29;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;07/06/2024;19:51:23;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;03/07/2024;15:33:15;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;20/07/2024;17:13:31;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;21/07/2024;08:38:49;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;28;Nao Informado;28;Nao utilizado;22/07/2024;08:13:33;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;21/08/2024;15:00:56;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;05/03/2024;12:40:04;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;05/03/2024;13:18:58;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;23/03/2024;13:32:00;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;29/05/2024;13:02:29;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;29/05/2024;13:45:44;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;29/05/2024;13:47:47;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;29/05/2024;14:47:26;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;10/06/2024;11:11:06;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;03/07/2024;16:19:43;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;18# Merc. São Miguel;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;04/05/2024;11:36:17;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;18# Merc. São Miguel;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;21/03/2024;14:08:49;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;18# Merc. São Miguel;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;26/03/2024;09:40:06;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;18# Merc. São Miguel;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;26/03/2024;10:16:07;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;18# Merc. São Miguel;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;05/04/2024;15:22:57;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;18# Merc. São Miguel;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;05/04/2024;15:58:19;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;18# Merc. São Miguel;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;10/05/2024;14:13:54;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;18# Merc. São Miguel;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;10/05/2024;14:50:23;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;18# Merc. São Miguel;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;05/06/2024;16:08:09;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;02/03/2024;10:29:50;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;05/03/2024;15:43:59;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;12/03/2024;13:40:43;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;31/03/2024;08:42:30;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;06/04/2024;15:54:03;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;06/04/2024;16:06:49;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;20/04/2024;15:05:25;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;03/05/2024;18:39:18;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;03/05/2024;18:42:36;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;03/06/2024;09:44:29;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;03/06/2024;10:50:05;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;03/06/2024;11:00:27;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;22/06/2024;08:16:35;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;27/06/2024;16:10:24;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;0;Nao Informado;0;Nao utilizado;14/11/2024;14:48:51;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;12,99;Nao Informado;12,99;Nao utilizado;16/08/2024;17:31:37;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;08/03/2025;11:49:00;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;08/03/2025;11:55:43;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;14/03/2025;18:59:30;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;18/03/2025;16:15:45;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;19/03/2025;07:34:41;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;19/03/2025;10:43:52;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;19/03/2025;12:08:02;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;28/03/2025;11:42:44;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;28/03/2025;11:43:35;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;25# Extra Bourrol;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;18/07/2024;18:01:38;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;06/07/2024;16:45:32;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;28;Nao Informado;28;Nao utilizado;17/02/2025;10:47:26;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;24/02/2025;16:53:18;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;12,99;Nao Informado;12,99;Nao utilizado;24/02/2025;19:45:15;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;31# Gestão PUQ Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;27/11/2024;20:02:08;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;27/05/2025;16:39:51;;;;;VendPago;;;;123975390
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/05/2025;11:29:07;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/05/2025;12:20:22;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/06/2025;13:19:24;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/06/2025;15:21:26;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/06/2025;15:21:47;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/06/2025;16:26:25;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;06/06/2025;16:36:04;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;06/06/2025;17:35:38;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;08/06/2025;09:57:17;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;11/06/2025;12:29:32;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;11/06/2025;14:44:18;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;1# Extra Itaquera;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;13/06/2025;10:23:46;;;;;VendPago;;;;140220251118
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;14/06/2025;12:21:28;;;;;VendPago;;;;123976325
+Estoque - LAVAI;1# Extra Itaquera;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;14/06/2025;13:11:52;;;;;VendPago;;;;140220251118
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;14/06/2025;14:25:38;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;1# Extra Itaquera;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;16/06/2025;11:59:07;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;19/06/2025;09:55:00;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;19/06/2025;10:51:32;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;19/06/2025;11:45:38;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;19/06/2025;13:07:31;;;;;VendPago;;;;123976325
+Estoque - LAVAI;1# Extra Itaquera;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/06/2025;18:15:48;;;;;VendPago;;;;140220251118
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/06/2025;19:13:02;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;25/06/2025;10:45:31;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;25/06/2025;12:08:34;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;26/06/2025;15:18:04;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/06/2025;09:01:10;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/06/2025;09:53:09;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/06/2025;10:42:34;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;01/07/2025;16:32:59;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;01/07/2025;17:10:17;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/07/2025;11:59:36;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/07/2025;12:30:38;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/07/2025;19:52:31;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/07/2025;11:40:51;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/07/2025;13:28:00;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/07/2025;14:27:50;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/07/2025;18:59:26;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;05/07/2025;13:21:58;;;;;VendPago;;;;1238670539
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;09/07/2025;09:07:53;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;09/07/2025;10:00:39;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;09/07/2025;10:50:59;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;10/07/2025;17:29:15;;;;;VendPago;;;;123975707
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;12/07/2025;11:42:56;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;12/07/2025;12:26:50;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;12/07/2025;12:37:33;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;13/07/2025;11:25:26;;;;;VendPago;;;;123975707
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;14/07/2025;11:54:43;;;;;VendPago;;;;123975163
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;20/07/2025;10:12:14;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;20/07/2025;10:59:46;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;20/07/2025;11:17:05;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;20/07/2025;12:09:11;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;20/07/2025;13:53:53;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/07/2025;13:29:12;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/07/2025;13:46:16;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/07/2025;14:02:19;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/07/2025;14:07:31;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/07/2025;14:09:15;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/07/2025;15:14:37;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/07/2025;15:15:46;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/07/2025;17:00:43;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;22/07/2025;12:03:38;;;;;VendPago;;;;20924
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;22/07/2025;12:08:34;;;;;VendPago;;;;40920241459
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;22/07/2025;13:21:09;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;22/07/2025;13:22:06;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;22/07/2025;14:01:24;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;22/07/2025;14:02:21;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;22/07/2025;14:04:45;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;22/07/2025;14:54:27;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;22/07/2025;15:56:39;;;;;VendPago;;;;123975390
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/07/2025;15:27:47;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;24/07/2025;17:30:47;;;;;VendPago;;;;123975707
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;26/07/2025;15:23:02;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;26/07/2025;16:14:55;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/07/2025;10:45:38;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/07/2025;10:49:18;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/07/2025;11:42:04;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/07/2025;11:43:52;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;29/07/2025;12:01:21;;;;;VendPago;;;;123975707
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;01/08/2025;16:46:15;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/08/2025;13:12:03;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/08/2025;13:14:47;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/08/2025;13:50:58;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/08/2025;14:28:06;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/08/2025;15:21:08;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/08/2025;15:31:46;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/08/2025;15:33:30;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;03/08/2025;10:39:15;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;03/08/2025;11:35:49;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/08/2025;16:15:06;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;06/08/2025;16:33:49;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;09/08/2025;15:42:37;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;11/08/2025;18:17:03;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;14/08/2025;16:06:53;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;15/08/2025;11:33:13;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;18/08/2025;14:14:09;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;19/08/2025;16:02:07;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/08/2025;17:19:37;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;10/09/2025;16:01:51;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;11/09/2025;12:37:36;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;18# Merc. São Miguel;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;13/09/2025;13:19:50;;;;;VendPago;;;;1237378497
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;16/09/2025;15:11:21;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;16/09/2025;15:11:55;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;16/09/2025;15:34:40;;;;;VendPago;;;;123976325
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;25/09/2025;16:53:42;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;25/09/2025;17:23:05;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;25/09/2025;17:23:59;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;25/09/2025;17:41:51;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;25/09/2025;17:54:59;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;27/09/2025;11:21:05;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/09/2025;11:41:54;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/09/2025;11:43:01;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;01/10/2025;13:29:41;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;01/10/2025;13:30:23;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;01/10/2025;14:03:17;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/10/2025;10:54:54;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/10/2025;11:44:59;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;06/10/2025;10:37:49;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;09/10/2025;11:28:44;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;10/10/2025;15:18:26;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;15/10/2025;12:10:36;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;15/10/2025;13:13:44;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;20/10/2025;11:14:09;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/10/2025;16:17:18;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;1# Extra Itaquera;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;22/10/2025;12:27:51;;;;;VendPago;;;;140220251118
+Estoque - LAVAI;36# Mini Extra São João;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/10/2025;11:31:28;;;;;VendPago;;;;2547525476
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/10/2025;14:47:08;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/10/2025;14:59:05;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/10/2025;15:10:08;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/10/2025;15:15:48;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/10/2025;15:39:35;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/10/2025;16:12:01;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/10/2025;16:36:51;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/10/2025;17:03:01;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/10/2025;17:04:11;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;23# Dia - 24 de Maio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;30/10/2025;11:45:11;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/11/2025;11:32:54;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;18# Merc. São Miguel;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/11/2025;13:10:27;;;;;VendPago;;;;1237378497
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;11/11/2025;09:01:04;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;11/11/2025;09:37:39;;;;;VendPago;;;;123976325
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;11/11/2025;16:44:50;;;;;VendPago;;;;123975707
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;11/11/2025;17:25:04;;;;;VendPago;;;;123975707
+Estoque - LAVAI;1# Extra Itaquera;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;45976;0.5789583333333334;;;;;VendPago;;;;140220251118
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;17/11/2025;15:10:13;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;20/11/2025;13:25:59;;;;;VendPago;;;;123975163
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;20/11/2025;14:18:56;;;;;VendPago;;;;123975163
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;20/11/2025;15:17:01;;;;;VendPago;;;;123975163
+Estoque - LAVAI;1# Extra Itaquera;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;22/11/2025;12:13:40;;;;;VendPago;;;;140220251118
+Estoque - LAVAI;18# Merc. São Miguel;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;24/11/2025;14:28:56;;;;;VendPago;;;;1237378497
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;26/11/2025;16:12:16;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/11/2025;11:58:04;;;;;VendPago;;;;123975163
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;01/12/2025;12:49:27;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/12/2025;15:02:29;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;05/12/2025;14:00:58;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;09/12/2025;11:20:49;;;;;VendPago;;;;1238670539
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;10/12/2025;12:20:49;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;11/12/2025;13:20:49;;;;;VendPago;;;;1238670539
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;12/12/2025;14:20:49;;;;;VendPago;;;;123976325
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;13/12/2025;15:20:49;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;13/12/2025;10:26:02;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;13/12/2025;10:35:51;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;13/12/2025;11:56:13;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;17/12/2025;10:24:40;;;;;VendPago;;;;123975390
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;18/12/2025;09:48:23;;;;;VendPago;;;;123976325
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;18/12/2025;12:49:30;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;36# Mini Extra São João;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;18/12/2025;14:01:25;;;;;VendPago;;;;2547525476
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;19/12/2025;0.5723379629629629;;;;;VendPago;;;;1238670539
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;20/12/2025;0.7997106481481482;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;22/12/2025;18:57:28;;;;;VendPago;;;;123976325
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/12/2025;11:09:34;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/12/2025;11:18:21;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/12/2025;16:40:28;;;;;VendPago;;;;123976325
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/12/2025;16:43:15;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;24/12/2025;08:36:10;;;;;VendPago;;;;1238670539
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;24/12/2025;09:32:41;;;;;VendPago;;;;1238670539
+Estoque - LAVAI;18# Merc. São Miguel;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;27/12/2025;09:09:48;;;;;VendPago;;;;1237378497
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/12/2025;11:12:32;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/12/2025;16:14:46;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/12/2025;17:00:45;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;05/01/2026;16:43:01;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;06/01/2026;11:15:23;;;;;VendPago;;;;123975707
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;06/01/2026;11:17:00;;;;;VendPago;;;;40920241459
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;06/01/2026;11:27:08;;;;;VendPago;;;;20924
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;06/01/2026;12:35:22;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;06/01/2026;13:18:35;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;06/01/2026;13:19:34;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;08/01/2026;17:49:13;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;09/01/2026;16:48:01;;;;;VendPago;;;;123975163
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;10/01/2026;18:30:42;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;12/01/2026;11:58:44;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;14/01/2026;18:23:20;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;17/01/2026;17:30:23;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/01/2026;14:41:55;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/01/2026;15:54:15;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;21/01/2026;19:39:11;;;;;VendPago;;;;123975390
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/01/2026;16:14:42;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;26/01/2026;13:54:46;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;26/01/2026;13:56:02;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;26/01/2026;14:40:23;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;26/01/2026;14:42:04;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;26/01/2026;14:43:46;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;27/01/2026;09:52:22;;;;;VendPago;;;;123975707
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;27/01/2026;09:54:06;;;;;VendPago;;;;123975707
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;27/01/2026;10:35:57;;;;;VendPago;;;;123975707
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;27/01/2026;11:24:25;;;;;VendPago;;;;40920241459
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;27/01/2026;11:28:18;;;;;VendPago;;;;20924
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;27/01/2026;11:42:13;;;;;VendPago;;;;123975707
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;27/01/2026;12:10:40;;;;;VendPago;;;;20924
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;27/01/2026;12:19:02;;;;;VendPago;;;;123975707
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;28/01/2026;15:41:45;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;28/01/2026;17:17:23;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;10# Extra Vila Mariana;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/01/2026;09:51:42;;;;;VendPago;;;;123977165
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;29/01/2026;12:34:19;;;;;VendPago;;;;40920241459
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;29/01/2026;13:53:02;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;31/01/2026;12:08:34;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;31/01/2026;19:12:24;;;;;VendPago;;;;123975707
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;02/02/2026;15:19:27;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;03/02/2026;11:00:52;;;;;VendPago;;;;123975707
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;03/02/2026;11:35:03;;;;;VendPago;;;;123975707
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/02/2026;11:00:05;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/02/2026;11:01:42;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;05/02/2026;12:28:11;;;;;VendPago;;;;123975707
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;06/02/2026;08:53:25;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;06/02/2026;09:11:47;;;;;VendPago;;;;123975707
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;06/02/2026;10:26:26;;;;;VendPago;;;;123975707
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;06/02/2026;11:06:36;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;06/02/2026;13:01:52;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;07/02/2026;18:29:30;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;07/02/2026;18:35:50;;;;;VendPago;;;;123976325
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;09/02/2026;13:25:23;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;09/02/2026;13:47:39;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;10/02/2026;11:47:02;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;10/02/2026;12:04:50;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;10/02/2026;15:21:26;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;16/02/2026;08:20:25;;;;;VendPago;;;;123976325
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;16/02/2026;14:06:39;;;;;VendPago;;;;40920241459
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;16/02/2026;14:07:05;;;;;VendPago;;;;40920241459
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;16/02/2026;15:44:58;;;;;VendPago;;;;40920241459
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;16/02/2026;15:45:40;;;;;VendPago;;;;40920241459
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;16/02/2026;16:46:55;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;1# Extra Itaquera;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;17/02/2026;11:38:34;;;;;VendPago;;;;140220251118
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;20/02/2026;12:38:43;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;20/02/2026;13:01:41;;;;;VendPago;;;;123976325
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/02/2026;18:41:18;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;25/02/2026;16:18:32;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/03/2026;12:00:21;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;04/03/2026;12:38:02;;;;;VendPago;;;;123976325
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;05/03/2026;11:16:03;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;08/03/2026;16:32:02;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;09/03/2026;12:25:59;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;09/03/2026;12:33:39;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;09/03/2026;12:34:56;;;;;VendPago;;;;123976325
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;09/03/2026;13:36:09;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;10/03/2026;13:06:25;;;;;VendPago;;;;123976325
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;10/03/2026;13:19:02;;;;;VendPago;;;;1238670539
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;10/03/2026;14:49:57;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;17# Merc. Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;11/03/2026;12:12:31;;;;;VendPago;;;;1238670539
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;11/03/2026;15:18:34;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;13/03/2026;12:21:09;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;13/03/2026;14:19:01;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;13/03/2026;14:33:40;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;13/03/2026;14:35:46;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;13/03/2026;14:36:59;;;;;VendPago;;;;123976325
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;13/03/2026;14:39:39;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;14/03/2026;15:00:45;;;;;VendPago;;;;123976325
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;14/03/2026;16:51:28;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;15/03/2026;20:03:55;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;16/03/2026;09:33:17;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;16/03/2026;09:54:48;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;16/03/2026;10:00:04;;;;;VendPago;;;;123976325
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;16/03/2026;10:18:03;;;;;VendPago;;;;40920241459
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;16/03/2026;10:18:42;;;;;VendPago;;;;40920241459
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;16/03/2026;11:17:14;;;;;VendPago;;;;40920241459
+Estoque - LAVAI;39# Timbirás - GNA;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;17/03/2026;15:58:28;;;;;VendPago;;;;2111202409175780
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;17/03/2026;17:41:34;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;18/03/2026;12:40:51;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;18/03/2026;12:42:51;;;;;VendPago;;;;123976325
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;18/03/2026;15:29:18;;;;;VendPago;;;;123975163
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/03/2026;12:20:40;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;32# Extra Sonho do Gaucho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;23/03/2026;14:21:00;;;;;VendPago;;;;1700400561
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16,99;Nao Informado;16,99;Nao utilizado;26/03/2026;11:29:26;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;26/03/2026;14:24:12;;;;;VendPago;;;;123975163
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16,99;Nao Informado;16,99;Nao utilizado;27/03/2026;13:58:56;;;;;VendPago;;;;123976325
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16,99;Nao Informado;16,99;Nao utilizado;27/03/2026;14:42:53;;;;;VendPago;;;;123975163
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16,99;Nao Informado;16,99;Nao utilizado;30/03/2026;14:29:18;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;22# Dia - Br. De Limeira;VendPago (Nova);VendPago;CASHLESS;Lavadora;;14;Nao Informado;14;Nao utilizado;31/03/2026;08:27:50;;;;;VendPago;;;;123975707
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;03/04/2026;18:33:07;;;;;VendPago;;;;123976325
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;15/04/2026;17:16:25;;;;;VendPago;;;;123975163
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;16/04/2026;14:29:50;;;;;VendPago;;;;123975163
+Estoque - LAVAI;20# Extra Belenzinho;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;17/04/2026;11:16:38;;;;;VendPago;;;;123975163
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;17/04/2026;14:22:21;;;;;VendPago;;;;40920241459
+Estoque - LAVAI;10# Extra Vila Mariana;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16,99;Nao Informado;16,99;Nao utilizado;18/04/2026;09:44:33;;;;;VendPago;;;;123977165
+Estoque - LAVAI;10# Extra Vila Mariana;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16,99;Nao Informado;16,99;Nao utilizado;20/04/2026;18:45:21;;;;;VendPago;;;;123977165
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16,99;Nao Informado;16,99;Nao utilizado;24/04/2026;17:26:19;;;;;VendPago;;;;123976325
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16,99;Nao Informado;16,99;Nao utilizado;07/05/2026;10:49:14;;;;;VendPago;;;;123976325
+Estoque - LAVAI;31# Gestão PUQ - Perdizes;VendPago (Nova);VendPago;CASHLESS;Lavadora;;7;Nao Informado;7;Nao utilizado;07/05/2026;15:11:00;;;;;VendPago;;;;40920241459
+Estoque - LAVAI;3# Extra Rio Branco;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16,99;Nao Informado;16,99;Nao utilizado;08/05/2026;12:09:15;;;;;VendPago;;;;123976325
+Estoque - LAVAI;21# Graça Teotônio;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16;Nao Informado;16;Nao utilizado;11/05/2026;15:43:05;;;;;VendPago;;;;11122014151
+Estoque - LAVAI;12# Dia - Brooklin;VendPago (Nova);VendPago;CASHLESS;Lavadora;;16,99;Nao Informado;16,99;Nao utilizado;13/05/2026;18:41:16;;;;;VendPago;;;;123975390`;
