@@ -3331,6 +3331,43 @@ function renderWeatherChart() {
     return `${parts[2]}/${parts[1]}`;
   });
 
+  const filterPdv = document.getElementById('filter-pdv').value;
+
+  // Calcula a média de ciclos por máquina para cada dia do mês atual
+  const dailyCyclesPerMachine = daily.time.map(dateStr => {
+    const parts = dateStr.split('-');
+    const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+    
+    const dayRows = allRows.filter(r => {
+      if (r[C.data] !== formattedDate) return false;
+      if (filterPdv !== 'all') {
+        const maquina = (r[C.maquina] || '').trim();
+        const pdvName = pdvMap[maquina] || maquina;
+        if (pdvName !== filterPdv) return false;
+      }
+      if (filterFonte !== 'all' && getRowSource(r) !== filterFonte) return false;
+      return true;
+    });
+
+    let cyclesSum = 0;
+    const pdvsNoDia = new Set();
+    dayRows.forEach(r => {
+      cyclesSum += getRowCycles(r);
+      const pdv = (r[C.maquina] || '').trim();
+      if (pdv) pdvsNoDia.add(pdv);
+    });
+
+    // Calcula total de máquinas ativas
+    let torresNoDia = 0;
+    pdvsNoDia.forEach(pdvNome => {
+      const c = findCustoPDV(pdvNome);
+      torresNoDia += c ? c.stack : 1;
+    });
+    const maquinasNoDia = torresNoDia * 2 || (filterPdv !== 'all' ? 4 : 78);
+
+    return maquinasNoDia > 0 ? parseFloat((cyclesSum / maquinasNoDia).toFixed(2)) : 0;
+  });
+
   const options = {
     series: [
       {
@@ -3344,26 +3381,31 @@ function renderWeatherChart() {
         data: daily.temperature_2m_min
       },
       {
+        name: 'Média de Ciclos/Máquina',
+        type: 'line',
+        data: dailyCyclesPerMachine
+      },
+      {
         name: 'Chuva (mm)',
         type: 'column',
         data: daily.rain_sum
       }
     ],
     chart: {
-      height: 300,
+      height: 320,
       type: 'line',
       stacked: false,
       toolbar: { show: false },
       fontFamily: 'inherit'
     },
-    colors: ['#ef4444', '#3b82f6', '#0ea5e9'],
+    colors: ['#ef4444', '#3b82f6', '#8b5cf6', '#0ea5e9'],
     stroke: {
-      width: [3, 3, 0],
+      width: [3, 3, 3, 0],
       curve: 'smooth'
     },
     plotOptions: {
       bar: {
-        columnWidth: '45%'
+        columnWidth: '40%'
       }
     },
     dataLabels: {
@@ -3384,6 +3426,19 @@ function renderWeatherChart() {
         title: {
           text: 'Temperatura (°C)',
           style: { color: '#ef4444' }
+        },
+        labels: {
+          style: { colors: '#64748b' }
+        }
+      },
+      {
+        show: false
+      },
+      {
+        opposite: true,
+        title: {
+          text: 'Média Ciclos / Máquina',
+          style: { color: '#8b5cf6' }
         },
         labels: {
           style: { colors: '#64748b' }
