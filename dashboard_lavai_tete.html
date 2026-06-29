@@ -1309,11 +1309,7 @@ function getRowSource(r) {
 // CSV FETCH & PARSE
 // ══════════════════════════════════════════════════════
 function parseCSV(txt){
-  const lines=txt.replace(/\r
-/g,'
-').replace(/\r/g,'
-').trim().split('
-');
+  const lines=txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split('\n');
   const firstLine = lines[0] || '';
   const delimiter = firstLine.includes(';') ? ';' : ',';
   function split(l){
