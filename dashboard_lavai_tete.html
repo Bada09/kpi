@@ -603,7 +603,7 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
   <div class="op-modal-overlay" id="weather-modal-overlay" onclick="closeWeatherModal(event)" style="z-index: 1000;">
     <div class="op-modal" style="max-width: 700px; width: 90%;">
       <div class="op-modal-header">
-        <h2><i class="fas fa-cloud-sun-rain" style="color:var(--cyan)"></i> Clima em São Paulo - Mês Atual</h2>
+        <h2 id="weather-modal-title"><i class="fas fa-cloud-sun-rain" style="color:var(--cyan)"></i> Clima em São Paulo</h2>
         <button class="op-modal-close" onclick="closeWeatherModal()">✕</button>
       </div>
       <div class="op-modal-body" style="padding-bottom:15px;">
@@ -1693,6 +1693,14 @@ function applyFilter(){
     return true;
   });
   renderAll();
+  
+  // Verifica se o periodo selecionado de clima mudou
+  if (typeof getWeatherPeriod === 'function') {
+    const period = getWeatherPeriod();
+    if (period.start !== lastWeatherStart || period.end !== lastWeatherEnd) {
+      fetchWeatherData();
+    }
+  }
 }
 
 
@@ -2570,9 +2578,8 @@ async function integrarVmpayAPI() {
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     const s = document.createElement('script');
-    // Atualiza o cache a cada 5 minutos, permitindo cacheamento do navegador no intervalo
-    const cacheBuster = Math.floor(Date.now() / 300000);
-    s.src = src + '?nc=' + cacheBuster;
+    const isLocal = window.location.protocol === 'file:';
+    s.src = isLocal ? src : (src + '?v=' + Date.now());
     s.onload = resolve;
     s.onerror = reject;
     document.head.appendChild(s);
@@ -3220,25 +3227,92 @@ function renderFinanceiro() {
 }
 
 // ══════════════════════════════════════════════════════
-// CLIMA SÃO PAULO
-// ══════════════════════════════════════════════════════
+// CLIMA SAO PAULO
 let weatherData = null;
 let weatherChart = null;
+let lastWeatherStart = "";
+let lastWeatherEnd = "";
+
+function getWeatherPeriod() {
+  const now = new Date();
+  let startStr = "";
+  let endStr = "";
+  
+  const filterYear = document.getElementById('filter-year').value;
+  const filterMonth = document.getElementById('filter-month').value;
+  
+  if (dtFrom && dtTo) {
+    const format = (d) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+    startStr = format(dtFrom);
+    endStr = format(dtTo);
+  } else if (filterYear !== 'all' && filterMonth !== 'all') {
+    const y = parseInt(filterYear, 10);
+    const m = parseInt(filterMonth, 10);
+    const isCurrent = (y === now.getFullYear() && m === (now.getMonth() + 1));
+    const start = new Date(y, m - 1, 1);
+    let end;
+    if (isCurrent) {
+      end = now;
+    } else {
+      end = new Date(y, m, 0);
+    }
+    const format = (d) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+    startStr = format(start);
+    endStr = format(end);
+  } else {
+    let maxDt = now;
+    if (typeof filtered !== 'undefined' && filtered && filtered.length > 0) {
+      const dates = filtered.map(r => parseDate(r[C.data])).filter(d => d !== null);
+      if (dates.length > 0) {
+        maxDt = new Date(Math.max(...dates));
+      }
+    }
+    const y = maxDt.getFullYear();
+    const m = maxDt.getMonth() + 1;
+    const isCurrent = (y === now.getFullYear() && m === (now.getMonth() + 1));
+    const start = new Date(y, m - 1, 1);
+    let end;
+    if (isCurrent) {
+      end = now;
+    } else {
+      end = new Date(y, m, 0);
+    }
+    const format = (d) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+    startStr = format(start);
+    endStr = format(end);
+  }
+  return { start: startStr, end: endStr };
+}
 
 async function fetchWeatherData() {
   try {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const startDate = `${year}-${month}-01`;
-    const endDate = `${year}-${month}-${day}`;
+    const period = getWeatherPeriod();
+    const startDate = period.start;
+    const endDate = period.end;
+    
+    lastWeatherStart = startDate;
+    lastWeatherEnd = endDate;
 
     // 1. Busca clima atual
     const resCurr = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-23.5505&longitude=-46.6333&current_weather=true&timezone=America/Sao_Paulo');
     const dataCurr = await resCurr.json();
     
-    // 2. Busca histórico mensal
+    // 2. Busca histórico do período selecionado
     const resHist = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=-23.5505&longitude=-46.6333&start_date=${startDate}&end_date=${endDate}&daily=temperature_2m_max,temperature_2m_min,rain_sum&timezone=America/Sao_Paulo`);
     const dataHist = await resHist.json();
 
@@ -3248,12 +3322,18 @@ async function fetchWeatherData() {
     };
 
     updateWeatherCard();
+    
+    // Se o modal estiver aberto, atualiza o gráfico
+    const modal = document.getElementById('weather-modal-overlay');
+    if (modal && modal.classList.contains('open')) {
+      renderWeatherChart();
+    }
   } catch (err) {
     console.error("Erro ao buscar dados climáticos:", err);
-    document.getElementById('kpi-weather-sub').innerHTML = `
-      <i class="fas fa-triangle-exclamation" style="color:var(--red)"></i>
-      <span>Erro ao carregar clima</span>
-    `;
+    const sub = document.getElementById('kpi-weather-sub');
+    if (sub) {
+      sub.innerHTML = `<i class="fas fa-triangle-exclamation" style="color:var(--red)"></i> <span>Erro ao carregar clima</span>`;
+    }
   }
 }
 
@@ -3297,11 +3377,13 @@ function updateWeatherCard() {
   const desc = getWeatherDesc(code);
   const iconClass = getWeatherIcon(code);
 
-  document.getElementById('kpi-weather-temp').textContent = `${temp}°C`;
-  document.getElementById('kpi-weather-sub').innerHTML = `
-    <i class="fas ${iconClass}" style="color:var(--cyan)"></i>
-    <span>São Paulo: ${desc}</span>
-  `;
+  const valEl = document.getElementById('kpi-weather-temp');
+  if (valEl) valEl.textContent = `${temp}°C`;
+  
+  const subEl = document.getElementById('kpi-weather-sub');
+  if (subEl) {
+    subEl.innerHTML = `<i class="fas ${iconClass}" style="color:var(--cyan)"></i> <span>São Paulo: ${desc}</span>`;
+  }
   
   const iconBox = document.getElementById('kpi-weather-icon-box');
   if (iconBox) {
@@ -3310,6 +3392,17 @@ function updateWeatherCard() {
 }
 
 function abrirModalClima() {
+  const period = getWeatherPeriod();
+  const formatBR = (dateStr) => {
+    const p = dateStr.split('-');
+    return `${p[2]}/${p[1]}/${p[0]}`;
+  };
+  const title = `Clima em São Paulo (${formatBR(period.start)} a ${formatBR(period.end)})`;
+  const modalTitle = document.getElementById('weather-modal-title');
+  if (modalTitle) {
+    modalTitle.innerHTML = `<i class="fas fa-cloud-sun-rain" style="color:var(--cyan)"></i> ${title}`;
+  }
+  
   document.getElementById('weather-modal-overlay').classList.add('open');
   setTimeout(() => {
     renderWeatherChart();
