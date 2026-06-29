@@ -1871,8 +1871,8 @@ function renderKPIs(){
 
   // ── Atualizar Dia da Semana ──
   const daysOfWeek = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-  let weekdayText = "Múltiplos";
-  let weekdaySub = "Período com múltiplos dias";
+  let weekdayText = "";
+  let weekdaySub = "";
   
   if (dtFrom && dtTo) {
     const timeDiff = Math.abs(dtTo.getTime() - dtFrom.getTime());
@@ -1882,18 +1882,15 @@ function renderKPIs(){
       weekdayText = daysOfWeek[dayIdx];
       weekdaySub = `Dia ${dtFrom.getDate().toString().padStart(2, '0')}/${(dtFrom.getMonth()+1).toString().padStart(2, '0')}/${dtFrom.getFullYear()}`;
     } else {
+      weekdayText = "Múltiplos";
       weekdaySub = `Período de ${diffDays + 1} dias`;
     }
   } else {
-    const filterYear = document.getElementById('filter-year').value;
-    const filterMonth = document.getElementById('filter-month').value;
-    if (filterYear !== 'all' && filterMonth !== 'all') {
-      weekdaySub = `Mês: ${filterMonth}/${filterYear}`;
-    } else if (filterYear !== 'all') {
-      weekdaySub = `Ano: ${filterYear}`;
-    } else {
-      weekdaySub = "Todo o período";
-    }
+    // Se não há filtro de datas customizado, mostra hoje como padrão
+    const today = new Date();
+    const dayIdx = today.getDay();
+    weekdayText = daysOfWeek[dayIdx];
+    weekdaySub = `Hoje: ${today.getDate().toString().padStart(2, '0')}/${(today.getMonth()+1).toString().padStart(2, '0')}/${today.getFullYear()}`;
   }
   document.getElementById('kpi-weekday-val').textContent = weekdayText;
   document.getElementById('kpi-weekday-sub').querySelector('span').textContent = weekdaySub;
@@ -2973,8 +2970,8 @@ function setFinView(mode) {
   if (mode === 'table') renderFinanceiro();
 }
 
-function buildFinPdvFilter() { /* Unificado */ });
-  if (cur) sel.value = cur;
+function buildFinPdvFilter() {
+  // Unificado - utiliza o filtro principal
 }
 
 function getFilteredPdvData() {
