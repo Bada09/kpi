@@ -158,74 +158,119 @@ async def dispensar_modal(page):
 
 
 async def fazer_login(page) -> bool:
-    """Preenche as credenciais de login no ERP Vending."""
-    try:
-        seletores_usuario = [
-            "#username",
-            "input[name='username']",
-            "input[name='user']",
-            "input[type='text']",
-        ]
-        campo_usuario = None
-        for sel in seletores_usuario:
+    """Preenche as credenciais de login no ERP Vending. Tenta até 3 vezes."""
+    for tentativa in range(1, 4):
+        try:
+            log.info(f"Login ERP: tentativa {tentativa}/3 — URL atual: {page.url}")
+
+            # Verifica se já está logado (navbar presente)
             try:
-                await page.wait_for_selector(sel, timeout=5000)
-                campo_usuario = sel
-                break
-            except PWTimeout:
-                continue
-
-        if not campo_usuario:
-            log.warning("Campo de usuario nao encontrado.")
-            return True  # Talvez já esteja logado
-
-        await page.fill(campo_usuario, LOGIN)
-
-        seletores_senha = [
-            "#password",
-            "input[type='password']",
-        ]
-        campo_senha = None
-        for sel in seletores_senha:
-            try:
-                await page.wait_for_selector(sel, timeout=3000)
-                await page.fill(sel, SENHA)
-                campo_senha = sel
-                break
-            except PWTimeout:
-                continue
-
-        if not campo_senha:
-            log.warning("Campo de senha nao encontrado.")
-            return False
-
-        seletores_submit = [
-            "input#login",
-            "#login",
-            "button[type='submit']",
-        ]
-        botao_clicked = False
-        for sel in seletores_submit:
-            try:
-                await page.wait_for_selector(sel, timeout=3000)
-                await page.click(sel)
-                botao_clicked = True
-                break
+                if await page.locator("a#navbarVendtef, #navbarPayblu, .navbar-brand").first.is_visible(timeout=3000):
+                    log.info("ERP: sessão já autenticada, pulando login.")
+                    return True
             except Exception:
-                continue
+                pass
 
-        if not botao_clicked:
-            log.warning("Botao de login/submit nao encontrado.")
+            seletores_usuario = [
+                "#username",
+                "input[name='username']",
+                "input[name='user']",
+                "input[type='text']",
+            ]
+            campo_usuario = None
+            for sel in seletores_usuario:
+                try:
+                    await page.wait_for_selector(sel, timeout=5000)
+                    campo_usuario = sel
+                    break
+                except PWTimeout:
+                    continue
+
+            if not campo_usuario:
+                log.warning(f"Login ERP tentativa {tentativa}: campo de usuário não encontrado. URL: {page.url}")
+                if tentativa < 3:
+                    await page.goto("https://www.erpvending.com.br/", timeout=TIMEOUT_MS, wait_until="domcontentloaded")
+                    await asyncio.sleep(3)
+                    continue
+                return False
+
+            await page.fill(campo_usuario, LOGIN)
+
+            seletores_senha = [
+                "#password",
+                "input[type='password']",
+            ]
+            campo_senha = None
+            for sel in seletores_senha:
+                try:
+                    await page.wait_for_selector(sel, timeout=3000)
+                    await page.fill(sel, SENHA)
+                    campo_senha = sel
+                    break
+                except PWTimeout:
+                    continue
+
+            if not campo_senha:
+                log.warning(f"Login ERP tentativa {tentativa}: campo de senha não encontrado.")
+                if tentativa < 3:
+                    await asyncio.sleep(3)
+                    continue
+                return False
+
+            seletores_submit = [
+                "input#login",
+                "#login",
+                "button[type='submit']",
+                "input[type='submit']",
+            ]
+            botao_clicked = False
+            for sel in seletores_submit:
+                try:
+                    await page.wait_for_selector(sel, timeout=3000)
+                    await page.click(sel)
+                    botao_clicked = True
+                    break
+                except Exception:
+                    continue
+
+            if not botao_clicked:
+                log.warning(f"Login ERP tentativa {tentativa}: botão de submit não encontrado.")
+                if tentativa < 3:
+                    await asyncio.sleep(3)
+                    continue
+                return False
+
+            await page.wait_for_load_state("networkidle", timeout=TIMEOUT_MS)
+            await asyncio.sleep(2)
+
+            # Verifica se o login foi bem-sucedido (navbar aparece)
+            try:
+                await page.wait_for_selector("a#navbarVendtef, #navbarPayblu, .navbar-nav", timeout=8000)
+                log.info("Login no ERP Vending realizado com sucesso.")
+                await dispensar_modal(page)
+                return True
+            except Exception:
+                log.warning(f"Login ERP tentativa {tentativa}: navbar não apareceu após submit. URL: {page.url}")
+                # Verifica se há mensagem de erro na página
+                try:
+                    err_text = await page.locator(".alert, .error, #error, .login-error").first.inner_text(timeout=2000)
+                    log.warning(f"Mensagem de erro na página de login: {err_text[:200]}")
+                except Exception:
+                    pass
+                if tentativa < 3:
+                    await page.goto("https://www.erpvending.com.br/", timeout=TIMEOUT_MS, wait_until="domcontentloaded")
+                    await asyncio.sleep(4)
+                    continue
+                return False
+
+        except Exception as e:
+            log.error(f"Login ERP tentativa {tentativa} — erro inesperado: {e}")
+            if tentativa < 3:
+                await asyncio.sleep(4)
+                continue
             return False
 
-        await page.wait_for_load_state("networkidle", timeout=TIMEOUT_MS)
-        log.info("Login no ERP Vending realizado.")
-        
-        await dispensar_modal(page)
-        return True
-    except Exception as e:
-        log.error(f"Erro no login: {e}")
-        return False
+    return False
 
 
 class AppsScriptRedirectHandler(urllib.request.HTTPRedirectHandler):
@@ -807,35 +852,41 @@ def is_june_2026(dt_val):
     return "/06/2026" in dt_str or "2026-06" in dt_str
 
 def obter_caminho_excel(nome_arquivo):
-    # Fonte canônica: pasta gateway LAVAI (onde o usuário edita manualmente)
-    # Sempre tem prioridade sobre cópias em kpi/ ou na raiz do projeto.
-    p1 = Path(r"C:\Users\badad\OneDrive\Desktop\gateway LAVAI") / nome_arquivo
-    p2 = Path(__file__).parent / "kpi" / nome_arquivo
-    p3 = Path(__file__).parent / nome_arquivo
+    def normalizar(s):
+        import re
+        s = s.lower()
+        if s.startswith("temp_read_only_"):
+            s = s[len("temp_read_only_"):]
+        s = re.sub(r'[^a-z0-9]', '', s)
+        return s
 
-    # Usar p1 se existir — independente de data de modificação
-    source_path = None
-    if p1.exists():
-        source_path = p1
-    elif p2.exists():
-        source_path = p2
-    elif p3.exists():
-        source_path = p3
+    nome_norm = normalizar(nome_arquivo)
 
-    if not source_path:
+    # Pastas de busca
+    pastas = [
+        Path(r"C:\Users\badad\OneDrive\Desktop\gateway LAVAI"),
+        Path(__file__).parent / "kpi",
+        Path(__file__).parent
+    ]
+
+    caminhos_existentes = []
+    for pasta in pastas:
+        if not pasta.exists():
+            continue
+        try:
+            for p in pasta.glob("*.xlsx"):
+                if normalizar(p.name) == nome_norm:
+                    caminhos_existentes.append(p)
+        except Exception:
+            pass
+
+    if not caminhos_existentes:
         return None
 
-    # Criar uma cópia temporária para evitar erros de permissão se o arquivo estiver aberto no Excel
-    try:
-        import shutil
-        temp_path = Path(__file__).parent / f"temp_read_only_{nome_arquivo}"
-        shutil.copy2(source_path, temp_path)
-        log.info(f"Selecionado arquivo fonte: {source_path} (copiado temporariamente para {temp_path.name})")
-        return temp_path
-    except Exception as e:
-        log.warning(f"Falha ao criar cópia temporária de {source_path.name}: {e}. Retornando arquivo original.")
-        return source_path
-
+    # Retorna o arquivo mais recentemente modificado entre todos os encontrados
+    novo_caminho = max(caminhos_existentes, key=lambda p: p.stat().st_mtime)
+    log.info(f"obter_caminho_excel('{nome_arquivo}'): selecionado o mais recente: {novo_caminho} (Modificado em: {datetime.fromtimestamp(novo_caminho.stat().st_mtime).strftime('%Y-%m-%d %H:%M:%S')})")
+    return novo_caminho
 
 def map_vmpay_excel_row(row, headers_idx):
     def get(col_name):
@@ -1190,21 +1241,13 @@ async def coletar_sq_excel():
                     ))
                     count += 1
                     
-            log.info(f"Processadas {count} transações de SQInsights do arquivo mestre.")
+            log.info(f"Processadas {count} transações recentes de SQInsights do arquivo mestre.")
+            return all_rows
         except Exception as e:
             log.error(f"Erro ao ler arquivo mestre SQInsights {master_path}: {e}")
             
-    # Busca a API para obter dados recentes (mês atual e futuro)
-    log.info("Buscando dados recentes do SQInsights via API...")
-    try:
-        api_sq_rows = await coletar_sq_api()
-        if api_sq_rows:
-            all_rows.extend(api_sq_rows)
-            log.info(f"Adicionadas {len(api_sq_rows)} transações do SQInsights via API.")
-    except Exception as e:
-        log.error(f"Erro ao coletar dados do SQInsights via API: {e}")
-
-    return all_rows
+    log.warning("Arquivo mestre do SQInsights não encontrado. Usando fallback para API/CDP.")
+    return await coletar_sq_api()
 
 
 def coletar_vendpago_excel():
@@ -1380,24 +1423,13 @@ def map_payblu_csv_row(row):
     ]
 
 
-async def coletar_payblu(page):
-    """
-    Estabelece sessão PayBlu via link SSO do navbar (igual ao VendTEF),
-    depois navega para a URL de download, clica Continuar → Download.
-    Recebe a `page` já logada no ERP Vending.
-    """
-    log.info("Acessando relatorio PayBlu Private Label...")
-    rows = []
-    temp_csv = Path(__file__).parent / "temp_payblu.csv"
-
+async def _payblu_estabelecer_sso(page):
+    """Estabelece sessão SSO no PayBlu via navbar do ERP. Retorna True se OK."""
     try:
-        # 1. Voltar ao ERP para pegar o link SSO do PayBlu no navbar
-        log.info("PayBlu: estabelecendo sessao SSO via navbar...")
-        await page.goto("https://www.erpvending.com.br/", timeout=TIMEOUT_MS, wait_until="domcontentloaded")
+        await page.goto(URL_ERP, timeout=TIMEOUT_MS, wait_until="domcontentloaded")
         await page.wait_for_load_state("networkidle", timeout=TIMEOUT_MS)
         await dispensar_modal(page)
 
-        # Tenta clicar no link PayBlu do navbar (id ou texto)
         payblu_sso_href = None
         for sel in ["a#navbarPayblu", "a#navbarpayblu", "a:has-text('PayBlu')", "a[href*='payblu']"]:
             try:
@@ -1405,7 +1437,7 @@ async def coletar_payblu(page):
                 if await el.is_visible(timeout=3000):
                     payblu_sso_href = await el.get_attribute("href")
                     if payblu_sso_href:
-                        log.info(f"PayBlu: link SSO encontrado via '{sel}': {payblu_sso_href}")
+                        log.info(f"PayBlu SSO: link encontrado via '{sel}'")
                         break
             except Exception:
                 continue
@@ -1414,162 +1446,310 @@ async def coletar_payblu(page):
             await page.goto(payblu_sso_href, timeout=TIMEOUT_MS, wait_until="domcontentloaded")
             await page.wait_for_load_state("networkidle", timeout=TIMEOUT_MS)
             await asyncio.sleep(3)
+            return True
         else:
-            log.warning("PayBlu: link SSO nao encontrado no navbar. Tentando acesso direto...")
+            log.warning("PayBlu SSO: link não encontrado no navbar.")
+            return False
+    except Exception as e:
+        log.error(f"PayBlu SSO: erro ao estabelecer sessão: {e}")
+        return False
 
-        # 2. Navegar direto para a URL de download
+
+async def _payblu_baixar_mes(page, ano: int, mes: int, pasta_saida: Path) -> list:
+    """
+    Baixa o relatório PayBlu de um mês específico.
+    Preenche os campos de data inicio/fim do formulário, clica Continuar → Download.
+    Salva o CSV em pasta_saida/payblu_YYYY_MM.csv e retorna as rows mapeadas.
+    """
+    import calendar
+    primeiro_dia = f"01/{mes:02d}/{ano}"
+    ultimo_dia_n = calendar.monthrange(ano, mes)[1]
+    ultimo_dia   = f"{ultimo_dia_n:02d}/{mes:02d}/{ano}"
+    label_mes    = f"{ano}-{mes:02d}"
+
+    log.info(f"PayBlu: coletando {label_mes} ({primeiro_dia} → {ultimo_dia})...")
+    rows = []
+    temp_csv = Path(__file__).parent / f"temp_payblu_{ano}_{mes:02d}.csv"
+
+    try:
         await page.goto(URL_PAYBLU, timeout=TIMEOUT_MS, wait_until="domcontentloaded")
         await page.wait_for_load_state("networkidle", timeout=TIMEOUT_MS)
         await asyncio.sleep(2)
-
         await dispensar_modal(page)
 
-        # 3. Verificar se a página carregou o formulário (não redirecionou para login)
-        current_url = page.url
-        if "login" in current_url.lower() or "erpvending" in current_url.lower():
-            log.warning(f"PayBlu: redirecionado para login ({current_url}). Sessao nao estabelecida.")
+        # Verifica se não foi redirecionado para login
+        if "login" in page.url.lower() or "erpvending" in page.url.lower():
+            log.warning(f"PayBlu {label_mes}: redirecionado para login. Sessão perdida.")
             return rows
 
-        log.info("PayBlu: clicando em 'Continuar'...")
+        # Inspeciona campos de data disponíveis no formulário
+        campos_data = await page.locator("input[type='date'], input[name*='data'], input[name*='date'], input[name*='inicio'], input[name*='fim'], input[name*='start'], input[name*='end']").all()
+        log.info(f"PayBlu {label_mes}: {len(campos_data)} campos de data encontrados.")
+
+        if len(campos_data) >= 2:
+            # Formulário com campos de data início e fim
+            campo_inicio = campos_data[0]
+            campo_fim    = campos_data[1]
+
+            # Tenta preencher como input[type=date] (formato YYYY-MM-DD)
+            tipo_inicio = await campo_inicio.get_attribute("type") or ""
+            if tipo_inicio == "date":
+                await campo_inicio.fill(f"{ano}-{mes:02d}-01")
+                await campo_fim.fill(f"{ano}-{mes:02d}-{ultimo_dia_n:02d}")
+            else:
+                # Formato brasileiro dd/mm/yyyy
+                await campo_inicio.click(click_count=3)
+                await campo_inicio.type(primeiro_dia)
+                await campo_fim.click(click_count=3)
+                await campo_fim.type(ultimo_dia)
+
+            log.info(f"PayBlu {label_mes}: datas preenchidas ({primeiro_dia} → {ultimo_dia}).")
+        else:
+            # Formulário sem filtro de data (retorna mês corrente) — só funciona para o mês atual
+            now = datetime.now(FUSO_SP)
+            if not (ano == now.year and mes == now.month):
+                log.warning(f"PayBlu {label_mes}: formulário sem campos de data, pulando mês não-corrente.")
+                return rows
+            log.info(f"PayBlu {label_mes}: sem campos de data, baixando mês corrente.")
+
+        # Clica Continuar
         await page.locator("input[value='Continuar'], input[type='submit'], button[type='submit']").first.click(timeout=10000)
         await page.wait_for_load_state("networkidle", timeout=TIMEOUT_MS)
         await asyncio.sleep(4)
 
-        log.info("PayBlu: clicando em 'Download'...")
+        # Clica Download
         btn_locator = page.locator(
             "a:has-text('Download'), button:has-text('Download'), input[value='Download']"
         ).first
 
-        async with page.expect_download(timeout=20000) as dl_info:
+        async with page.expect_download(timeout=25000) as dl_info:
             await btn_locator.click()
 
         download = await dl_info.value
         await download.save_as(str(temp_csv))
-        log.info("PayBlu: CSV baixado com sucesso.")
+        log.info(f"PayBlu {label_mes}: CSV baixado.")
 
-        # Processar CSV — 2 linhas de título antes do header real
+        # Processa CSV
         with open(temp_csv, encoding="latin-1") as f:
             raw_lines = f.readlines()
 
-        # Encontrar linha do header (contém "Cliente")
         header_idx = 0
         for i, line in enumerate(raw_lines):
             if "Cliente" in line and "Pagamento" in line:
                 header_idx = i
                 break
 
-        data_lines = raw_lines[header_idx + 1:]  # pular o header
-        reader = csv.reader(data_lines, delimiter=";")
+        reader = csv.reader(raw_lines[header_idx + 1:], delimiter=";")
         count = 0
         for r in reader:
             if not r or not r[0].strip():
                 continue
             if r[0].strip().startswith("Total"):
                 continue
-            # Remove aspas extras
             r = [c.strip().strip('"') for c in r]
             if len(r) >= 11:
                 rows.append(map_payblu_csv_row(r))
                 count += 1
 
-        log.info(f"PayBlu: {count} transacoes processadas.")
+        log.info(f"PayBlu {label_mes}: {count} transações processadas.")
+
+        # Salva arquivo mensal persistente
+        if rows and pasta_saida:
+            pasta_saida.mkdir(parents=True, exist_ok=True)
+            arq_mes = pasta_saida / f"payblu_{ano}_{mes:02d}.csv"
+            with open(arq_mes, "w", encoding="utf-8", newline="") as f:
+                writer = csv.writer(f, delimiter=";")
+                writer.writerow(["Cliente","Máquina","Modelo","Fabricante","Pagamento",
+                                 "Produtos","Mola","Venda (R$)","Preço (R$)","Total",
+                                 "Código Promocional","Data","Hora","Nº Logico","NSU",
+                                 "Autorização","Tipo Cartão","Rede","Bandeira",
+                                 "Usuário","Nº Cartão","Matricula"])
+                for row in rows:
+                    padded = list(row) + [""] * (22 - len(row))
+                    writer.writerow(padded[:22])
+            log.info(f"PayBlu {label_mes}: arquivo salvo em {arq_mes}.")
 
     except Exception as e:
-        log.error(f"Erro ao coletar PayBlu: {e}")
+        log.error(f"PayBlu {label_mes}: erro — {e}")
     finally:
         if temp_csv.exists():
-            temp_csv.unlink()
+            try: temp_csv.unlink()
+            except: pass
 
+    return rows
+
+
+async def coletar_payblu(page):
+    """
+    Coleta relatórios PayBlu mês a mês para 2026 (jan até mês atual),
+    salva arquivos mensais persistentes e retorna todas as rows consolidadas.
+    """
+    log.info("PayBlu: iniciando coleta mensal 2026...")
+    todas_rows = []
+
+    # Pasta para arquivos mensais
+    pasta_payblu = Path(__file__).parent / "payblu_historico"
+
+    # Estabelece SSO
+    sso_ok = await _payblu_estabelecer_sso(page)
+    if not sso_ok:
+        log.warning("PayBlu: SSO falhou, tentando acesso direto...")
+
+    now = datetime.now(FUSO_SP)
+    ano_atual = now.year
+    mes_atual = now.month
+
+    # Coleta jan/2026 até mês corrente
+    ano_inicio = 2026
+    mes_inicio = 1
+
+    for ano in range(ano_inicio, ano_atual + 1):
+        m_inicio = mes_inicio if ano == ano_inicio else 1
+        m_fim    = mes_atual  if ano == ano_atual  else 12
+        for mes in range(m_inicio, m_fim + 1):
+            # Verifica se já existe arquivo salvo para este mês (exceto mês atual — sempre atualiza)
+            arq_mes = pasta_payblu / f"payblu_{ano}_{mes:02d}.csv"
+            if arq_mes.exists() and not (ano == ano_atual and mes == mes_atual):
+                log.info(f"PayBlu {ano}-{mes:02d}: arquivo já existe, carregando do disco.")
+                rows_mes = _payblu_carregar_csv_mes(arq_mes)
+                todas_rows.extend(rows_mes)
+                continue
+
+            # Precisa renovar SSO a cada ~3 meses para não expirar sessão
+            if mes % 3 == 1 and mes > 1:
+                await _payblu_estabelecer_sso(page)
+
+            rows_mes = await _payblu_baixar_mes(page, ano, mes, pasta_payblu)
+            todas_rows.extend(rows_mes)
+
+            # Pequena pausa entre downloads para não sobrecarregar o servidor
+            await asyncio.sleep(2)
+
+    log.info(f"PayBlu: coleta concluída — {len(todas_rows)} transações no total.")
+    return todas_rows
+
+
+def _payblu_carregar_csv_mes(arq_path: Path) -> list:
+    """Carrega rows de um arquivo CSV mensal salvo anteriormente."""
+    rows = []
+    try:
+        with open(arq_path, encoding="utf-8", newline="") as f:
+            reader = csv.reader(f, delimiter=";")
+            next(reader, None)  # pula cabeçalho
+            for r in reader:
+                if len(r) >= 22:
+                    rows.append(r)
+    except Exception as e:
+        log.error(f"PayBlu: erro ao carregar {arq_path.name}: {e}")
     return rows
 
 
 def coletar_yougo_excel():
     """
-    Lê dados históricos do You Go (PayBlu Private Label) do arquivo Excel.
-    Mapeia cada linha para o mesmo formato de 22 colunas do PayBlu.
+    Lê dados históricos do relatório Excel PayBlu You Go 2025.
+    Colunas: Cliente[0] Serial[1] MAC[2] Matricula[3] NomeTerminal[4]
+             Pagamento[5] Produto[6] Mola[7] Preco[8] ValorPago[9]
+             Data[10] Hora[11] Usuario[12] NSU[13]
     """
-    master_path = obter_caminho_excel("Vendas You Go 25.xlsx")
-    all_rows = []
+    import datetime as _dt
 
+    master_path = obter_caminho_excel("temp_read_only_Vendas_You_Go_25.xlsx")
+    if not master_path:
+        for nome in ["Vendas You Go 25.xlsx", "Vendas_You_Go_25.xlsx",
+                     "vendas you go 25.xlsx", "vendas_you_go_25.xlsx"]:
+            master_path = obter_caminho_excel(nome)
+            if master_path:
+                break
+
+    all_rows = []
     if not master_path or not master_path.exists():
-        log.warning("Arquivo Vendas You Go 25.xlsx nao encontrado.")
+        log.warning("Arquivo 'Vendas You Go 25.xlsx' nao encontrado. Pulando.")
         return all_rows
 
-    log.info(f"Lendo dados historicos do You Go do arquivo: {master_path}")
+    log.info(f"Lendo dados historicos You Go 2025 de: {master_path}")
     try:
         wb = openpyxl.load_workbook(master_path, read_only=True, data_only=True)
-        sheet = wb.active
-
-        # Colunas: Cliente[0]; N Serial[1]; MAC[2]; Matricula[3]; Nome Terminal[4];
-        #          Pagamento[5]; Produto[6]; Mola[7]; Preco[8]; Valor Pago[9];
-        #          Data[10]; Hora[11]; Usuario[12]; NSU[13]
+        ws = wb.active
         count = 0
-        for idx, row in enumerate(sheet.iter_rows(values_only=True)):
+
+        for idx, row in enumerate(ws.iter_rows(values_only=True)):
             if idx == 0:
                 continue
-            if not row or len(row) < 11:
-                continue
-            if row[0] is None:
+            if not row or not row[0]:
                 continue
 
-            # Data
-            data_val = row[10]
-            if isinstance(data_val, datetime):
+            def g(i):
+                v = row[i] if i < len(row) else None
+                return "" if v is None else str(v).strip()
+
+            # Data (col 10)
+            data_val = row[10] if len(row) > 10 else None
+            if isinstance(data_val, (_dt.datetime, _dt.date)):
                 data_br = data_val.strftime("%d/%m/%Y")
-                hora_br = row[11].strftime("%H:%M:%S") if isinstance(row[11], datetime) else str(row[11] or "00:00:00").strip()
-            elif isinstance(data_val, str) and data_val.strip():
-                dt_str = data_val.strip()
-                try:
-                    # Formato ISO: '2025-03-01 00:00:00'
-                    dt = datetime.fromisoformat(dt_str.split(' ')[0])
-                    data_br = dt.strftime("%d/%m/%Y")
-                except:
-                    data_br = dt_str
-                hora_br = str(row[11] or "00:00:00").strip()
             else:
-                continue
+                data_br = str(data_val or "").strip()
 
-            # Valor
-            valor_raw = str(row[9] or "0").replace("R$", "").replace(" ", "").strip()
+            # Hora (col 11)
+            hora_val = row[11] if len(row) > 11 else None
+            if isinstance(hora_val, _dt.time):
+                hora_br = hora_val.strftime("%H:%M:%S")
+            elif isinstance(data_val, _dt.datetime):
+                hora_br = data_val.strftime("%H:%M:%S")
+            else:
+                hora_br = "12:00:00"
+
+            # Valor pago (col 9)
+            total_r = 0.0
             try:
-                if "," in valor_raw:
-                    v = valor_raw.replace(".", "").replace(",", ".")
-                else:
-                    v = valor_raw
+                v = str(row[9] if len(row) > 9 else 0).replace("R$", "").replace(" ", "").strip()
+                if "," in v:
+                    v = v.replace(".", "").replace(",", ".")
                 total_r = float(v)
                 if total_r >= 1000 and total_r == int(total_r):
                     total_r = total_r / 100.0
-            except:
+            except Exception:
                 total_r = 0.0
 
-            serial    = str(row[1] or "").strip()
-            matricula = str(row[3] or "").strip()
-            nome_term = str(row[4] or serial).strip()
-            cliente   = str(row[0] or "LAVAÍ - You Go").strip()
-            pagamento = str(row[5] or "PRIVATE LABEL").strip()
-            produto   = str(row[6] or "1 Pulso(s)").strip()
-            mola_id   = str(row[7] or "").strip()
-            preco_r   = str(row[8] or "Não Informado").strip()
-            usuario   = str(row[12] or "").strip()
+            serial        = g(1)
+            matricula     = g(3)
+            nome_terminal = g(4) or serial
+            pagamento     = g(5) or "PRIVATE LABEL"
+            produto       = g(6) or "1 Pulso(s)"
+            mola_id       = g(7)
+            usuario       = g(12)
+            nsu_raw       = g(13)
+            nsu = nsu_raw if nsu_raw else (f"PB-{serial}|{data_br}|{hora_br}" if serial else "")
+            val_str       = str(total_r).replace(".", ",")
 
-            # NSU sintético idêntico ao gerado pelo portal ao vivo
-            nsu = f"PB-{serial}|{data_br}|{hora_br}" if serial else ""
-
-            mapped = [
-                cliente, nome_term, "PayBlu (Private Label)", "PayBlu",
-                pagamento, produto, mola_id,
-                str(total_r).replace(".", ","), preco_r, str(total_r).replace(".", ","),
-                "Não utilizado", data_br, hora_br, matricula,
-                nsu, "", "Private Label", "PayBlu",
-                "Private Label", usuario, "", matricula
-            ]
-            all_rows.append(mapped)
+            all_rows.append([
+                "LAVAÍ - You Go",        # [0]  Cliente
+                nome_terminal,           # [1]  Máquina
+                "PayBlu (Private Label)",# [2]  Modelo
+                "PayBlu",                # [3]  Fabricante
+                pagamento,               # [4]  Pagamento
+                produto,                 # [5]  Produto
+                mola_id,                 # [6]  Mola
+                val_str,                 # [7]  Venda R$
+                "Nao Informado",         # [8]  Preco R$
+                val_str,                 # [9]  Total
+                "Nao utilizado",         # [10] Cod Promocional
+                data_br,                 # [11] Data
+                hora_br,                 # [12] Hora
+                matricula,               # [13] N Logico
+                nsu,                     # [14] NSU
+                "",                      # [15] Autorizacao
+                "Private Label",         # [16] Tipo Cartao
+                "PayBlu",                # [17] Rede
+                "Private Label",         # [18] Bandeira
+                usuario,                 # [19] Usuario
+                "",                      # [20] No Cartao
+                matricula,               # [21] Matricula
+            ])
             count += 1
 
-        log.info(f"Processadas {count} transacoes historicas do You Go do arquivo Excel.")
-        wb.close()
+        log.info(f"You Go 2025: {count} transacoes carregadas de '{master_path.name}'.")
     except Exception as e:
-        log.error(f"Erro ao ler arquivo You Go {master_path}: {e}")
+        log.error(f"Erro ao ler You Go 2025 '{master_path}': {e}")
 
     return all_rows
 
@@ -1681,61 +1861,134 @@ def salvar_fonte_local(rows, js_path, var_name):
     except Exception as e:
         log.error("Erro ao salvar " + js_path.name + ": " + str(e))
 
+def encontrar_repo_git(path_inicial: Path):
+    """Sobe na árvore de diretórios a partir de path_inicial até encontrar um .git."""
+    p = path_inicial.resolve()
+    for _ in range(8):  # máximo 8 níveis acima
+        if (p / ".git").is_dir():
+            return p
+        if p.parent == p:
+            break
+        p = p.parent
+    return None
+
+
 def publicar_dados_github():
     import subprocess
     log.info("Iniciando publicação automática no GitHub...")
-    
-    cwd_root = Path(__file__).parent
+
+    script_dir = Path(__file__).parent.resolve()
+
+    # ── Repositório ROOT ──────────────────────────────────────────
+    # Detecta o repo git que contém o script (sobe na árvore)
+    cwd_root = encontrar_repo_git(script_dir)
+    if not cwd_root:
+        log.error(f"publicar_dados_github: nenhum repositório git encontrado a partir de {script_dir}. Verifique se 'git init' foi executado na pasta correta.")
+        return
+    log.info(f"Repositório root detectado: {cwd_root}")
+
+    # Detecta a branch atual do root
+    branch_root = "master" # fallback padrão
+    try:
+        res = subprocess.run(["git", "branch", "--show-current"], cwd=str(cwd_root), capture_output=True, text=True, check=True)
+        b_str = res.stdout.strip()
+        if b_str:
+            branch_root = b_str
+    except Exception:
+        try:
+            res = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=str(cwd_root), capture_output=True, text=True, check=True)
+            b_str = res.stdout.strip()
+            if b_str:
+                branch_root = b_str
+        except Exception:
+            pass
+    log.info(f"Branch atual detectada no root: {branch_root}")
+
     files_root = [
         "vmpay_local.js",
         "vendtef_local.js",
         "payblu_local.js",
         "sqi_local.js",
         "dados_relatorios.json",
-        "robo_lavai.py",
-        "dashboard_lavai_tete.html",
-        "dashboard_lavai.html",
     ]
-    
-    # 1. Atualizar repositório root (branch master)
+
     for f in files_root:
-        f_path = cwd_root / f
+        f_path = script_dir / f
+        if not f_path.exists():
+            f_path = cwd_root / f
         if f_path.exists():
             try:
-                subprocess.run(["git", "add", "-f", f], cwd=str(cwd_root), check=True, capture_output=True, text=True)
+                subprocess.run(
+                    ["git", "add", "-f", str(f_path)],
+                    cwd=str(cwd_root), check=True, capture_output=True, text=True
+                )
             except Exception as e:
                 log.error(f"Erro ao adicionar {f} no root: {e}")
-                
+        else:
+            log.warning(f"Arquivo {f} não encontrado, pulando.")
+
     now_str = datetime.now(FUSO_SP).strftime("%Y-%m-%d %H:%M:%S")
     try:
-        status_res = subprocess.run(["git", "status", "--porcelain"], cwd=str(cwd_root), check=True, capture_output=True, text=True)
+        status_res = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=str(cwd_root), check=True, capture_output=True, text=True
+        )
         if status_res.stdout.strip():
             try:
-                subprocess.run(["git", "pull", "--rebase", "origin", "master"], cwd=str(cwd_root), check=True, capture_output=True, text=True)
+                subprocess.run(["git", "pull", "--rebase", "origin", branch_root],
+                               cwd=str(cwd_root), check=True, capture_output=True, text=True)
             except Exception as pe:
-                log.warning(f"Aviso ao dar pull --rebase no root: {pe}")
-            subprocess.run(["git", "commit", "-m", f"Auto-update dashboard (root) - {now_str}"], cwd=str(cwd_root), check=True, capture_output=True, text=True)
+                log.warning(f"Aviso ao dar pull --rebase no root ({branch_root}): {pe}")
+            subprocess.run(
+                ["git", "commit", "-m", f"Auto-update dashboard (root) - {now_str}"],
+                cwd=str(cwd_root), check=True, capture_output=True, text=True
+            )
             log.info("Commit realizado no root.")
-            subprocess.run(["git", "push", "origin", "master"], cwd=str(cwd_root), check=True, capture_output=True, text=True)
+            subprocess.run(["git", "push", "origin", branch_root],
+                           cwd=str(cwd_root), check=True, capture_output=True, text=True)
             log.info("Push realizado no root.")
         else:
             log.info("Sem alterações no root.")
     except Exception as e:
-        log.error(f"Erro no git commit/push do root: {e}")
+        log.error(f"Erro no git commit/push do root ({branch_root}): {e}")
+
+    # ── Repositório KPI (subpasta com .git próprio) ───────────────
+    kpi_candidates = [script_dir / "kpi", cwd_root / "kpi"]
+    cwd_kpi = None
+    for kc in kpi_candidates:
+        if kc.is_dir() and (kc / ".git").is_dir():
+            cwd_kpi = kc
+            break
+
+    if cwd_kpi:
+        log.info(f"Repositório kpi detectado: {cwd_kpi}")
         
-    # 2. Atualizar repositório subpasta kpi (branch main)
-    cwd_kpi = cwd_root / "kpi"
-    if cwd_kpi.is_dir():
+        # Detecta a branch atual do kpi
+        branch_kpi = "main" # fallback padrão
+        try:
+            res = subprocess.run(["git", "branch", "--show-current"], cwd=str(cwd_kpi), capture_output=True, text=True, check=True)
+            b_str = res.stdout.strip()
+            if b_str:
+                branch_kpi = b_str
+        except Exception:
+            try:
+                res = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=str(cwd_kpi), capture_output=True, text=True, check=True)
+                b_str = res.stdout.strip()
+                if b_str:
+                    branch_kpi = b_str
+            except Exception:
+                pass
+        log.info(f"Branch atual detectada no kpi: {branch_kpi}")
+
         files_kpi = [
             "vmpay_local.js",
             "vendtef_local.js",
             "payblu_local.js",
             "sqi_local.js",
-            "dados_relatorios.json"
+            "dados_relatorios.json",
         ]
-        
-        # Copiar dados_relatorios.json para a pasta kpi
-        src_json = cwd_root / "dados_relatorios.json"
+
+        src_json = script_dir / "dados_relatorios.json"
         dest_json = cwd_kpi / "dados_relatorios.json"
         if src_json.exists():
             try:
@@ -1747,25 +2000,40 @@ def publicar_dados_github():
             f_path = cwd_kpi / f
             if f_path.exists():
                 try:
-                    subprocess.run(["git", "add", "-f", f], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
+                    subprocess.run(
+                        ["git", "add", "-f", f],
+                        cwd=str(cwd_kpi), check=True, capture_output=True, text=True
+                    )
                 except Exception as e:
                     log.error(f"Erro ao adicionar {f} no kpi: {e}")
-                    
+            else:
+                log.warning(f"kpi/{f} não encontrado, pulando.")
+
         try:
-            status_res = subprocess.run(["git", "status", "--porcelain"], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
+            status_res = subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=str(cwd_kpi), check=True, capture_output=True, text=True
+            )
             if status_res.stdout.strip():
                 try:
-                    subprocess.run(["git", "pull", "--rebase", "origin", "main"], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
+                    subprocess.run(["git", "pull", "--rebase", "origin", branch_kpi],
+                                   cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
                 except Exception as pe:
-                    log.warning(f"Aviso ao dar pull --rebase no kpi: {pe}")
-                subprocess.run(["git", "commit", "-m", f"Auto-update dados (kpi) - {now_str}"], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
+                    log.warning(f"Aviso ao dar pull --rebase no kpi ({branch_kpi}): {pe}")
+                subprocess.run(
+                    ["git", "commit", "-m", f"Auto-update dashboard (kpi) - {now_str}"],
+                    cwd=str(cwd_kpi), check=True, capture_output=True, text=True
+                )
                 log.info("Commit realizado no kpi.")
-                subprocess.run(["git", "push", "origin", "main"], cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
+                subprocess.run(["git", "push", "origin", branch_kpi],
+                               cwd=str(cwd_kpi), check=True, capture_output=True, text=True)
                 log.info("Push realizado no kpi.")
             else:
                 log.info("Sem alterações no kpi.")
         except Exception as e:
-            log.error(f"Erro no git commit/push do kpi: {e}")
+            log.error(f"Erro no git commit/push do kpi ({branch_kpi}): {e}")
+    else:
+        log.info("Pasta kpi/ sem repositório git próprio — pulando push kpi.")
 
 
 async def coletar_tudo():
@@ -1794,9 +2062,9 @@ async def coletar_tudo():
             
             ok = await fazer_login(page)
             if not ok:
-                log.error("Falha ao logar no ERP Vending.")
-                await browser.close()
-                return
+                log.error("Falha ao logar no ERP Vending após 3 tentativas. VendTEF e PayBlu não serão coletados nesta execução.")
+                # Não encerra — continua para API VMPay, SQI e VendPago
+                raise Exception("ERP login failed — skip VendTEF/PayBlu")
 
             # Estabelecer SSO com VendTEF
             log.info("Estabelecendo sessao no VendTEF via link SSO...")
@@ -1808,9 +2076,9 @@ async def coletar_tudo():
                 await page.wait_for_load_state("networkidle", timeout=TIMEOUT_MS)
                 await asyncio.sleep(3)
             else:
-                log.warning("Navbar link do VendTEF nao contem href.")
-                await browser.close()
-                return
+                log.warning("Navbar link do VendTEF nao contem href. Tentando URL direta...")
+                await page.goto(URL_DOWNLOAD, timeout=TIMEOUT_MS, wait_until="domcontentloaded")
+                await page.wait_for_load_state("networkidle", timeout=TIMEOUT_MS)
 
             # Acessar relatorioVendasGeralDownload
             log.info(f"Acessando pagina de download: {URL_DOWNLOAD}")
@@ -1845,14 +2113,12 @@ async def coletar_tudo():
             reader = csv.reader(content.splitlines(), delimiter=';')
             for i, r in enumerate(reader):
                 if i < 6:
-                    # pular os 6 cabecalhos
                     continue
                 if len(r) >= 22:
                     rows.append([cell.strip() for cell in r])
                     
             log.info(f"Total de {len(rows)} transacoes encontradas no relatorio mensal.")
 
-            # Remover arquivo temporario
             if temp_zip.exists():
                 temp_zip.unlink()
 
@@ -1860,26 +2126,31 @@ async def coletar_tudo():
             payblu_rows = await coletar_payblu(page)
 
         except Exception as e:
-            log.error(f"Erro durante a extracao: {e}")
+            log.error(f"Erro durante extracao ERP/VendTEF/PayBlu: {e}")
+            log.warning("Continuando pipeline com as demais fontes (API VMPay, SQInsights, VendPago).")
             payblu_rows = []
+            # Limpa zip temporário se existir
+            _tmp = Path(__file__).parent / "temp_vendas.zip"
+            if _tmp.exists():
+                try: _tmp.unlink()
+                except: pass
         finally:
             await browser.close()
 
     # Coletar dados da API VMPay Cashless, SQInsights, VendPago Excel e unificar com os dados raspados
     api_rows = coletar_vmpay_api()
-    excel_rows = []  # Desativado conforme solicitação do usuário (usar apenas API para VMPay)
+    # excel_rows removido: VMPay local não é mais usado; fonte única = API VMPay
     sq_rows = await coletar_sq_excel()
     vendpago_excel_rows = coletar_vendpago_excel()
-    yougo_excel_rows = coletar_yougo_excel()  # Dados históricos do You Go (PayBlu Excel)
+    yougo_excel_rows = coletar_yougo_excel()  # histórico PayBlu You Go 2025
 
     # Deduplicar cada fonte antes de enviar (evitar duplicatas dentro do mesmo lote)
     api_rows_to_merge = api_rows if api_rows is not None else []
     portal_rows_dedup   = merge_and_deduplicate(rows + vendpago_excel_rows, [])
-    vmpay_rows_dedup    = merge_and_deduplicate(api_rows_to_merge + excel_rows, [])
+    vmpay_rows_dedup    = merge_and_deduplicate(api_rows_to_merge, [])  # somente API, sem excel
     sq_rows_dedup       = merge_and_deduplicate(sq_rows, [])
-    # You Go Excel histórico + dados ao vivo do portal (Excel primeiro para preservar dados manuais)
-    payblu_rows_dedup   = merge_and_deduplicate(yougo_excel_rows + payblu_rows, [])
-
+    # PayBlu: deduplica histórico Excel junto com dados do portal (mesma fonte, evita duplicatas)
+    payblu_rows_dedup   = merge_and_deduplicate(payblu_rows + yougo_excel_rows, [])
 
     total_count = (len(portal_rows_dedup) + len(vmpay_rows_dedup) + len(sq_rows_dedup)
                    + len(payblu_rows_dedup))
@@ -1892,7 +2163,7 @@ async def coletar_tudo():
         "total_transacoes": total_count,
         "portal_transacoes": len(portal_rows_dedup),
         "api_transacoes": len(api_rows_to_merge),
-        "excel_transacoes": len(excel_rows) + len(vendpago_excel_rows),
+        "excel_transacoes": len(vendpago_excel_rows) + len(yougo_excel_rows),  # excel VMPay removido
         "sq_transacoes": len(sq_rows_dedup),
         "payblu_transacoes": len(payblu_rows_dedup)
     }
@@ -1901,9 +2172,15 @@ async def coletar_tudo():
     # ── Todas as fontes salvas como JS local — zero envio para o Sheets ──────
     salvar_fonte_local(portal_rows_dedup,   CSV_VENDTEF_LOCAL,  "LAVAI_VENDTEF_DATA")
     if api_rows is not None:
-        salvar_fonte_local(vmpay_rows_dedup,    CSV_VMPAY_LOCAL,    "LAVAI_VMPAY_DATA")
+        salvar_fonte_local(vmpay_rows_dedup, CSV_VMPAY_LOCAL, "LAVAI_VMPAY_DATA")
     else:
-        log.warning("Falha na API VMPay. Mantendo arquivo vmpay_local.js intacto com dados anteriores para evitar perda de dados.")
+        # API falhou → limpa o arquivo local para não exibir dados desatualizados
+        _vmpay_empty = "window.LAVAI_VMPAY_DATA = ``;\n"
+        try:
+            CSV_VMPAY_LOCAL.write_text(_vmpay_empty, encoding="utf-8")
+            log.warning("Falha na API VMPay. Arquivo vmpay_local.js limpo para evitar dados obsoletos.")
+        except Exception as _e:
+            log.error(f"Erro ao limpar vmpay_local.js: {_e}")
     salvar_fonte_local(payblu_rows_dedup,   CSV_PAYBLU_LOCAL,   "LAVAI_PAYBLU_DATA")
     salvar_fonte_local(sq_rows_dedup,       CSV_SQI_LOCAL,      "LAVAI_SQI_DATA")
 
@@ -1912,7 +2189,14 @@ async def coletar_tudo():
     if kpi_dir.is_dir():
         salvar_fonte_local(portal_rows_dedup,   kpi_dir / "vendtef_local.js",  "LAVAI_VENDTEF_DATA")
         if api_rows is not None:
-            salvar_fonte_local(vmpay_rows_dedup,    kpi_dir / "vmpay_local.js",    "LAVAI_VMPAY_DATA")
+            salvar_fonte_local(vmpay_rows_dedup, kpi_dir / "vmpay_local.js", "LAVAI_VMPAY_DATA")
+        else:
+            _kpi_vmpay = kpi_dir / "vmpay_local.js"
+            try:
+                _kpi_vmpay.write_text("window.LAVAI_VMPAY_DATA = ``;\n", encoding="utf-8")
+                log.warning("kpi/vmpay_local.js também limpo (API falhou).")
+            except Exception as _e:
+                log.error(f"Erro ao limpar kpi/vmpay_local.js: {_e}")
         salvar_fonte_local(payblu_rows_dedup,   kpi_dir / "payblu_local.js",   "LAVAI_PAYBLU_DATA")
         salvar_fonte_local(sq_rows_dedup,       kpi_dir / "sqi_local.js",      "LAVAI_SQI_DATA")
         log.info("Arquivos locais da pasta 'kpi' também foram atualizados automaticamente.")
