@@ -2203,6 +2203,12 @@ async def coletar_tudo():
     total_count = (len(portal_rows_dedup) + len(vmpay_rows_dedup) + len(sq_rows_dedup)
                    + len(payblu_rows_dedup))
 
+        # Determinar diretórios de gravação baseados no repositório git
+    root_dir = encontrar_repo_git(Path(__file__).parent)
+    if not root_dir:
+        root_dir = Path(__file__).parent
+    kpi_dir = root_dir / "kpi"
+
     # Salva JSON de status para manter compatibilidade
     payload = {
         "gerado_em": datetime.now(FUSO_SP).isoformat(),
@@ -2215,17 +2221,19 @@ async def coletar_tudo():
         "sq_transacoes": len(sq_rows_dedup),
         "payblu_transacoes": len(payblu_rows_dedup)
     }
-    SAIDA_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    
+    (root_dir / "dados_relatorios.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    if kpi_dir.is_dir() and kpi_dir != root_dir:
+        (kpi_dir / "dados_relatorios.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     # ── Todas as fontes salvas como JS local — zero envio para o Sheets ──────
-    salvar_fonte_local(portal_rows_dedup,   CSV_VENDTEF_LOCAL,  "LAVAI_VENDTEF_DATA")
-    salvar_fonte_local(vmpay_rows_dedup,    CSV_VMPAY_LOCAL,    "LAVAI_VMPAY_DATA")
-    salvar_fonte_local(payblu_rows_dedup,   CSV_PAYBLU_LOCAL,   "LAVAI_PAYBLU_DATA")
-    salvar_fonte_local(sq_rows_dedup,       CSV_SQI_LOCAL,      "LAVAI_SQI_DATA")
+    salvar_fonte_local(portal_rows_dedup,   root_dir / "vendtef_local.js",  "LAVAI_VENDTEF_DATA")
+    salvar_fonte_local(vmpay_rows_dedup,    root_dir / "vmpay_local.js",    "LAVAI_VMPAY_DATA")
+    salvar_fonte_local(payblu_rows_dedup,   root_dir / "payblu_local.js",   "LAVAI_PAYBLU_DATA")
+    salvar_fonte_local(sq_rows_dedup,       root_dir / "sqi_local.js",      "LAVAI_SQI_DATA")
 
     # Também salvar na subpasta 'kpi' se ela existir (para manter a branch main de deploy atualizada)
-    kpi_dir = Path(__file__).parent / "kpi"
-    if kpi_dir.is_dir():
+    if kpi_dir.is_dir() and kpi_dir != root_dir:
         salvar_fonte_local(portal_rows_dedup,   kpi_dir / "vendtef_local.js",  "LAVAI_VENDTEF_DATA")
         salvar_fonte_local(vmpay_rows_dedup,    kpi_dir / "vmpay_local.js",    "LAVAI_VMPAY_DATA")
         salvar_fonte_local(payblu_rows_dedup,   kpi_dir / "payblu_local.js",   "LAVAI_PAYBLU_DATA")
