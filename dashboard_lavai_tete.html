@@ -902,6 +902,11 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
         <div class="fin-kpi-value" id="fin-kpi-margem-liq">0,0%</div>
         <div class="fin-kpi-sub" id="fin-kpi-margem-liq-sub">Após todos os custos</div>
       </div>
+      <div class="fin-kpi cycles" style="--before-bg:linear-gradient(90deg,#8b5cf6,#a78bfa)">
+        <div class="fin-kpi-label">Média de Ciclos/Máquina/Dia</div>
+        <div class="fin-kpi-value" id="fin-kpi-media-ciclos">0,0</div>
+        <div class="fin-kpi-sub" id="fin-kpi-media-ciclos-sub">Total: 0 ciclos no período</div>
+      </div>
     </div>
 
     <!-- PDV Cards view -->
@@ -3045,6 +3050,15 @@ function renderFinanceiro() {
       ? `<i class="fas fa-check-circle" style="color:#10b981"></i> Lucro consolidado no período`
       : `<i class="fas fa-exclamation-triangle" style="color:#ef4444"></i> Prejuízo consolidado no período`;
 
+  // Média de ciclos/máquina/dia consolidada
+  let totalMaquinasConsolidado = 0;
+  result.forEach(({custo}) => {
+    totalMaquinasConsolidado += custo.stack * 2;
+  });
+  const mediaCiclosConsolidada = totalMaquinasConsolidado > 0 ? (totCiclos / totalMaquinasConsolidado) / (diasPeriodo || 1) : 0;
+  document.getElementById('fin-kpi-media-ciclos').textContent = fmtN(mediaCiclosConsolidada, 1);
+  document.getElementById('fin-kpi-media-ciclos-sub').textContent = `Total: ${totCiclos.toLocaleString('pt-BR')} ciclos no período`;
+
   const mlEl = document.getElementById('fin-kpi-margem-liq');
   mlEl.textContent = fmtN(margemLiq,1) + '%';
   mlEl.className = 'fin-kpi-value ' + (margemLiq >= 20 ? 'fin-delta-pos' : margemLiq >= 5 ? 'fin-delta-warn' : 'fin-delta-neg');
@@ -3054,6 +3068,9 @@ function renderFinanceiro() {
   // ── Cards por PDV ──
   const grid = document.getElementById('fin-pdv-grid');
   grid.innerHTML = result.map(({custo, calc}) => {
+    const totalCiclos = calc.washCycles + calc.dryCycles;
+    const numMaquinas = custo.stack * 2;
+    const mediaCiclos = numMaquinas > 0 ? (totalCiclos / numMaquinas) / (diasPeriodo || 1) : 0;
     const alerta = gerarAlerta(calc, custo);
     const mbPct = Math.max(0, Math.min(100, calc.margemBruta));
     const mlPct = Math.max(0, Math.min(100, calc.margemLiq));
@@ -3068,6 +3085,7 @@ function renderFinanceiro() {
           <div class="fin-pdv-name">${custo.pdv}</div>
           <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
             <span class="fin-pdv-type-badge ${custo.tipo.toLowerCase()}">${custo.tipo === 'RUA' ? '🏪 Rua' : '🏢 Condomínio'}</span>
+            <span class="fin-pdv-type-badge cycles" style="background:rgba(139,92,246,.08);color:#8b5cf6;border:1px solid rgba(139,92,246,.25)">🔄 Média: ${fmtN(mediaCiclos, 1)}/maq/dia</span>
             <span style="font-size:10px;color:var(--text-muted);padding:2px 0">${custo.stack} stack · ${calc.washCycles} lav · ${calc.dryCycles} sec</span>
           </div>
         </div>
