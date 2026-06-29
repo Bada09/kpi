@@ -775,13 +775,26 @@ def map_excel_row_to_csv_row(row, resolved):
 
 
 def coletar_vmpay_api():
-    log.info("Buscando dados de transações cashless da API VMPay (do início do ano até hoje)...")
+    log.info("Buscando dados de transações cashless da API VMPay...")
     
-    # Calcular data de início e fim (2026-01-01 até hoje)
+    # Verifica se já temos dados locais salvos em algum lugar
+    tem_dados = False
+    for path in [CSV_VMPAY_LOCAL, Path(__file__).parent / "vmpay_local.js", Path(__file__).parent.parent / "vmpay_local.js"]:
+        if path.exists() and len(path.read_text(encoding="utf-8")) > 1000:
+            tem_dados = True
+            break
+
     now = datetime.now()
-    start_date = datetime(2026, 1, 1, 0, 0, 0)
+    if tem_dados:
+        # Se temos dados, busca apenas os últimos 30 dias para uma atualização rápida
+        start_date = now - timedelta(days=30)
+        log.info("Dados locais de VMPay encontrados. Buscando apenas os últimos 30 dias de transações para atualização rápida...")
+    else:
+        # Se não temos dados, busca desde o início do ano
+        start_date = datetime(2026, 1, 1, 0, 0, 0)
+        log.info("Dados locais de VMPay não encontrados ou vazios. Buscando desde o início do ano (2026-01-01)...")
+
     end_date = datetime(now.year, now.month, now.day, 23, 59, 59)
-        
     start_date_str = start_date.strftime("%Y-%m-%dT%H:%M:%S")
     end_date_str = end_date.strftime("%Y-%m-%dT%H:%M:%S")
     
@@ -789,8 +802,7 @@ def coletar_vmpay_api():
     
     import urllib.parse
     
-    # Nota: A API da VMPay limita a paginação em no máximo 1000 registros por chamada (valores maiores causam erro 400).
-    # Otimizamos trazendo a quantidade máxima permitida (1000 por chamada) para fazer o menor número de requisições possível.
+    # Otimizado para trazer o limite máximo permitido (1000 por página)
     per_page = 1000
     page = 1
     has_more = True
@@ -835,7 +847,7 @@ def coletar_vmpay_api():
             log.error(f"Erro geral ao chamar a API VMPay na página {page} ({e}). Abortando coleta VMPay.")
             return None
             
-    log.info(f"API VMPay: total de {len(all_txs)} transações coletadas no mês atual.")
+    log.info(f"API VMPay: total de {len(all_txs)} transações coletadas no período.")
     rows = []
     for tx in all_txs:
         if isinstance(tx, dict):
@@ -1861,6 +1873,26 @@ def salvar_fonte_local(rows, js_path, var_name):
     except Exception as e:
         log.error("Erro ao salvar " + js_path.name + ": " + str(e))
 
+def carregar_fonte_local(caminho):
+    if not caminho.exists():
+        return []
+    try:
+        content = caminho.read_text(encoding="utf-8")
+        start_idx = content.find("`")
+        end_idx = content.rfind("`")
+        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+            csv_data = content[start_idx + 1:end_idx]
+            reader = csv.reader(csv_data.splitlines(), delimiter=";")
+            rows = []
+            for r in reader:
+                if not r or r[0].strip() == "Cliente":
+                    continue
+                rows.append(r)
+            return rows
+    except Exception as e:
+        log.error(f"Erro ao carregar dados locais de {caminho.name}: {e}")
+    return []
+
 def encontrar_repo_git(path_inicial: Path):
     """Sobe na árvore de diretórios a partir de path_inicial até encontrar um .git."""
     p = path_inicial.resolve()
@@ -2144,10 +2176,26 @@ async def coletar_tudo():
     vendpago_excel_rows = coletar_vendpago_excel()
     yougo_excel_rows = coletar_yougo_excel()  # histórico PayBlu You Go 2025
 
+        # Carrega dados VMPay já existentes para mesclar (evita perder histórico se a API falhar ou se trouxer período parcial)
+    vmpay_antigos = []
+    for p_cache in [CSV_VMPAY_LOCAL, Path(__file__).parent / "kpi" / "vmpay_local.js", Path(__file__).parent.parent / "vmpay_local.js"]:
+        if p_cache.exists() and p_cache.stat().st_size >= 100:
+            vmpay_antigos = carregar_fonte_local(p_cache)
+            if vmpay_antigos:
+                break
+
     # Deduplicar cada fonte antes de enviar (evitar duplicatas dentro do mesmo lote)
     api_rows_to_merge = api_rows if api_rows is not None else []
     portal_rows_dedup   = merge_and_deduplicate(rows + vendpago_excel_rows, [])
-    vmpay_rows_dedup    = merge_and_deduplicate(api_rows_to_merge, [])  # somente API, sem excel
+    
+    # Se a API teve sucesso, mescla o novo lote com o histórico. Se falhou, preserva o histórico intacto.
+    if api_rows is not None:
+        vmpay_rows_dedup = merge_and_deduplicate(vmpay_antigos + api_rows_to_merge, [])
+        log.info(f"VMPay: mesclados {len(api_rows_to_merge)} novos registros da API com {len(vmpay_antigos)} históricos (Total: {len(vmpay_rows_dedup)}).")
+    else:
+        vmpay_rows_dedup = merge_and_deduplicate(vmpay_antigos, [])
+        log.warning(f"VMPay: mantendo {len(vmpay_rows_dedup)} registros históricos devido a falha na API.")
+        
     sq_rows_dedup       = merge_and_deduplicate(sq_rows, [])
     # PayBlu: deduplica histórico Excel junto com dados do portal (mesma fonte, evita duplicatas)
     payblu_rows_dedup   = merge_and_deduplicate(payblu_rows + yougo_excel_rows, [])
@@ -2171,16 +2219,7 @@ async def coletar_tudo():
 
     # ── Todas as fontes salvas como JS local — zero envio para o Sheets ──────
     salvar_fonte_local(portal_rows_dedup,   CSV_VENDTEF_LOCAL,  "LAVAI_VENDTEF_DATA")
-    if api_rows is not None:
-        salvar_fonte_local(vmpay_rows_dedup, CSV_VMPAY_LOCAL, "LAVAI_VMPAY_DATA")
-    else:
-        # API falhou → limpa o arquivo local para não exibir dados desatualizados
-        _vmpay_empty = "window.LAVAI_VMPAY_DATA = ``;\n"
-        try:
-            CSV_VMPAY_LOCAL.write_text(_vmpay_empty, encoding="utf-8")
-            log.warning("Falha na API VMPay. Arquivo vmpay_local.js limpo para evitar dados obsoletos.")
-        except Exception as _e:
-            log.error(f"Erro ao limpar vmpay_local.js: {_e}")
+    salvar_fonte_local(vmpay_rows_dedup,    CSV_VMPAY_LOCAL,    "LAVAI_VMPAY_DATA")
     salvar_fonte_local(payblu_rows_dedup,   CSV_PAYBLU_LOCAL,   "LAVAI_PAYBLU_DATA")
     salvar_fonte_local(sq_rows_dedup,       CSV_SQI_LOCAL,      "LAVAI_SQI_DATA")
 
@@ -2188,15 +2227,7 @@ async def coletar_tudo():
     kpi_dir = Path(__file__).parent / "kpi"
     if kpi_dir.is_dir():
         salvar_fonte_local(portal_rows_dedup,   kpi_dir / "vendtef_local.js",  "LAVAI_VENDTEF_DATA")
-        if api_rows is not None:
-            salvar_fonte_local(vmpay_rows_dedup, kpi_dir / "vmpay_local.js", "LAVAI_VMPAY_DATA")
-        else:
-            _kpi_vmpay = kpi_dir / "vmpay_local.js"
-            try:
-                _kpi_vmpay.write_text("window.LAVAI_VMPAY_DATA = ``;\n", encoding="utf-8")
-                log.warning("kpi/vmpay_local.js também limpo (API falhou).")
-            except Exception as _e:
-                log.error(f"Erro ao limpar kpi/vmpay_local.js: {_e}")
+        salvar_fonte_local(vmpay_rows_dedup,    kpi_dir / "vmpay_local.js",    "LAVAI_VMPAY_DATA")
         salvar_fonte_local(payblu_rows_dedup,   kpi_dir / "payblu_local.js",   "LAVAI_PAYBLU_DATA")
         salvar_fonte_local(sq_rows_dedup,       kpi_dir / "sqi_local.js",      "LAVAI_SQI_DATA")
         log.info("Arquivos locais da pasta 'kpi' também foram atualizados automaticamente.")
