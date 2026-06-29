@@ -851,26 +851,14 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
   <div id="page-resultados">
 
     <!-- Filtros financeiros -->
-    <div class="fin-filter-bar">
-      <label>PDV</label>
-      <select id="fin-filter-pdv" onchange="renderFinanceiro()">
-        <option value="all">Todos os PDVs</option>
-      </select>
-      <label style="margin-left:8px">Tipo de Op.</label>
-      <select id="fin-filter-tipo" onchange="renderFinanceiro()">
-        <option value="all">Todos</option>
-        <option value="RUA">🏪 Rua / Varejo</option>
-        <option value="CONDO">🏢 Condomínio</option>
-      </select>
-      <div style="flex:1"></div>
-      <div class="fin-view-toggle">
+    <!-- Titulo consolidado com toggle de visualização integrado -->
+    <div class="fin-section-title" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <span><i class="fas fa-chart-pie" style="color:var(--cyan)"></i> Consolidado Financeiro</span>
+      <div class="fin-view-toggle" style="margin:0">
         <button class="fin-view-btn active" id="finview-cards" onclick="setFinView('cards')"><i class="fas fa-th-large"></i> Cards</button>
         <button class="fin-view-btn" id="finview-table" onclick="setFinView('table')"><i class="fas fa-table"></i> Tabela</button>
       </div>
     </div>
-
-    <!-- KPIs consolidados -->
-    <div class="fin-section-title"><i class="fas fa-chart-pie" style="color:var(--cyan)"></i> Consolidado Financeiro</div>
     <div class="fin-kpi-grid" id="fin-kpi-grid">
       <div class="fin-kpi revenue">
         <div class="fin-kpi-label">Receita Total</div>
@@ -1685,7 +1673,9 @@ function applyFilter(){
     // PDV filter
     if (filterPdv !== 'all') {
       const maq = (r[C.maquina] || '').trim();
-      if (maq !== filterPdv) return false;
+      const custoObj = findCustoPDV(maq);
+      const pdvName = custoObj ? custoObj.pdv : maq;
+      if (pdvName !== filterPdv) return false;
     }
     
     // Custom date range filter
@@ -1721,6 +1711,9 @@ function renderAll(){
   renderPdvList();
   renderTable();
   updateElapsedTimes();
+  if (typeof renderFinanceiro === 'function') {
+    renderFinanceiro();
+  }
 }
 
 function updateElapsedTimes() {
@@ -1871,7 +1864,8 @@ function renderKPIs(){
   const todayRows = allRows.filter(r => {
     if (filterPdv !== 'all') {
       const maquina = (r[C.maquina] || '').trim();
-      const pdvName = pdvMap[maquina] || maquina;
+      const custoObj = findCustoPDV(maquina);
+      const pdvName = custoObj ? custoObj.pdv : maquina;
       if (pdvName !== filterPdv) return false;
     }
     if (filterFonte !== 'all' && getRowSource(r) !== filterFonte) return false;
@@ -2526,6 +2520,13 @@ async function integrarVmpayAPI() {
     return rows;
   }
 
+  // ── Carregar Custos PDV dinâmicos ──
+  await tryLoad('LAVAI_CUSTOS_PDV', 'custos_pdv_local.js');
+  if (window.LAVAI_CUSTOS_PDV && window.LAVAI_CUSTOS_PDV.length > 0) {
+    CUSTOS_PDV = window.LAVAI_CUSTOS_PDV;
+    console.log('Custos de PDV carregados dinamicamente: ' + CUSTOS_PDV.length + ' registros.');
+  }
+
   // 1. VendTEF — vendtef_local.js
   await tryLoad('LAVAI_VENDTEF_DATA', 'vendtef_local.js');
   if (window.LAVAI_VENDTEF_DATA) {
@@ -2675,7 +2676,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ══════════════════════════════════════════════════════
 // CUSTOS DA OPERAÇÃO — dados da planilha Custo_operação.xlsx
 // ══════════════════════════════════════════════════════
-const CUSTOS_PDV = [
+let CUSTOS_PDV = [
   {pdv:'1# Extra Itaquera',       stack:2, tipo:'RUA',   internet:80, mp:0.12, aluguel:800,  comissao:0.12, produto:0.54, tecnico:400, energiaLav:0.18, energiaSec:1.65, agua:0.90},
   {pdv:'10# Extra Vila Mariana',  stack:2, tipo:'RUA',   internet:80, mp:0.00, aluguel:800,  comissao:0.00, produto:0.54, tecnico:400, energiaLav:0.18, energiaSec:1.65, agua:0.90},
   {pdv:'11# Extra Barra Funda',   stack:1, tipo:'RUA',   internet:80, mp:0.00, aluguel:600,  comissao:0.00, produto:0.54, tecnico:400, energiaLav:0.18, energiaSec:1.65, agua:0.90},
@@ -2932,29 +2933,17 @@ function setFinView(mode) {
   if (mode === 'table') renderFinanceiro();
 }
 
-function buildFinPdvFilter() {
-  const sel = document.getElementById('fin-filter-pdv');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="all">Todos os PDVs</option>';
-  CUSTOS_PDV.forEach(c => {
-    const o = document.createElement('option');
-    o.value = c.pdv;
-    o.textContent = c.pdv;
-    sel.appendChild(o);
-  });
+function buildFinPdvFilter() { /* Unificado */ });
   if (cur) sel.value = cur;
 }
 
 function getFilteredPdvData() {
-  // Agrega dados do filtered (com filtros da página principal já aplicados)
   const diasPeriodo = getFilteredDaysCount();
-  const finPdv = document.getElementById('fin-filter-pdv').value;
-  const finTipo = document.getElementById('fin-filter-tipo').value;
+  const mainPdv = document.getElementById('filter-pdv').value;
 
   const pdvMap = {};
   filtered.forEach(r => {
     let maqName = (r[C.maquina] || '').trim();
-    // normalizar nome
     if (/^\d+$/.test(maqName)) maqName = (r[0] || maqName).trim();
     if (!maqName) return;
 
@@ -2965,11 +2954,8 @@ function getFilteredPdvData() {
     pdvMap[maqName].receita += toNum(r[C.total]);
   });
 
-  // Mapeia cada PDV com seus custos
   let result = [];
-  // Itera pelos PDVs de custo que têm dados OU pelos que foram cadastrados
   const pdvNomesComDados = new Set(Object.keys(pdvMap));
-
   CUSTOS_PDV.forEach(custo => {
     // Tenta casar nome do custo com nome do dado
     let dadoKey = null;
@@ -2997,9 +2983,18 @@ function getFilteredPdvData() {
     result.push({custo, calc, dadosEncontrados: !!dadoKey});
   });
 
-  // Aplica filtros da página fin
-  if (finPdv !== 'all') result = result.filter(x => x.custo.pdv === finPdv);
-  if (finTipo !== 'all') result = result.filter(x => x.custo.tipo === finTipo);
+  // Filtrar pelo PDV selecionado no filtro principal
+  if (mainPdv !== 'all') {
+    result = result.filter(x => {
+      if (x.custo.pdv === mainPdv) return true;
+      const nm = x.custo.pdv.match(/^(\d+#)/);
+      if (nm) {
+        const pref = nm[1].toLowerCase();
+        if (mainPdv.toLowerCase().startsWith(pref)) return true;
+      }
+      return false;
+    });
+  }
 
   // Ordena: maior receita primeiro
   result.sort((a,b) => b.calc.receita - a.calc.receita);
@@ -3453,7 +3448,8 @@ function renderWeatherChart() {
       if (r[C.data] !== formattedDate) return false;
       if (filterPdv !== 'all') {
         const maquina = (r[C.maquina] || '').trim();
-        const pdvName = pdvMap[maquina] || maquina;
+        const custoObj = findCustoPDV(maquina);
+        const pdvName = custoObj ? custoObj.pdv : maquina;
         if (pdvName !== filterPdv) return false;
       }
       if (filterFonte !== 'all' && getRowSource(r) !== filterFonte) return false;
