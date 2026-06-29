@@ -315,6 +315,10 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
 .kpi-today::before{background:linear-gradient(90deg,#ec4899,#f43f5e)}
 .kpi-today .kpi-icon{background:rgba(236,72,153,.12);color:#ec4899}
 
+/* CLIMA SAO PAULO - KPI card extra */
+.kpi-weather::before{background:linear-gradient(90deg,#0ea5e9,#06b6d4)}
+.kpi-weather .kpi-icon{background:rgba(14,165,233,.12);color:#0ea5e9}
+
 /* ══════════════════════════════════════════════════
    BOTÃO TIPO DE OPERAÇÃO
 ══════════════════════════════════════════════════ */
@@ -595,6 +599,19 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
     </button>
   </div>
 
+  <!-- MODAL: CLIMA SÃO PAULO -->
+  <div class="op-modal-overlay" id="weather-modal-overlay" onclick="closeWeatherModal(event)" style="z-index: 1000;">
+    <div class="op-modal" style="max-width: 700px; width: 90%;">
+      <div class="op-modal-header">
+        <h2><i class="fas fa-cloud-sun-rain" style="color:var(--cyan)"></i> Clima em São Paulo - Mês Atual</h2>
+        <button class="op-modal-close" onclick="closeWeatherModal()">✕</button>
+      </div>
+      <div class="op-modal-body" style="padding-bottom:15px;">
+        <div id="weather-monthly-chart" style="width: 100%; min-height: 320px;"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: TIPO DE OPERAÇÃO -->
   <div class="op-modal-overlay" id="op-modal-overlay" onclick="closeOpModal(event)">
     <div class="op-modal">
@@ -706,6 +723,17 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
         </div>
       </div>
       <div class="kpi-icon" style="background:rgba(16,185,129,.12);color:var(--green)"><i class="fas fa-soap"></i></div>
+    </div>
+    <div class="kpi-card kpi-weather" id="kpi-weather-card" style="cursor:pointer" onclick="abrirModalClima()">
+      <div class="kpi-content">
+        <h3>Clima São Paulo</h3>
+        <div class="kpi-value" id="kpi-weather-temp">--°C</div>
+        <div class="kpi-subtext" id="kpi-weather-sub">
+          <i class="fas fa-cloud-sun" style="color:var(--cyan)"></i>
+          <span>Carregando clima...</span>
+        </div>
+      </div>
+      <div class="kpi-icon" id="kpi-weather-icon-box" style="background:rgba(14,165,233,.12);color:var(--cyan)"><i class="fas fa-cloud-sun"></i></div>
     </div>
   </div><!-- /kpi-grid -->
 
@@ -3191,12 +3219,217 @@ function renderFinanceiro() {
   }
 }
 
+// ══════════════════════════════════════════════════════
+// CLIMA SÃO PAULO
+// ══════════════════════════════════════════════════════
+let weatherData = null;
+let weatherChart = null;
+
+async function fetchWeatherData() {
+  try {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const startDate = `${year}-${month}-01`;
+    const endDate = `${year}-${month}-${day}`;
+
+    // 1. Busca clima atual
+    const resCurr = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-23.5505&longitude=-46.6333&current_weather=true&timezone=America/Sao_Paulo');
+    const dataCurr = await resCurr.json();
+    
+    // 2. Busca histórico mensal
+    const resHist = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=-23.5505&longitude=-46.6333&start_date=${startDate}&end_date=${endDate}&daily=temperature_2m_max,temperature_2m_min,rain_sum&timezone=America/Sao_Paulo`);
+    const dataHist = await resHist.json();
+
+    weatherData = {
+      current: dataCurr.current_weather,
+      daily: dataHist.daily
+    };
+
+    updateWeatherCard();
+  } catch (err) {
+    console.error("Erro ao buscar dados climáticos:", err);
+    document.getElementById('kpi-weather-sub').innerHTML = `
+      <i class="fas fa-triangle-exclamation" style="color:var(--red)"></i>
+      <span>Erro ao carregar clima</span>
+    `;
+  }
+}
+
+function getWeatherDesc(code) {
+  const codes = {
+    0: "Céu Limpo",
+    1: "Predominantemente Limpo",
+    2: "Parcialmente Nublado",
+    3: "Encoberto",
+    45: "Nevoeiro",
+    48: "Nevoeiro com Gelo",
+    51: "Garoa Leve",
+    53: "Garoa Moderada",
+    55: "Garoa Densa",
+    61: "Chuva Leve",
+    63: "Chuva Moderada",
+    65: "Chuva Forte",
+    80: "Pancadas Leves de Chuva",
+    81: "Pancadas Moderadas",
+    82: "Pancadas Fortes",
+    95: "Tempestade",
+    96: "Tempestade com Granizo",
+    99: "Tempestade Forte"
+  };
+  return codes[code] || "Instável";
+}
+
+function getWeatherIcon(code) {
+  if ([0, 1].includes(code)) return "fa-sun";
+  if ([2, 3].includes(code)) return "fa-cloud-sun";
+  if ([45, 48].includes(code)) return "fa-smog";
+  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return "fa-cloud-showers-heavy";
+  if ([95, 96, 99].includes(code)) return "fa-cloud-bolt";
+  return "fa-cloud";
+}
+
+function updateWeatherCard() {
+  if (!weatherData || !weatherData.current) return;
+  const temp = Math.round(weatherData.current.temperature);
+  const code = weatherData.current.weathercode;
+  const desc = getWeatherDesc(code);
+  const iconClass = getWeatherIcon(code);
+
+  document.getElementById('kpi-weather-temp').textContent = `${temp}°C`;
+  document.getElementById('kpi-weather-sub').innerHTML = `
+    <i class="fas ${iconClass}" style="color:var(--cyan)"></i>
+    <span>São Paulo: ${desc}</span>
+  `;
+  
+  const iconBox = document.getElementById('kpi-weather-icon-box');
+  if (iconBox) {
+    iconBox.innerHTML = `<i class="fas ${iconClass}"></i>`;
+  }
+}
+
+function abrirModalClima() {
+  document.getElementById('weather-modal-overlay').classList.add('open');
+  setTimeout(() => {
+    renderWeatherChart();
+  }, 120);
+}
+
+function closeWeatherModal(e) {
+  if (!e || e.target === document.getElementById('weather-modal-overlay') || !e.target) {
+    document.getElementById('weather-modal-overlay').classList.remove('open');
+  }
+}
+
+function renderWeatherChart() {
+  if (!weatherData || !weatherData.daily) return;
+  
+  const daily = weatherData.daily;
+  const categories = daily.time.map(dateStr => {
+    const parts = dateStr.split('-');
+    return `${parts[2]}/${parts[1]}`;
+  });
+
+  const options = {
+    series: [
+      {
+        name: 'Temp Máxima (°C)',
+        type: 'line',
+        data: daily.temperature_2m_max
+      },
+      {
+        name: 'Temp Mínima (°C)',
+        type: 'line',
+        data: daily.temperature_2m_min
+      },
+      {
+        name: 'Chuva (mm)',
+        type: 'column',
+        data: daily.rain_sum
+      }
+    ],
+    chart: {
+      height: 300,
+      type: 'line',
+      stacked: false,
+      toolbar: { show: false },
+      fontFamily: 'inherit'
+    },
+    colors: ['#ef4444', '#3b82f6', '#0ea5e9'],
+    stroke: {
+      width: [3, 3, 0],
+      curve: 'smooth'
+    },
+    plotOptions: {
+      bar: {
+        columnWidth: '45%'
+      }
+    },
+    dataLabels: {
+      enabled: false
+    },
+    legend: {
+      position: 'top',
+      horizontalAlign: 'center'
+    },
+    xaxis: {
+      categories: categories,
+      labels: {
+        style: { colors: '#64748b' }
+      }
+    },
+    yaxis: [
+      {
+        title: {
+          text: 'Temperatura (°C)',
+          style: { color: '#ef4444' }
+        },
+        labels: {
+          style: { colors: '#64748b' }
+        }
+      },
+      {
+        opposite: true,
+        title: {
+          text: 'Chuva (mm)',
+          style: { color: '#0ea5e9' }
+        },
+        labels: {
+          style: { colors: '#64748b' }
+        }
+      }
+    ],
+    tooltip: {
+      shared: true,
+      intersect: false,
+      y: {
+        formatter: function (y) {
+          if (typeof y !== "undefined") {
+            return y.toFixed(1);
+          }
+          return y;
+        }
+      }
+    }
+  };
+
+  if (weatherChart) {
+    weatherChart.destroy();
+  }
+  
+  weatherChart = new ApexCharts(document.querySelector("#weather-monthly-chart"), options);
+  weatherChart.render();
+}
+
 // ── Inicializa página resultados com display:none ──
 document.addEventListener('DOMContentLoaded', () => {
   const rPage = document.getElementById('page-resultados');
   if (rPage) rPage.style.display = 'none';
   // Inicializa modal com dados
   buildOpModal('TODOS');
+  // Busca dados de clima
+  fetchWeatherData();
 });
 </script>
 </body>
