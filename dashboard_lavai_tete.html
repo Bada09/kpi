@@ -311,6 +311,9 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
 ══════════════════════════════════════════════════ */
 .kpi-cycles-machine::before{background:linear-gradient(90deg,#6366f1,#8b5cf6)}
 .kpi-cycles-machine .kpi-icon{background:rgba(99,102,241,.12);color:#6366f1}
+/* TODAY SALES - KPI card extra */
+.kpi-today::before{background:linear-gradient(90deg,#ec4899,#f43f5e)}
+.kpi-today .kpi-icon{background:rgba(236,72,153,.12);color:#ec4899}
 
 /* ══════════════════════════════════════════════════
    BOTÃO TIPO DE OPERAÇÃO
@@ -638,6 +641,17 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
       <div class="kpi-content"><h3>Projeção de Faturamento</h3><div class="kpi-value" id="kpi-projection-val">R$ 0,00</div>
         <div class="kpi-subtext" id="kpi-projection-sub"><span>Calculando...</span></div></div>
       <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+    </div>
+    <div class="kpi-card kpi-today">
+      <div class="kpi-content">
+        <h3>Vendas de Hoje</h3>
+        <div class="kpi-value" id="kpi-today-val">0</div>
+        <div class="kpi-subtext" id="kpi-today-sub">
+          <i class="fas fa-bullseye" style="color:#ec4899"></i>
+          <span>Meta: 0 | 0% atingida</span>
+        </div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-shopping-bag"></i></div>
     </div>
     <div class="kpi-card kpi-wash">
       <div class="kpi-content"><h3>Ciclos de Lavagem</h3><div class="kpi-value" id="kpi-wash-val">0</div>
@@ -1295,7 +1309,11 @@ function getRowSource(r) {
 // CSV FETCH & PARSE
 // ══════════════════════════════════════════════════════
 function parseCSV(txt){
-  const lines=txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split('\n');
+  const lines=txt.replace(/\r
+/g,'
+').replace(/\r/g,'
+').trim().split('
+');
   const firstLine = lines[0] || '';
   const delimiter = firstLine.includes(';') ? ';' : ',';
   function split(l){
@@ -1324,6 +1342,14 @@ function parseDate(s){
     }
   }
   return null;
+}
+
+function getTodayStr() {
+  const d = new Date();
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 function fmtBRL(n){return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
@@ -1801,6 +1827,28 @@ function renderKPIs(){
   document.getElementById('kpi-pdvs-val').textContent = pdvsAtivos.size.toLocaleString('pt-BR');
   document.getElementById('kpi-torres-val').textContent = totalTorres.toLocaleString('pt-BR');
   document.getElementById('kpi-maquinas-val').textContent = totalMaquinas.toLocaleString('pt-BR');
+
+  // Vendas de hoje e meta (2 por dia por PDV ativo no período selecionado)
+  const todayStr = getTodayStr();
+  const filterPdv = document.getElementById('filter-pdv').value;
+  const todayRows = allRows.filter(r => {
+    if (filterPdv !== 'all') {
+      const maquina = (r[C.maquina] || '').trim();
+      const pdvName = pdvMap[maquina] || maquina;
+      if (pdvName !== filterPdv) return false;
+    }
+    if (filterFonte !== 'all' && getRowSource(r) !== filterFonte) return false;
+    return r[C.data] === todayStr;
+  });
+  const todaySalesCount = todayRows.length;
+  const dailyGoal = 2 * (filterPdv !== 'all' ? 1 : (pdvsAtivos.size || 25));
+  const pctMet = dailyGoal > 0 ? Math.round((todaySalesCount / dailyGoal) * 100) : 0;
+  
+  document.getElementById('kpi-today-val').textContent = todaySalesCount.toLocaleString('pt-BR');
+  document.getElementById('kpi-today-sub').innerHTML = `
+    <i class="fas fa-bullseye" style="color:#ec4899"></i>
+    <span>Meta: ${dailyGoal} | ${pctMet}% atingida</span>
+  `;
 
   // Projeção: se o período for passado, a projeção é o próprio total faturado
   const now = new Date();

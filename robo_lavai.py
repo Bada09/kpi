@@ -774,22 +774,36 @@ def map_excel_row_to_csv_row(row, resolved):
     ]
 
 
-def coletar_vmpay_api():
+def obter_ultima_data_cache(rows):
+    # Retorna o objeto datetime correspondente à última data encontrada nas linhas
+    # O formato da data nas linhas é DD/MM/YYYY na coluna index 11 (C.data)
+    ultima_dt = None
+    for r in rows:
+        if len(r) >= 12:
+            dt_str = r[11].strip()
+            try:
+                day, month, year = map(int, dt_str.split('/'))
+                dt = datetime(year, month, day)
+                if ultima_dt is None or dt > ultima_dt:
+                    ultima_dt = dt
+            except Exception:
+                pass
+    return ultima_dt
+
+def coletar_vmpay_api(vmpay_antigos=None):
     log.info("Buscando dados de transações cashless da API VMPay...")
     
-    # Verifica se já temos dados locais salvos em algum lugar
-    tem_dados = False
-    for path in [CSV_VMPAY_LOCAL, Path(__file__).parent / "vmpay_local.js", Path(__file__).parent.parent / "vmpay_local.js"]:
-        if path.exists() and len(path.read_text(encoding="utf-8")) > 1000:
-            tem_dados = True
-            break
-
     now = datetime.now()
-    if tem_dados:
-        # Se temos dados, busca apenas os últimos 30 dias para uma atualização rápida
-        start_date = now - timedelta(days=30)
-        log.info("Dados locais de VMPay encontrados. Buscando apenas os últimos 30 dias de transações para atualização rápida...")
-    else:
+    start_date = None
+    
+    if vmpay_antigos:
+        ultima_dt = obter_ultima_data_cache(vmpay_antigos)
+        if ultima_dt:
+            # Começa 2 dias antes da última transação para garantir que nenhuma transação pendente foi perdida
+            start_date = ultima_dt - timedelta(days=2)
+            log.info(f"Última transação do cache encontrada em {ultima_dt.strftime('%d/%m/%Y')}. Buscando novos dados a partir de {start_date.strftime('%d/%m/%Y')}...")
+            
+    if not start_date:
         # Se não temos dados, busca desde o início do ano
         start_date = datetime(2026, 1, 1, 0, 0, 0)
         log.info("Dados locais de VMPay não encontrados ou vazios. Buscando desde o início do ano (2026-01-01)...")
@@ -2155,7 +2169,8 @@ async def coletar_tudo():
                 temp_zip.unlink()
 
             # Coletar PayBlu com a mesma sessão autenticada
-            payblu_rows = await coletar_payblu(page)
+            # payblu_rows = await coletar_payblu(page) # desativado por solicitacao do usuario
+            payblu_rows = []
 
         except Exception as e:
             log.error(f"Erro durante extracao ERP/VendTEF/PayBlu: {e}")
@@ -2169,20 +2184,20 @@ async def coletar_tudo():
         finally:
             await browser.close()
 
-    # Coletar dados da API VMPay Cashless, SQInsights, VendPago Excel e unificar com os dados raspados
-    api_rows = coletar_vmpay_api()
-    # excel_rows removido: VMPay local não é mais usado; fonte única = API VMPay
-    sq_rows = await coletar_sq_excel()
-    vendpago_excel_rows = coletar_vendpago_excel()
-    yougo_excel_rows = coletar_yougo_excel()  # histórico PayBlu You Go 2025
-
-        # Carrega dados VMPay já existentes para mesclar (evita perder histórico se a API falhar ou se trouxer período parcial)
+    # Carrega dados VMPay já existentes para obter a última data e mesclar (evita perder histórico se a API falhar ou se trouxer período parcial)
     vmpay_antigos = []
-    for p_cache in [CSV_VMPAY_LOCAL, Path(__file__).parent / "kpi" / "vmpay_local.js", Path(__file__).parent.parent / "vmpay_local.js"]:
+    for p_cache in [CSV_VMPAY_LOCAL, Path(__file__).parent / "vmpay_local.js", Path(__file__).parent / "kpi" / "vmpay_local.js", Path(__file__).parent.parent / "vmpay_local.js"]:
         if p_cache.exists() and p_cache.stat().st_size >= 100:
             vmpay_antigos = carregar_fonte_local(p_cache)
             if vmpay_antigos:
                 break
+
+    # Coletar dados da API VMPay Cashless, SQInsights, VendPago Excel e unificar com os dados raspados
+    api_rows = coletar_vmpay_api(vmpay_antigos)
+    # excel_rows removido: VMPay local não é mais usado; fonte única = API VMPay
+    sq_rows = await coletar_sq_excel()
+    vendpago_excel_rows = coletar_vendpago_excel()
+    yougo_excel_rows = coletar_yougo_excel()  # histórico PayBlu You Go 2025
 
     # Deduplicar cada fonte antes de enviar (evitar duplicatas dentro do mesmo lote)
     api_rows_to_merge = api_rows if api_rows is not None else []
@@ -2197,17 +2212,29 @@ async def coletar_tudo():
         log.warning(f"VMPay: mantendo {len(vmpay_rows_dedup)} registros históricos devido a falha na API.")
         
     sq_rows_dedup       = merge_and_deduplicate(sq_rows, [])
-    # PayBlu: deduplica histórico Excel junto com dados do portal (mesma fonte, evita duplicatas)
-    payblu_rows_dedup   = merge_and_deduplicate(payblu_rows + yougo_excel_rows, [])
+    
+    # Carrega dados PayBlu já existentes para mesclar (mantém o histórico já que a coleta automática foi desativada)
+    payblu_antigos = []
+    for p_cache in [CSV_PAYBLU_LOCAL, Path(__file__).parent / "payblu_local.js", Path(__file__).parent / "kpi" / "payblu_local.js", Path(__file__).parent.parent / "payblu_local.js"]:
+        if p_cache.exists() and p_cache.stat().st_size >= 100:
+            payblu_antigos = carregar_fonte_local(p_cache)
+            if payblu_antigos:
+                break
+                
+    # PayBlu: deduplica o histórico carregado + YouGo 2025
+    payblu_rows_dedup   = merge_and_deduplicate(payblu_antigos + yougo_excel_rows, [])
 
     total_count = (len(portal_rows_dedup) + len(vmpay_rows_dedup) + len(sq_rows_dedup)
                    + len(payblu_rows_dedup))
 
-        # Determinar diretórios de gravação baseados no repositório git
-    root_dir = encontrar_repo_git(Path(__file__).parent)
-    if not root_dir:
-        root_dir = Path(__file__).parent
-    kpi_dir = root_dir / "kpi"
+            # Determinar diretórios de gravação baseados no local do script e repositório
+    script_dir = Path(__file__).parent
+    if script_dir.name == "kpi":
+        kpi_dir = script_dir
+        root_dir = script_dir.parent
+    else:
+        root_dir = script_dir
+        kpi_dir = script_dir / "kpi" 
 
     # Salva JSON de status para manter compatibilidade
     payload = {
