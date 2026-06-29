@@ -1824,7 +1824,7 @@ function renderKPIs(){
   document.getElementById('kpi-torres-val').textContent = totalTorres.toLocaleString('pt-BR');
   document.getElementById('kpi-maquinas-val').textContent = totalMaquinas.toLocaleString('pt-BR');
 
-  // Vendas de hoje e meta (2 por dia por PDV ativo no período selecionado)
+  // Vendas de hoje e meta (100 ate as 15h, 200 apos as 15h01)
   const todayStr = getTodayStr();
   const filterPdv = document.getElementById('filter-pdv').value;
   const todayRows = allRows.filter(r => {
@@ -1837,13 +1837,30 @@ function renderKPIs(){
     return r[C.data] === todayStr;
   });
   const todaySalesCount = todayRows.length;
-  const dailyGoal = 2 * (filterPdv !== 'all' ? 1 : (pdvsAtivos.size || 25));
+
+  const nowTime = new Date();
+  const currentHour = nowTime.getHours();
+  const currentMin = nowTime.getMinutes();
+  
+  let baseGoal = 200;
+  let targetLabel = "dia";
+  if (currentHour < 15 || (currentHour === 15 && currentMin === 0)) {
+    baseGoal = 100;
+    targetLabel = "ate 15h";
+  }
+  
+  let dailyGoal = baseGoal;
+  if (filterPdv !== 'all') {
+    dailyGoal = Math.round(baseGoal / (pdvsAtivos.size || 25));
+    if (dailyGoal < 1) dailyGoal = 1;
+  }
+  
   const pctMet = dailyGoal > 0 ? Math.round((todaySalesCount / dailyGoal) * 100) : 0;
   
   document.getElementById('kpi-today-val').textContent = todaySalesCount.toLocaleString('pt-BR');
   document.getElementById('kpi-today-sub').innerHTML = `
     <i class="fas fa-bullseye" style="color:#ec4899"></i>
-    <span>Meta: ${dailyGoal} | ${pctMet}% atingida</span>
+    <span>Meta: ${dailyGoal} (${targetLabel}) | ${pctMet}% atingida</span>
   `;
 
   // Projeção: se o período for passado, a projeção é o próprio total faturado
