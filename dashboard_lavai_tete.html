@@ -1965,11 +1965,8 @@ function renderKPIs(){
   const numDays = getFilteredDaysCount() || 1;
   const filterPdv = document.getElementById('filter-pdv').value;
   
-  let dailyGoal = 200;
-  if (filterPdv !== 'all') {
-    dailyGoal = totalMaquinas * 2.56;
-  }
-  
+  // A meta diaria de vendas e proporcional ao numero de maquinas ativas filtradas (2.56 vendas/maquina/dia)
+  const dailyGoal = totalMaquinas * 2.56;
   const periodGoal = Math.round(dailyGoal * numDays);
   const periodSales = filtered.length;
   
@@ -2008,6 +2005,12 @@ function renderKPIs(){
       const pdvName = custoObj ? custoObj.pdv : maquina;
       if (pdvName !== filterPdv) return false;
     }
+    if (filterOpType !== 'all') {
+      const maquina = (r[C.maquina] || '').trim();
+      const custoObj = findCustoPDV(maquina);
+      const pdvTipo = custoObj ? custoObj.tipo : 'RUA';
+      if (pdvTipo !== filterOpType) return false;
+    }
     if (filterFonte !== 'all' && getRowSource(r) !== filterFonte) return false;
     return r[C.data] === todayStr;
   });
@@ -2018,6 +2021,12 @@ function renderKPIs(){
       const custoObj = findCustoPDV(maquina);
       const pdvName = custoObj ? custoObj.pdv : maquina;
       if (pdvName !== filterPdv) return false;
+    }
+    if (filterOpType !== 'all') {
+      const maquina = (r[C.maquina] || '').trim();
+      const custoObj = findCustoPDV(maquina);
+      const pdvTipo = custoObj ? custoObj.tipo : 'RUA';
+      if (pdvTipo !== filterOpType) return false;
     }
     if (filterFonte !== 'all' && getRowSource(r) !== filterFonte) return false;
     return r[C.data] === yesterdayStr;
@@ -3116,7 +3125,13 @@ function getFilteredPdvData() {
 
   let result = [];
   const pdvNomesComDados = new Set(Object.keys(pdvMap));
-  CUSTOS_PDV.forEach(custo => {
+  
+  // Filtra os custos pelo tipo de operacao selecionado
+  const custosFiltrados = filterOpType === 'all' 
+    ? CUSTOS_PDV 
+    : CUSTOS_PDV.filter(c => c.tipo === filterOpType);
+
+  custosFiltrados.forEach(custo => {
     // Tenta casar nome do custo com nome do dado
     let dadoKey = null;
     // exact
@@ -3163,6 +3178,7 @@ function getFilteredPdvData() {
       energiaSec: 1.65,
       agua: 0.90
     };
+    if (filterOpType !== 'all' && defaultCusto.tipo !== filterOpType) return;
     const dados = pdvMap[maqName];
     const calc = calcCustoPDV(defaultCusto, dados.wash, dados.dry, dados.receita, diasPeriodo);
     result.push({custo: defaultCusto, calc, dadosEncontrados: true});
