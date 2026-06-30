@@ -315,6 +315,10 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
 .kpi-today::before{background:linear-gradient(90deg,#ec4899,#f43f5e)}
 .kpi-today .kpi-icon{background:rgba(236,72,153,.12);color:#ec4899}
 
+/* TODAY & YESTERDAY SALES - KPI card extra */
+.kpi-today-yesterday::before{background:linear-gradient(90deg,#0ea5e9,#8b5cf6)}
+.kpi-today-yesterday .kpi-icon{background:rgba(14,165,233,.12);color:#0ea5e9}
+
 /* CLIMA SAO PAULO - KPI card extra */
 .kpi-weather::before{background:linear-gradient(90deg,#0ea5e9,#06b6d4)}
 .kpi-weather .kpi-icon{background:rgba(14,165,233,.12);color:#0ea5e9}
@@ -661,7 +665,7 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
     </div>
     <div class="kpi-card kpi-today">
       <div class="kpi-content">
-        <h3>Vendas de Hoje</h3>
+        <h3 id="kpi-today-title">Vendas de Hoje</h3>
         <div class="kpi-value" id="kpi-today-val">0</div>
         <div class="kpi-subtext" id="kpi-today-sub">
           <i class="fas fa-bullseye" style="color:#ec4899"></i>
@@ -669,6 +673,20 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
         </div>
       </div>
       <div class="kpi-icon"><i class="fas fa-shopping-bag"></i></div>
+    </div>
+    <div class="kpi-card kpi-today-yesterday">
+      <div class="kpi-content">
+        <h3 id="kpi-today-yesterday-title">Hoje & Ontem</h3>
+        <div class="kpi-value" id="kpi-today-yesterday-val" style="font-size: 16px; line-height: 1.4; margin-top: 5px; font-weight: 700;">
+          Hoje: <span id="kpi-today-count" style="color:#10b981">0</span><br>
+          Ontem: <span id="kpi-yesterday-count" style="color:#ef4444">0</span>
+        </div>
+        <div class="kpi-subtext" id="kpi-today-yesterday-sub">
+          <i class="fas fa-calendar-check" style="color:#0ea5e9"></i>
+          <span>Carregando...</span>
+        </div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-history"></i></div>
     </div>
     <div class="kpi-card kpi-wash">
       <div class="kpi-content"><h3>Ciclos de Lavagem</h3><div class="kpi-value" id="kpi-wash-val">0</div>
@@ -1380,6 +1398,15 @@ function getTodayStr() {
   return `${day}/${month}/${year}`;
 }
 
+function getYesterdayStr() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 function fmtBRL(n){return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
 function fmtN(n,d=2){return n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});}
 
@@ -1895,9 +1922,48 @@ function renderKPIs(){
   document.getElementById('kpi-weekday-val').textContent = weekdayText;
   document.getElementById('kpi-weekday-sub').querySelector('span').textContent = weekdaySub;
 
-  // Vendas de hoje e meta (100 ate as 15h, 200 apos as 15h01)
-  const todayStr = getTodayStr();
+  // ── Atualizar Vendas no Período / Meta ──
+  const numDays = getFilteredDaysCount() || 1;
   const filterPdv = document.getElementById('filter-pdv').value;
+  
+  let baseDailyGoal = 200;
+  let dailyGoal = baseDailyGoal;
+  if (filterPdv !== 'all') {
+    dailyGoal = Math.round(baseDailyGoal / (pdvsAtivos.size || 25));
+    if (dailyGoal < 1) dailyGoal = 1;
+  }
+  
+  const periodGoal = dailyGoal * numDays;
+  const periodSales = filtered.length;
+  
+  let pctText = "";
+  let pctColor = "";
+  if (periodGoal > 0) {
+    const diff = periodSales - periodGoal;
+    const pct = Math.abs(Math.round((diff / periodGoal) * 100));
+    if (diff >= 0) {
+      pctText = `+${pct}% acima da meta`;
+      pctColor = '#10b981'; // green
+    } else {
+      pctText = `-${pct}% abaixo da meta`;
+      pctColor = '#ef4444'; // red
+    }
+  } else {
+    pctText = "Sem meta";
+    pctColor = 'var(--text-muted)';
+  }
+  
+  document.getElementById('kpi-today-title').textContent = numDays === 1 ? 'Vendas do Dia' : 'Vendas no Período';
+  document.getElementById('kpi-today-val').textContent = periodSales.toLocaleString('pt-BR');
+  document.getElementById('kpi-today-sub').innerHTML = `
+    <i class="fas fa-bullseye" style="color:${pctColor}"></i>
+    <span>Meta: ${periodGoal} | <strong style="color:${pctColor}">${pctText}</strong></span>
+  `;
+
+  // ── Atualizar Card Hoje & Ontem ──
+  const todayStr = getTodayStr();
+  const yesterdayStr = getYesterdayStr();
+  
   const todayRows = allRows.filter(r => {
     if (filterPdv !== 'all') {
       const maquina = (r[C.maquina] || '').trim();
@@ -1908,32 +1974,21 @@ function renderKPIs(){
     if (filterFonte !== 'all' && getRowSource(r) !== filterFonte) return false;
     return r[C.data] === todayStr;
   });
-  const todaySalesCount = todayRows.length;
-
-  const nowTime = new Date();
-  const currentHour = nowTime.getHours();
-  const currentMin = nowTime.getMinutes();
   
-  let baseGoal = 200;
-  let targetLabel = "dia";
-  if (currentHour < 15 || (currentHour === 15 && currentMin === 0)) {
-    baseGoal = 100;
-    targetLabel = "ate 15h";
-  }
+  const yesterdayRows = allRows.filter(r => {
+    if (filterPdv !== 'all') {
+      const maquina = (r[C.maquina] || '').trim();
+      const custoObj = findCustoPDV(maquina);
+      const pdvName = custoObj ? custoObj.pdv : maquina;
+      if (pdvName !== filterPdv) return false;
+    }
+    if (filterFonte !== 'all' && getRowSource(r) !== filterFonte) return false;
+    return r[C.data] === yesterdayStr;
+  });
   
-  let dailyGoal = baseGoal;
-  if (filterPdv !== 'all') {
-    dailyGoal = Math.round(baseGoal / (pdvsAtivos.size || 25));
-    if (dailyGoal < 1) dailyGoal = 1;
-  }
-  
-  const pctMet = dailyGoal > 0 ? Math.round((todaySalesCount / dailyGoal) * 100) : 0;
-  
-  document.getElementById('kpi-today-val').textContent = todaySalesCount.toLocaleString('pt-BR');
-  document.getElementById('kpi-today-sub').innerHTML = `
-    <i class="fas fa-bullseye" style="color:#ec4899"></i>
-    <span>Meta: ${dailyGoal} (${targetLabel}) | ${pctMet}% atingida</span>
-  `;
+  document.getElementById('kpi-today-count').textContent = todayRows.length.toLocaleString('pt-BR');
+  document.getElementById('kpi-yesterday-count').textContent = yesterdayRows.length.toLocaleString('pt-BR');
+  document.getElementById('kpi-today-yesterday-sub').querySelector('span').textContent = `Hoje: ${todayStr}`;
 
   // Projeção: se o período for passado, a projeção é o próprio total faturado
   const now = new Date();
