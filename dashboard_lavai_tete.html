@@ -6,10 +6,1038 @@
 <title>Dashboard LAVAÍ — Consolidado</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts">
+// ══════════════════════════════════════════════════════
+// ROBÔ LAVAÍ IA ASSISTENTE ENGINE
+// ══════════════════════════════════════════════════════
+let speechRecognitionObj = null;
+
+function toggleLavaiBot() {
+  const chat = document.getElementById('lavai-bot-chat');
+  if (chat) {
+    chat.classList.toggle('open');
+    if (chat.classList.contains('open')) {
+      document.getElementById('lavai-bot-input').focus();
+    }
+  }
+}
+
+function handleLavaiBotKey(e) {
+  if (e.key === 'Enter') {
+    sendLavaiBotMessage();
+  }
+}
+
+function setRobotState(state) {
+  const trigger = document.getElementById('lavai-bot-trigger');
+  if (!trigger) return;
+  trigger.classList.remove('listening', 'thinking');
+  if (state === 'listening') trigger.classList.add('listening');
+  if (state === 'thinking') trigger.classList.add('thinking');
+}
+
+function sendRobotText(text, isUser = false) {
+  const box = document.getElementById('lavai-bot-messages');
+  if (!box) return;
+  const msg = document.createElement('div');
+  msg.className = 'lavai-bot-msg ' + (isUser ? 'user' : 'bot');
+  msg.innerHTML = text;
+  box.appendChild(msg);
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendLavaiBotMessage() {
+  const input = document.getElementById('lavai-bot-input');
+  if (!input) return;
+  const query = input.value.trim();
+  if (!query) return;
+  
+  // Envia msg do usuário
+  sendRobotText(query, true);
+  input.value = '';
+  
+  // Estado: Pensando
+  setRobotState('thinking');
+  
+  setTimeout(() => {
+    try {
+      const reply = answerQuestionLocal(query);
+      sendRobotText(reply, false);
+    } catch(e) {
+      console.error(e);
+      sendRobotText("Ops, deu um erro ao pesquisar no banco de dados local. 🤖⚠️");
+    } finally {
+      setRobotState('idle');
+    }
+  }, 600);
+}
+
+function startSpeechToText() {
+  const btn = document.getElementById('lavai-bot-audio-btn');
+  if (!btn) return;
+  
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    sendRobotText("Seu navegador não suporta reconhecimento de voz. Tente usar o Google Chrome. 🎙️❌");
+    return;
+  }
+  
+  if (btn.classList.contains('active')) {
+    if (speechRecognitionObj) speechRecognitionObj.stop();
+    return;
+  }
+  
+  btn.classList.add('active');
+  setRobotState('listening');
+  
+  const rec = new SpeechRecognition();
+  speechRecognitionObj = rec;
+  rec.lang = 'pt-BR';
+  rec.continuous = false;
+  rec.interimResults = false;
+  
+  rec.onresult = function(e) {
+    const text = e.results[0][0].transcript;
+    document.getElementById('lavai-bot-input').value = text;
+    sendLavaiBotMessage();
+  };
+  
+  rec.onerror = function(e) {
+    console.error("Voz erro:", e);
+    btn.classList.remove('active');
+    setRobotState('idle');
+  };
+  
+  rec.onend = function() {
+    btn.classList.remove('active');
+    setRobotState('idle');
+  };
+  
+  rec.start();
+}
+
+function answerQuestionLocal(q) {
+  const clean = q.toLowerCase().trim();
+  
+  // 1. Hoje
+  if (clean.includes('hoje') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
+    const todayStr = getTodayStr();
+    const rows = allRows.filter(r => r[C.data] === todayStr);
+    const sales = rows.length;
+    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    return `Hoje tivemos **${sales} vendas**, totalizando **${fmtBRL(revenue)}** faturados até o momento. 📊`;
+  }
+  
+  // 2. Ontem
+  if (clean.includes('ontem') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
+    const yesterdayStr = getYesterdayStr();
+    const rows = allRows.filter(r => r[C.data] === yesterdayStr);
+    const sales = rows.length;
+    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    return `Ontem tivemos **${sales} vendas**, faturando um total de **${fmtBRL(revenue)}**. 💰`;
+  }
+  
+  // 3. Melhor PDV
+  if (clean.includes('melhor pdv') || clean.includes('pdv faturou mais') || clean.includes('mais vendeu') || clean.includes('pdv mais faturou')) {
+    const pdvsSales = {};
+    const pdvsRev = {};
+    allRows.forEach(r => {
+      const maq = (r[C.maquina] || '').trim();
+      const c = findCustoPDV(maq);
+      const name = c ? c.pdv : maq;
+      if (name) {
+        pdvsSales[name] = (pdvsSales[name] || 0) + 1;
+        pdvsRev[name] = (pdvsRev[name] || 0) + toNum(r[C.total]);
+      }
+    });
+    let bestName = null;
+    let maxRev = -1;
+    Object.entries(pdvsRev).forEach(([name, rev]) => {
+      if (rev > maxRev) {
+        maxRev = rev;
+        bestName = name;
+      }
+    });
+    if (bestName) {
+      return `O PDV com maior faturamento histórico acumulado é **${bestName}** com **${fmtBRL(maxRev)}** (total de ${pdvsSales[bestName]} vendas). 👑`;
+    }
+  }
+  
+  // 4. Pior PDV
+  if (clean.includes('pior pdv') || clean.includes('pdv faturou menos') || clean.includes('menos vendeu') || clean.includes('pdv menos faturou')) {
+    const pdvsSales = {};
+    const pdvsRev = {};
+    allRows.forEach(r => {
+      const maq = (r[C.maquina] || '').trim();
+      const c = findCustoPDV(maq);
+      const name = c ? c.pdv : maq;
+      if (name) {
+        pdvsSales[name] = (pdvsSales[name] || 0) + 1;
+        pdvsRev[name] = (pdvsRev[name] || 0) + toNum(r[C.total]);
+      }
+    });
+    let worstName = null;
+    let minRev = 999999999;
+    Object.entries(pdvsRev).forEach(([name, rev]) => {
+      if (rev < minRev && rev > 0) {
+        minRev = rev;
+        worstName = name;
+      }
+    });
+    if (worstName) {
+      return `O PDV com menor faturamento acumulado é **${worstName}** com **${fmtBRL(minRev)}** (total de ${pdvsSales[worstName]} vendas). 📉`;
+    }
+  }
+
+  // 5. Meta
+  if (clean.includes('meta')) {
+    const numDays = getFilteredDaysCount() || 1;
+    const filterPdv = document.getElementById('filter-pdv').value;
+    const filterOpType = window.filterOpType || 'all';
+    
+    let totalMaquinas = 0;
+    let totalTorres = 0;
+    const pdvsAtivos = new Set();
+    filtered.forEach(r => {
+      const pdv = (r[C.maquina] || '').trim();
+      if (pdv) pdvsAtivos.add(pdv);
+    });
+    pdvsAtivos.forEach(pdvNome => {
+      const c = findCustoPDV(pdvNome);
+      totalTorres += c ? c.stack : 1;
+    });
+    totalMaquinas = totalTorres * 2;
+
+    let dailyGoal = 200;
+    if (filterPdv !== 'all' || filterOpType !== 'all') {
+      dailyGoal = totalMaquinas * 2.56;
+    }
+    const periodGoal = Math.round(dailyGoal * numDays);
+    const periodSales = filtered.length;
+    const diff = periodSales - periodGoal;
+    const pct = periodGoal > 0 ? Math.round((diff / periodGoal) * 100) : 0;
+    
+    if (diff >= 0) {
+      return `A meta para o período selecionado (${numDays} dia(s)) é de **${periodGoal} vendas**. Realizamos **${periodSales} vendas** (+${pct}% acima da meta!). 🎉`;
+    } else {
+      return `A meta para o período selecionado (${numDays} dia(s)) é de **${periodGoal} vendas**. Realizamos **${periodSales} vendas** (${pct}% abaixo da meta). 🎯`;
+    }
+  }
+
+  // 6. Projeção
+  if (clean.includes('proje') || clean.includes('quanto vamos faturar')) {
+    const projVal = document.getElementById('kpi-projection-val').textContent;
+    const projSub = document.getElementById('kpi-projection-sub').textContent;
+    return `A projeção estimada de faturamento para o final do período selecionado é de **${projVal}**. Subtexto: ${projSub}. 📈`;
+  }
+
+  // 7. Clima
+  if (clean.includes('clima') || clean.includes('temperatura') || clean.includes('chuva') || clean.includes('tempo')) {
+    const tempVal = document.getElementById('kpi-weather-temp').textContent;
+    const subVal = document.getElementById('kpi-weather-sub').textContent;
+    return `O clima atual em São Paulo registrado é de **${tempVal}** (${subVal}). ⛅`;
+  }
+
+  // 8. Specific PDV stats check
+  for (const custo of CUSTOS_PDV) {
+    const shortName = custo.pdv.replace(/^\d+#\s*/, '').toLowerCase();
+    if (clean.includes(shortName)) {
+      const pdvRows = allRows.filter(r => {
+        const maq = (r[C.maquina] || '').trim();
+        const c = findCustoPDV(maq);
+        return c && c.pdv === custo.pdv;
+      });
+      const totalRev = pdvRows.reduce((s, r) => s + toNum(r[C.total]), 0);
+      const wash = pdvRows.filter(r => isMaqWash(r)).length;
+      const dry = pdvRows.filter(r => isMaqDry(r)).length;
+      
+      return `Dados de **${custo.pdv}**:<br>
+        • Faturamento total: **${fmtBRL(totalRev)}**<br>
+        • Vendas totais: **${pdvRows.length}**<br>
+        • Ciclos: **${wash} lavagens** e **${dry} secagens**<br>
+        • Tipo: **${custo.tipo === 'RUA' ? 'Rua 🏪' : 'Condomínio 🏢'}** com **${custo.stack} stacks** (maquinas: ${custo.stack*2})`;
+    }
+  }
+
+  // Default fallback response
+  return `Entendi sua pergunta, mas não consegui cruzar com uma consulta exata do banco de dados local. Posso te informar sobre **Faturamento de Hoje/Ontem**, **Melhor/Pior PDV**, **Metas de Vendas**, **Projeções** ou detalhes de algum **PDV específico** (escreva o nome do PDV). 🤖`;
+}
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr">
+// ══════════════════════════════════════════════════════
+// ROBÔ LAVAÍ IA ASSISTENTE ENGINE
+// ══════════════════════════════════════════════════════
+let speechRecognitionObj = null;
+
+function toggleLavaiBot() {
+  const chat = document.getElementById('lavai-bot-chat');
+  if (chat) {
+    chat.classList.toggle('open');
+    if (chat.classList.contains('open')) {
+      document.getElementById('lavai-bot-input').focus();
+    }
+  }
+}
+
+function handleLavaiBotKey(e) {
+  if (e.key === 'Enter') {
+    sendLavaiBotMessage();
+  }
+}
+
+function setRobotState(state) {
+  const trigger = document.getElementById('lavai-bot-trigger');
+  if (!trigger) return;
+  trigger.classList.remove('listening', 'thinking');
+  if (state === 'listening') trigger.classList.add('listening');
+  if (state === 'thinking') trigger.classList.add('thinking');
+}
+
+function sendRobotText(text, isUser = false) {
+  const box = document.getElementById('lavai-bot-messages');
+  if (!box) return;
+  const msg = document.createElement('div');
+  msg.className = 'lavai-bot-msg ' + (isUser ? 'user' : 'bot');
+  msg.innerHTML = text;
+  box.appendChild(msg);
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendLavaiBotMessage() {
+  const input = document.getElementById('lavai-bot-input');
+  if (!input) return;
+  const query = input.value.trim();
+  if (!query) return;
+  
+  // Envia msg do usuário
+  sendRobotText(query, true);
+  input.value = '';
+  
+  // Estado: Pensando
+  setRobotState('thinking');
+  
+  setTimeout(() => {
+    try {
+      const reply = answerQuestionLocal(query);
+      sendRobotText(reply, false);
+    } catch(e) {
+      console.error(e);
+      sendRobotText("Ops, deu um erro ao pesquisar no banco de dados local. 🤖⚠️");
+    } finally {
+      setRobotState('idle');
+    }
+  }, 600);
+}
+
+function startSpeechToText() {
+  const btn = document.getElementById('lavai-bot-audio-btn');
+  if (!btn) return;
+  
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    sendRobotText("Seu navegador não suporta reconhecimento de voz. Tente usar o Google Chrome. 🎙️❌");
+    return;
+  }
+  
+  if (btn.classList.contains('active')) {
+    if (speechRecognitionObj) speechRecognitionObj.stop();
+    return;
+  }
+  
+  btn.classList.add('active');
+  setRobotState('listening');
+  
+  const rec = new SpeechRecognition();
+  speechRecognitionObj = rec;
+  rec.lang = 'pt-BR';
+  rec.continuous = false;
+  rec.interimResults = false;
+  
+  rec.onresult = function(e) {
+    const text = e.results[0][0].transcript;
+    document.getElementById('lavai-bot-input').value = text;
+    sendLavaiBotMessage();
+  };
+  
+  rec.onerror = function(e) {
+    console.error("Voz erro:", e);
+    btn.classList.remove('active');
+    setRobotState('idle');
+  };
+  
+  rec.onend = function() {
+    btn.classList.remove('active');
+    setRobotState('idle');
+  };
+  
+  rec.start();
+}
+
+function answerQuestionLocal(q) {
+  const clean = q.toLowerCase().trim();
+  
+  // 1. Hoje
+  if (clean.includes('hoje') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
+    const todayStr = getTodayStr();
+    const rows = allRows.filter(r => r[C.data] === todayStr);
+    const sales = rows.length;
+    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    return `Hoje tivemos **${sales} vendas**, totalizando **${fmtBRL(revenue)}** faturados até o momento. 📊`;
+  }
+  
+  // 2. Ontem
+  if (clean.includes('ontem') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
+    const yesterdayStr = getYesterdayStr();
+    const rows = allRows.filter(r => r[C.data] === yesterdayStr);
+    const sales = rows.length;
+    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    return `Ontem tivemos **${sales} vendas**, faturando um total de **${fmtBRL(revenue)}**. 💰`;
+  }
+  
+  // 3. Melhor PDV
+  if (clean.includes('melhor pdv') || clean.includes('pdv faturou mais') || clean.includes('mais vendeu') || clean.includes('pdv mais faturou')) {
+    const pdvsSales = {};
+    const pdvsRev = {};
+    allRows.forEach(r => {
+      const maq = (r[C.maquina] || '').trim();
+      const c = findCustoPDV(maq);
+      const name = c ? c.pdv : maq;
+      if (name) {
+        pdvsSales[name] = (pdvsSales[name] || 0) + 1;
+        pdvsRev[name] = (pdvsRev[name] || 0) + toNum(r[C.total]);
+      }
+    });
+    let bestName = null;
+    let maxRev = -1;
+    Object.entries(pdvsRev).forEach(([name, rev]) => {
+      if (rev > maxRev) {
+        maxRev = rev;
+        bestName = name;
+      }
+    });
+    if (bestName) {
+      return `O PDV com maior faturamento histórico acumulado é **${bestName}** com **${fmtBRL(maxRev)}** (total de ${pdvsSales[bestName]} vendas). 👑`;
+    }
+  }
+  
+  // 4. Pior PDV
+  if (clean.includes('pior pdv') || clean.includes('pdv faturou menos') || clean.includes('menos vendeu') || clean.includes('pdv menos faturou')) {
+    const pdvsSales = {};
+    const pdvsRev = {};
+    allRows.forEach(r => {
+      const maq = (r[C.maquina] || '').trim();
+      const c = findCustoPDV(maq);
+      const name = c ? c.pdv : maq;
+      if (name) {
+        pdvsSales[name] = (pdvsSales[name] || 0) + 1;
+        pdvsRev[name] = (pdvsRev[name] || 0) + toNum(r[C.total]);
+      }
+    });
+    let worstName = null;
+    let minRev = 999999999;
+    Object.entries(pdvsRev).forEach(([name, rev]) => {
+      if (rev < minRev && rev > 0) {
+        minRev = rev;
+        worstName = name;
+      }
+    });
+    if (worstName) {
+      return `O PDV com menor faturamento acumulado é **${worstName}** com **${fmtBRL(minRev)}** (total de ${pdvsSales[worstName]} vendas). 📉`;
+    }
+  }
+
+  // 5. Meta
+  if (clean.includes('meta')) {
+    const numDays = getFilteredDaysCount() || 1;
+    const filterPdv = document.getElementById('filter-pdv').value;
+    const filterOpType = window.filterOpType || 'all';
+    
+    let totalMaquinas = 0;
+    let totalTorres = 0;
+    const pdvsAtivos = new Set();
+    filtered.forEach(r => {
+      const pdv = (r[C.maquina] || '').trim();
+      if (pdv) pdvsAtivos.add(pdv);
+    });
+    pdvsAtivos.forEach(pdvNome => {
+      const c = findCustoPDV(pdvNome);
+      totalTorres += c ? c.stack : 1;
+    });
+    totalMaquinas = totalTorres * 2;
+
+    let dailyGoal = 200;
+    if (filterPdv !== 'all' || filterOpType !== 'all') {
+      dailyGoal = totalMaquinas * 2.56;
+    }
+    const periodGoal = Math.round(dailyGoal * numDays);
+    const periodSales = filtered.length;
+    const diff = periodSales - periodGoal;
+    const pct = periodGoal > 0 ? Math.round((diff / periodGoal) * 100) : 0;
+    
+    if (diff >= 0) {
+      return `A meta para o período selecionado (${numDays} dia(s)) é de **${periodGoal} vendas**. Realizamos **${periodSales} vendas** (+${pct}% acima da meta!). 🎉`;
+    } else {
+      return `A meta para o período selecionado (${numDays} dia(s)) é de **${periodGoal} vendas**. Realizamos **${periodSales} vendas** (${pct}% abaixo da meta). 🎯`;
+    }
+  }
+
+  // 6. Projeção
+  if (clean.includes('proje') || clean.includes('quanto vamos faturar')) {
+    const projVal = document.getElementById('kpi-projection-val').textContent;
+    const projSub = document.getElementById('kpi-projection-sub').textContent;
+    return `A projeção estimada de faturamento para o final do período selecionado é de **${projVal}**. Subtexto: ${projSub}. 📈`;
+  }
+
+  // 7. Clima
+  if (clean.includes('clima') || clean.includes('temperatura') || clean.includes('chuva') || clean.includes('tempo')) {
+    const tempVal = document.getElementById('kpi-weather-temp').textContent;
+    const subVal = document.getElementById('kpi-weather-sub').textContent;
+    return `O clima atual em São Paulo registrado é de **${tempVal}** (${subVal}). ⛅`;
+  }
+
+  // 8. Specific PDV stats check
+  for (const custo of CUSTOS_PDV) {
+    const shortName = custo.pdv.replace(/^\d+#\s*/, '').toLowerCase();
+    if (clean.includes(shortName)) {
+      const pdvRows = allRows.filter(r => {
+        const maq = (r[C.maquina] || '').trim();
+        const c = findCustoPDV(maq);
+        return c && c.pdv === custo.pdv;
+      });
+      const totalRev = pdvRows.reduce((s, r) => s + toNum(r[C.total]), 0);
+      const wash = pdvRows.filter(r => isMaqWash(r)).length;
+      const dry = pdvRows.filter(r => isMaqDry(r)).length;
+      
+      return `Dados de **${custo.pdv}**:<br>
+        • Faturamento total: **${fmtBRL(totalRev)}**<br>
+        • Vendas totais: **${pdvRows.length}**<br>
+        • Ciclos: **${wash} lavagens** e **${dry} secagens**<br>
+        • Tipo: **${custo.tipo === 'RUA' ? 'Rua 🏪' : 'Condomínio 🏢'}** com **${custo.stack} stacks** (maquinas: ${custo.stack*2})`;
+    }
+  }
+
+  // Default fallback response
+  return `Entendi sua pergunta, mas não consegui cruzar com uma consulta exata do banco de dados local. Posso te informar sobre **Faturamento de Hoje/Ontem**, **Melhor/Pior PDV**, **Metas de Vendas**, **Projeções** ou detalhes de algum **PDV específico** (escreva o nome do PDV). 🤖`;
+}
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js">
+// ══════════════════════════════════════════════════════
+// ROBÔ LAVAÍ IA ASSISTENTE ENGINE
+// ══════════════════════════════════════════════════════
+let speechRecognitionObj = null;
+
+function toggleLavaiBot() {
+  const chat = document.getElementById('lavai-bot-chat');
+  if (chat) {
+    chat.classList.toggle('open');
+    if (chat.classList.contains('open')) {
+      document.getElementById('lavai-bot-input').focus();
+    }
+  }
+}
+
+function handleLavaiBotKey(e) {
+  if (e.key === 'Enter') {
+    sendLavaiBotMessage();
+  }
+}
+
+function setRobotState(state) {
+  const trigger = document.getElementById('lavai-bot-trigger');
+  if (!trigger) return;
+  trigger.classList.remove('listening', 'thinking');
+  if (state === 'listening') trigger.classList.add('listening');
+  if (state === 'thinking') trigger.classList.add('thinking');
+}
+
+function sendRobotText(text, isUser = false) {
+  const box = document.getElementById('lavai-bot-messages');
+  if (!box) return;
+  const msg = document.createElement('div');
+  msg.className = 'lavai-bot-msg ' + (isUser ? 'user' : 'bot');
+  msg.innerHTML = text;
+  box.appendChild(msg);
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendLavaiBotMessage() {
+  const input = document.getElementById('lavai-bot-input');
+  if (!input) return;
+  const query = input.value.trim();
+  if (!query) return;
+  
+  // Envia msg do usuário
+  sendRobotText(query, true);
+  input.value = '';
+  
+  // Estado: Pensando
+  setRobotState('thinking');
+  
+  setTimeout(() => {
+    try {
+      const reply = answerQuestionLocal(query);
+      sendRobotText(reply, false);
+    } catch(e) {
+      console.error(e);
+      sendRobotText("Ops, deu um erro ao pesquisar no banco de dados local. 🤖⚠️");
+    } finally {
+      setRobotState('idle');
+    }
+  }, 600);
+}
+
+function startSpeechToText() {
+  const btn = document.getElementById('lavai-bot-audio-btn');
+  if (!btn) return;
+  
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    sendRobotText("Seu navegador não suporta reconhecimento de voz. Tente usar o Google Chrome. 🎙️❌");
+    return;
+  }
+  
+  if (btn.classList.contains('active')) {
+    if (speechRecognitionObj) speechRecognitionObj.stop();
+    return;
+  }
+  
+  btn.classList.add('active');
+  setRobotState('listening');
+  
+  const rec = new SpeechRecognition();
+  speechRecognitionObj = rec;
+  rec.lang = 'pt-BR';
+  rec.continuous = false;
+  rec.interimResults = false;
+  
+  rec.onresult = function(e) {
+    const text = e.results[0][0].transcript;
+    document.getElementById('lavai-bot-input').value = text;
+    sendLavaiBotMessage();
+  };
+  
+  rec.onerror = function(e) {
+    console.error("Voz erro:", e);
+    btn.classList.remove('active');
+    setRobotState('idle');
+  };
+  
+  rec.onend = function() {
+    btn.classList.remove('active');
+    setRobotState('idle');
+  };
+  
+  rec.start();
+}
+
+function answerQuestionLocal(q) {
+  const clean = q.toLowerCase().trim();
+  
+  // 1. Hoje
+  if (clean.includes('hoje') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
+    const todayStr = getTodayStr();
+    const rows = allRows.filter(r => r[C.data] === todayStr);
+    const sales = rows.length;
+    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    return `Hoje tivemos **${sales} vendas**, totalizando **${fmtBRL(revenue)}** faturados até o momento. 📊`;
+  }
+  
+  // 2. Ontem
+  if (clean.includes('ontem') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
+    const yesterdayStr = getYesterdayStr();
+    const rows = allRows.filter(r => r[C.data] === yesterdayStr);
+    const sales = rows.length;
+    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    return `Ontem tivemos **${sales} vendas**, faturando um total de **${fmtBRL(revenue)}**. 💰`;
+  }
+  
+  // 3. Melhor PDV
+  if (clean.includes('melhor pdv') || clean.includes('pdv faturou mais') || clean.includes('mais vendeu') || clean.includes('pdv mais faturou')) {
+    const pdvsSales = {};
+    const pdvsRev = {};
+    allRows.forEach(r => {
+      const maq = (r[C.maquina] || '').trim();
+      const c = findCustoPDV(maq);
+      const name = c ? c.pdv : maq;
+      if (name) {
+        pdvsSales[name] = (pdvsSales[name] || 0) + 1;
+        pdvsRev[name] = (pdvsRev[name] || 0) + toNum(r[C.total]);
+      }
+    });
+    let bestName = null;
+    let maxRev = -1;
+    Object.entries(pdvsRev).forEach(([name, rev]) => {
+      if (rev > maxRev) {
+        maxRev = rev;
+        bestName = name;
+      }
+    });
+    if (bestName) {
+      return `O PDV com maior faturamento histórico acumulado é **${bestName}** com **${fmtBRL(maxRev)}** (total de ${pdvsSales[bestName]} vendas). 👑`;
+    }
+  }
+  
+  // 4. Pior PDV
+  if (clean.includes('pior pdv') || clean.includes('pdv faturou menos') || clean.includes('menos vendeu') || clean.includes('pdv menos faturou')) {
+    const pdvsSales = {};
+    const pdvsRev = {};
+    allRows.forEach(r => {
+      const maq = (r[C.maquina] || '').trim();
+      const c = findCustoPDV(maq);
+      const name = c ? c.pdv : maq;
+      if (name) {
+        pdvsSales[name] = (pdvsSales[name] || 0) + 1;
+        pdvsRev[name] = (pdvsRev[name] || 0) + toNum(r[C.total]);
+      }
+    });
+    let worstName = null;
+    let minRev = 999999999;
+    Object.entries(pdvsRev).forEach(([name, rev]) => {
+      if (rev < minRev && rev > 0) {
+        minRev = rev;
+        worstName = name;
+      }
+    });
+    if (worstName) {
+      return `O PDV com menor faturamento acumulado é **${worstName}** com **${fmtBRL(minRev)}** (total de ${pdvsSales[worstName]} vendas). 📉`;
+    }
+  }
+
+  // 5. Meta
+  if (clean.includes('meta')) {
+    const numDays = getFilteredDaysCount() || 1;
+    const filterPdv = document.getElementById('filter-pdv').value;
+    const filterOpType = window.filterOpType || 'all';
+    
+    let totalMaquinas = 0;
+    let totalTorres = 0;
+    const pdvsAtivos = new Set();
+    filtered.forEach(r => {
+      const pdv = (r[C.maquina] || '').trim();
+      if (pdv) pdvsAtivos.add(pdv);
+    });
+    pdvsAtivos.forEach(pdvNome => {
+      const c = findCustoPDV(pdvNome);
+      totalTorres += c ? c.stack : 1;
+    });
+    totalMaquinas = totalTorres * 2;
+
+    let dailyGoal = 200;
+    if (filterPdv !== 'all' || filterOpType !== 'all') {
+      dailyGoal = totalMaquinas * 2.56;
+    }
+    const periodGoal = Math.round(dailyGoal * numDays);
+    const periodSales = filtered.length;
+    const diff = periodSales - periodGoal;
+    const pct = periodGoal > 0 ? Math.round((diff / periodGoal) * 100) : 0;
+    
+    if (diff >= 0) {
+      return `A meta para o período selecionado (${numDays} dia(s)) é de **${periodGoal} vendas**. Realizamos **${periodSales} vendas** (+${pct}% acima da meta!). 🎉`;
+    } else {
+      return `A meta para o período selecionado (${numDays} dia(s)) é de **${periodGoal} vendas**. Realizamos **${periodSales} vendas** (${pct}% abaixo da meta). 🎯`;
+    }
+  }
+
+  // 6. Projeção
+  if (clean.includes('proje') || clean.includes('quanto vamos faturar')) {
+    const projVal = document.getElementById('kpi-projection-val').textContent;
+    const projSub = document.getElementById('kpi-projection-sub').textContent;
+    return `A projeção estimada de faturamento para o final do período selecionado é de **${projVal}**. Subtexto: ${projSub}. 📈`;
+  }
+
+  // 7. Clima
+  if (clean.includes('clima') || clean.includes('temperatura') || clean.includes('chuva') || clean.includes('tempo')) {
+    const tempVal = document.getElementById('kpi-weather-temp').textContent;
+    const subVal = document.getElementById('kpi-weather-sub').textContent;
+    return `O clima atual em São Paulo registrado é de **${tempVal}** (${subVal}). ⛅`;
+  }
+
+  // 8. Specific PDV stats check
+  for (const custo of CUSTOS_PDV) {
+    const shortName = custo.pdv.replace(/^\d+#\s*/, '').toLowerCase();
+    if (clean.includes(shortName)) {
+      const pdvRows = allRows.filter(r => {
+        const maq = (r[C.maquina] || '').trim();
+        const c = findCustoPDV(maq);
+        return c && c.pdv === custo.pdv;
+      });
+      const totalRev = pdvRows.reduce((s, r) => s + toNum(r[C.total]), 0);
+      const wash = pdvRows.filter(r => isMaqWash(r)).length;
+      const dry = pdvRows.filter(r => isMaqDry(r)).length;
+      
+      return `Dados de **${custo.pdv}**:<br>
+        • Faturamento total: **${fmtBRL(totalRev)}**<br>
+        • Vendas totais: **${pdvRows.length}**<br>
+        • Ciclos: **${wash} lavagens** e **${dry} secagens**<br>
+        • Tipo: **${custo.tipo === 'RUA' ? 'Rua 🏪' : 'Condomínio 🏢'}** com **${custo.stack} stacks** (maquinas: ${custo.stack*2})`;
+    }
+  }
+
+  // Default fallback response
+  return `Entendi sua pergunta, mas não consegui cruzar com uma consulta exata do banco de dados local. Posso te informar sobre **Faturamento de Hoje/Ontem**, **Melhor/Pior PDV**, **Metas de Vendas**, **Projeções** ou detalhes de algum **PDV específico** (escreva o nome do PDV). 🤖`;
+}
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+// ══════════════════════════════════════════════════════
+// ROBÔ LAVAÍ IA ASSISTENTE ENGINE
+// ══════════════════════════════════════════════════════
+let speechRecognitionObj = null;
+
+function toggleLavaiBot() {
+  const chat = document.getElementById('lavai-bot-chat');
+  if (chat) {
+    chat.classList.toggle('open');
+    if (chat.classList.contains('open')) {
+      document.getElementById('lavai-bot-input').focus();
+    }
+  }
+}
+
+function handleLavaiBotKey(e) {
+  if (e.key === 'Enter') {
+    sendLavaiBotMessage();
+  }
+}
+
+function setRobotState(state) {
+  const trigger = document.getElementById('lavai-bot-trigger');
+  if (!trigger) return;
+  trigger.classList.remove('listening', 'thinking');
+  if (state === 'listening') trigger.classList.add('listening');
+  if (state === 'thinking') trigger.classList.add('thinking');
+}
+
+function sendRobotText(text, isUser = false) {
+  const box = document.getElementById('lavai-bot-messages');
+  if (!box) return;
+  const msg = document.createElement('div');
+  msg.className = 'lavai-bot-msg ' + (isUser ? 'user' : 'bot');
+  msg.innerHTML = text;
+  box.appendChild(msg);
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendLavaiBotMessage() {
+  const input = document.getElementById('lavai-bot-input');
+  if (!input) return;
+  const query = input.value.trim();
+  if (!query) return;
+  
+  // Envia msg do usuário
+  sendRobotText(query, true);
+  input.value = '';
+  
+  // Estado: Pensando
+  setRobotState('thinking');
+  
+  setTimeout(() => {
+    try {
+      const reply = answerQuestionLocal(query);
+      sendRobotText(reply, false);
+    } catch(e) {
+      console.error(e);
+      sendRobotText("Ops, deu um erro ao pesquisar no banco de dados local. 🤖⚠️");
+    } finally {
+      setRobotState('idle');
+    }
+  }, 600);
+}
+
+function startSpeechToText() {
+  const btn = document.getElementById('lavai-bot-audio-btn');
+  if (!btn) return;
+  
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    sendRobotText("Seu navegador não suporta reconhecimento de voz. Tente usar o Google Chrome. 🎙️❌");
+    return;
+  }
+  
+  if (btn.classList.contains('active')) {
+    if (speechRecognitionObj) speechRecognitionObj.stop();
+    return;
+  }
+  
+  btn.classList.add('active');
+  setRobotState('listening');
+  
+  const rec = new SpeechRecognition();
+  speechRecognitionObj = rec;
+  rec.lang = 'pt-BR';
+  rec.continuous = false;
+  rec.interimResults = false;
+  
+  rec.onresult = function(e) {
+    const text = e.results[0][0].transcript;
+    document.getElementById('lavai-bot-input').value = text;
+    sendLavaiBotMessage();
+  };
+  
+  rec.onerror = function(e) {
+    console.error("Voz erro:", e);
+    btn.classList.remove('active');
+    setRobotState('idle');
+  };
+  
+  rec.onend = function() {
+    btn.classList.remove('active');
+    setRobotState('idle');
+  };
+  
+  rec.start();
+}
+
+function answerQuestionLocal(q) {
+  const clean = q.toLowerCase().trim();
+  
+  // 1. Hoje
+  if (clean.includes('hoje') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
+    const todayStr = getTodayStr();
+    const rows = allRows.filter(r => r[C.data] === todayStr);
+    const sales = rows.length;
+    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    return `Hoje tivemos **${sales} vendas**, totalizando **${fmtBRL(revenue)}** faturados até o momento. 📊`;
+  }
+  
+  // 2. Ontem
+  if (clean.includes('ontem') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
+    const yesterdayStr = getYesterdayStr();
+    const rows = allRows.filter(r => r[C.data] === yesterdayStr);
+    const sales = rows.length;
+    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    return `Ontem tivemos **${sales} vendas**, faturando um total de **${fmtBRL(revenue)}**. 💰`;
+  }
+  
+  // 3. Melhor PDV
+  if (clean.includes('melhor pdv') || clean.includes('pdv faturou mais') || clean.includes('mais vendeu') || clean.includes('pdv mais faturou')) {
+    const pdvsSales = {};
+    const pdvsRev = {};
+    allRows.forEach(r => {
+      const maq = (r[C.maquina] || '').trim();
+      const c = findCustoPDV(maq);
+      const name = c ? c.pdv : maq;
+      if (name) {
+        pdvsSales[name] = (pdvsSales[name] || 0) + 1;
+        pdvsRev[name] = (pdvsRev[name] || 0) + toNum(r[C.total]);
+      }
+    });
+    let bestName = null;
+    let maxRev = -1;
+    Object.entries(pdvsRev).forEach(([name, rev]) => {
+      if (rev > maxRev) {
+        maxRev = rev;
+        bestName = name;
+      }
+    });
+    if (bestName) {
+      return `O PDV com maior faturamento histórico acumulado é **${bestName}** com **${fmtBRL(maxRev)}** (total de ${pdvsSales[bestName]} vendas). 👑`;
+    }
+  }
+  
+  // 4. Pior PDV
+  if (clean.includes('pior pdv') || clean.includes('pdv faturou menos') || clean.includes('menos vendeu') || clean.includes('pdv menos faturou')) {
+    const pdvsSales = {};
+    const pdvsRev = {};
+    allRows.forEach(r => {
+      const maq = (r[C.maquina] || '').trim();
+      const c = findCustoPDV(maq);
+      const name = c ? c.pdv : maq;
+      if (name) {
+        pdvsSales[name] = (pdvsSales[name] || 0) + 1;
+        pdvsRev[name] = (pdvsRev[name] || 0) + toNum(r[C.total]);
+      }
+    });
+    let worstName = null;
+    let minRev = 999999999;
+    Object.entries(pdvsRev).forEach(([name, rev]) => {
+      if (rev < minRev && rev > 0) {
+        minRev = rev;
+        worstName = name;
+      }
+    });
+    if (worstName) {
+      return `O PDV com menor faturamento acumulado é **${worstName}** com **${fmtBRL(minRev)}** (total de ${pdvsSales[worstName]} vendas). 📉`;
+    }
+  }
+
+  // 5. Meta
+  if (clean.includes('meta')) {
+    const numDays = getFilteredDaysCount() || 1;
+    const filterPdv = document.getElementById('filter-pdv').value;
+    const filterOpType = window.filterOpType || 'all';
+    
+    let totalMaquinas = 0;
+    let totalTorres = 0;
+    const pdvsAtivos = new Set();
+    filtered.forEach(r => {
+      const pdv = (r[C.maquina] || '').trim();
+      if (pdv) pdvsAtivos.add(pdv);
+    });
+    pdvsAtivos.forEach(pdvNome => {
+      const c = findCustoPDV(pdvNome);
+      totalTorres += c ? c.stack : 1;
+    });
+    totalMaquinas = totalTorres * 2;
+
+    let dailyGoal = 200;
+    if (filterPdv !== 'all' || filterOpType !== 'all') {
+      dailyGoal = totalMaquinas * 2.56;
+    }
+    const periodGoal = Math.round(dailyGoal * numDays);
+    const periodSales = filtered.length;
+    const diff = periodSales - periodGoal;
+    const pct = periodGoal > 0 ? Math.round((diff / periodGoal) * 100) : 0;
+    
+    if (diff >= 0) {
+      return `A meta para o período selecionado (${numDays} dia(s)) é de **${periodGoal} vendas**. Realizamos **${periodSales} vendas** (+${pct}% acima da meta!). 🎉`;
+    } else {
+      return `A meta para o período selecionado (${numDays} dia(s)) é de **${periodGoal} vendas**. Realizamos **${periodSales} vendas** (${pct}% abaixo da meta). 🎯`;
+    }
+  }
+
+  // 6. Projeção
+  if (clean.includes('proje') || clean.includes('quanto vamos faturar')) {
+    const projVal = document.getElementById('kpi-projection-val').textContent;
+    const projSub = document.getElementById('kpi-projection-sub').textContent;
+    return `A projeção estimada de faturamento para o final do período selecionado é de **${projVal}**. Subtexto: ${projSub}. 📈`;
+  }
+
+  // 7. Clima
+  if (clean.includes('clima') || clean.includes('temperatura') || clean.includes('chuva') || clean.includes('tempo')) {
+    const tempVal = document.getElementById('kpi-weather-temp').textContent;
+    const subVal = document.getElementById('kpi-weather-sub').textContent;
+    return `O clima atual em São Paulo registrado é de **${tempVal}** (${subVal}). ⛅`;
+  }
+
+  // 8. Specific PDV stats check
+  for (const custo of CUSTOS_PDV) {
+    const shortName = custo.pdv.replace(/^\d+#\s*/, '').toLowerCase();
+    if (clean.includes(shortName)) {
+      const pdvRows = allRows.filter(r => {
+        const maq = (r[C.maquina] || '').trim();
+        const c = findCustoPDV(maq);
+        return c && c.pdv === custo.pdv;
+      });
+      const totalRev = pdvRows.reduce((s, r) => s + toNum(r[C.total]), 0);
+      const wash = pdvRows.filter(r => isMaqWash(r)).length;
+      const dry = pdvRows.filter(r => isMaqDry(r)).length;
+      
+      return `Dados de **${custo.pdv}**:<br>
+        • Faturamento total: **${fmtBRL(totalRev)}**<br>
+        • Vendas totais: **${pdvRows.length}**<br>
+        • Ciclos: **${wash} lavagens** e **${dry} secagens**<br>
+        • Tipo: **${custo.tipo === 'RUA' ? 'Rua 🏪' : 'Condomínio 🏢'}** com **${custo.stack} stacks** (maquinas: ${custo.stack*2})`;
+    }
+  }
+
+  // Default fallback response
+  return `Entendi sua pergunta, mas não consegui cruzar com uma consulta exata do banco de dados local. Posso te informar sobre **Faturamento de Hoje/Ontem**, **Melhor/Pior PDV**, **Metas de Vendas**, **Projeções** ou detalhes de algum **PDV específico** (escreva o nome do PDV). 🤖`;
+}
+
+</script>
 <!-- Os arquivos de dados locais são carregados sob demanda na inicialização do dashboard -->
 <style>
 /* ── Reset & Tokens ─────────────────────────────── */
@@ -322,6 +1350,281 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
 /* CLIMA SAO PAULO - KPI card extra */
 .kpi-weather::before{background:linear-gradient(90deg,#0ea5e9,#06b6d4)}
 .kpi-weather .kpi-icon{background:rgba(14,165,233,.12);color:#0ea5e9}
+
+/* ══════════════════════════════════════════════════
+   ROBÔ LAVAÍ IA ASSISTENTE ESTILO
+══════════════════════════════════════════════════ */
+.lavai-bot-container {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  z-index: 99999;
+  font-family: var(--font-sans);
+}
+.lavai-bot-avatar {
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 50%;
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: floatBot 3s ease-in-out infinite;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+.lavai-bot-avatar:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.6);
+}
+.lavai-bot-antenna {
+  width: 4px;
+  height: 8px;
+  background: #cbd5e1;
+  margin: 0 auto -2px auto;
+  position: relative;
+  border-radius: 2px;
+}
+.lavai-bot-antenna::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  position: absolute;
+  top: -7px;
+  left: -2px;
+  box-shadow: 0 0 10px #ef4444;
+}
+.lavai-bot-head {
+  width: 36px;
+  height: 24px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 2.5px solid #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+.lavai-bot-eyes {
+  display: flex;
+  gap: 6px;
+}
+.lavai-bot-eye {
+  width: 6px;
+  height: 6px;
+  background: #0ea5e9;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #0ea5e9;
+  animation: blinkBotEye 4s infinite;
+}
+.lavai-bot-avatar.listening {
+  background: linear-gradient(135deg, #ef4444, #f43f5e);
+  animation: pulseListening 1.2s infinite;
+}
+.lavai-bot-avatar.listening .lavai-bot-eye {
+  background: #fff;
+  box-shadow: 0 0 12px #fff;
+}
+.lavai-bot-avatar.thinking .lavai-bot-eye {
+  background: #eab308;
+  box-shadow: 0 0 12px #eab308;
+  animation: thinkEyes 0.5s infinite alternate;
+}
+.lavai-bot-shadow {
+  width: 50px;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 50%;
+  margin: 8px auto 0 auto;
+  filter: blur(2px);
+  animation: shadowSize 3s ease-in-out infinite;
+}
+.lavai-bot-chat {
+  position: absolute;
+  bottom: 90px;
+  right: 0;
+  width: 380px;
+  height: 480px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+  transform: scale(0.8) translateY(40px);
+  opacity: 0;
+  pointer-events: none;
+  transform-origin: bottom right;
+}
+.lavai-bot-chat.open {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+  pointer-events: all;
+}
+.lavai-bot-chat-header {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.lavai-bot-header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.lavai-bot-header-avatar {
+  font-size: 24px;
+}
+.lavai-bot-header-name {
+  font-weight: 800;
+  font-size: 14px;
+}
+.lavai-bot-header-status {
+  font-size: 11px;
+  opacity: 0.85;
+}
+.lavai-bot-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: all 0.15s;
+}
+.lavai-bot-close:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
+.lavai-bot-chat-body {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(248, 250, 252, 0.6);
+}
+.lavai-bot-msg {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+.lavai-bot-msg.bot {
+  background: #fff;
+  color: #334155;
+  align-self: flex-start;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border-bottom-left-radius: 2px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+.lavai-bot-msg.bot.suggestions {
+  font-size: 12px;
+  color: #64748b;
+  border-style: dashed;
+  background: rgba(241, 245, 249, 0.8);
+  max-width: 90%;
+}
+.lavai-bot-msg.user {
+  background: #6366f1;
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 2px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+.lavai-bot-chat-footer {
+  padding: 12px;
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  display: flex;
+  gap: 8px;
+  background: #fff;
+  align-items: center;
+}
+#lavai-bot-input {
+  flex: 1;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s;
+}
+#lavai-bot-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+.lavai-bot-audio-btn, .lavai-bot-send-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.lavai-bot-audio-btn {
+  background: #f1f5f9;
+  color: #64748b;
+}
+.lavai-bot-audio-btn:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+.lavai-bot-audio-btn.active {
+  background: #ef4444;
+  color: #fff;
+  animation: pulseMic 1s infinite;
+}
+.lavai-bot-send-btn {
+  background: #6366f1;
+  color: #fff;
+}
+.lavai-bot-send-btn:hover {
+  background: #4f46e5;
+  transform: scale(1.05);
+}
+@keyframes floatBot {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes shadowSize {
+  0%, 100% { transform: scale(1); opacity: 0.15; }
+  50% { transform: scale(0.85); opacity: 0.08; }
+}
+@keyframes blinkBotEye {
+  0%, 95%, 100% { transform: scaleY(1); }
+  97.5% { transform: scaleY(0.1); }
+}
+@keyframes thinkEyes {
+  from { transform: scale(1); }
+  to { transform: scale(0.7); }
+}
+@keyframes pulseListening {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+@keyframes pulseMic {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
 
 /* ══════════════════════════════════════════════════
    BOTÃO TIPO DE OPERAÇÃO
@@ -3798,6 +5101,311 @@ document.addEventListener('DOMContentLoaded', () => {
   // Busca dados de clima
   fetchWeatherData();
 });
+
+// ══════════════════════════════════════════════════════
+// ROBÔ LAVAÍ IA ASSISTENTE ENGINE
+// ══════════════════════════════════════════════════════
+let speechRecognitionObj = null;
+
+function toggleLavaiBot() {
+  const chat = document.getElementById('lavai-bot-chat');
+  if (chat) {
+    chat.classList.toggle('open');
+    if (chat.classList.contains('open')) {
+      document.getElementById('lavai-bot-input').focus();
+    }
+  }
+}
+
+function handleLavaiBotKey(e) {
+  if (e.key === 'Enter') {
+    sendLavaiBotMessage();
+  }
+}
+
+function setRobotState(state) {
+  const trigger = document.getElementById('lavai-bot-trigger');
+  if (!trigger) return;
+  trigger.classList.remove('listening', 'thinking');
+  if (state === 'listening') trigger.classList.add('listening');
+  if (state === 'thinking') trigger.classList.add('thinking');
+}
+
+function sendRobotText(text, isUser = false) {
+  const box = document.getElementById('lavai-bot-messages');
+  if (!box) return;
+  const msg = document.createElement('div');
+  msg.className = 'lavai-bot-msg ' + (isUser ? 'user' : 'bot');
+  msg.innerHTML = text;
+  box.appendChild(msg);
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendLavaiBotMessage() {
+  const input = document.getElementById('lavai-bot-input');
+  if (!input) return;
+  const query = input.value.trim();
+  if (!query) return;
+  
+  // Envia msg do usuário
+  sendRobotText(query, true);
+  input.value = '';
+  
+  // Estado: Pensando
+  setRobotState('thinking');
+  
+  setTimeout(() => {
+    try {
+      const reply = answerQuestionLocal(query);
+      sendRobotText(reply, false);
+    } catch(e) {
+      console.error(e);
+      sendRobotText("Ops, deu um erro ao pesquisar no banco de dados local. 🤖⚠️");
+    } finally {
+      setRobotState('idle');
+    }
+  }, 600);
+}
+
+function startSpeechToText() {
+  const btn = document.getElementById('lavai-bot-audio-btn');
+  if (!btn) return;
+  
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    sendRobotText("Seu navegador não suporta reconhecimento de voz. Tente usar o Google Chrome. 🎙️❌");
+    return;
+  }
+  
+  if (btn.classList.contains('active')) {
+    if (speechRecognitionObj) speechRecognitionObj.stop();
+    return;
+  }
+  
+  btn.classList.add('active');
+  setRobotState('listening');
+  
+  const rec = new SpeechRecognition();
+  speechRecognitionObj = rec;
+  rec.lang = 'pt-BR';
+  rec.continuous = false;
+  rec.interimResults = false;
+  
+  rec.onresult = function(e) {
+    const text = e.results[0][0].transcript;
+    document.getElementById('lavai-bot-input').value = text;
+    sendLavaiBotMessage();
+  };
+  
+  rec.onerror = function(e) {
+    console.error("Voz erro:", e);
+    btn.classList.remove('active');
+    setRobotState('idle');
+  };
+  
+  rec.onend = function() {
+    btn.classList.remove('active');
+    setRobotState('idle');
+  };
+  
+  rec.start();
+}
+
+function answerQuestionLocal(q) {
+  const clean = q.toLowerCase().trim();
+  
+  // 1. Hoje
+  if (clean.includes('hoje') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
+    const todayStr = getTodayStr();
+    const rows = allRows.filter(r => r[C.data] === todayStr);
+    const sales = rows.length;
+    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    return `Hoje tivemos **${sales} vendas**, totalizando **${fmtBRL(revenue)}** faturados até o momento. 📊`;
+  }
+  
+  // 2. Ontem
+  if (clean.includes('ontem') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
+    const yesterdayStr = getYesterdayStr();
+    const rows = allRows.filter(r => r[C.data] === yesterdayStr);
+    const sales = rows.length;
+    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    return `Ontem tivemos **${sales} vendas**, faturando um total de **${fmtBRL(revenue)}**. 💰`;
+  }
+  
+  // 3. Melhor PDV
+  if (clean.includes('melhor pdv') || clean.includes('pdv faturou mais') || clean.includes('mais vendeu') || clean.includes('pdv mais faturou')) {
+    const pdvsSales = {};
+    const pdvsRev = {};
+    allRows.forEach(r => {
+      const maq = (r[C.maquina] || '').trim();
+      const c = findCustoPDV(maq);
+      const name = c ? c.pdv : maq;
+      if (name) {
+        pdvsSales[name] = (pdvsSales[name] || 0) + 1;
+        pdvsRev[name] = (pdvsRev[name] || 0) + toNum(r[C.total]);
+      }
+    });
+    let bestName = null;
+    let maxRev = -1;
+    Object.entries(pdvsRev).forEach(([name, rev]) => {
+      if (rev > maxRev) {
+        maxRev = rev;
+        bestName = name;
+      }
+    });
+    if (bestName) {
+      return `O PDV com maior faturamento histórico acumulado é **${bestName}** com **${fmtBRL(maxRev)}** (total de ${pdvsSales[bestName]} vendas). 👑`;
+    }
+  }
+  
+  // 4. Pior PDV
+  if (clean.includes('pior pdv') || clean.includes('pdv faturou menos') || clean.includes('menos vendeu') || clean.includes('pdv menos faturou')) {
+    const pdvsSales = {};
+    const pdvsRev = {};
+    allRows.forEach(r => {
+      const maq = (r[C.maquina] || '').trim();
+      const c = findCustoPDV(maq);
+      const name = c ? c.pdv : maq;
+      if (name) {
+        pdvsSales[name] = (pdvsSales[name] || 0) + 1;
+        pdvsRev[name] = (pdvsRev[name] || 0) + toNum(r[C.total]);
+      }
+    });
+    let worstName = null;
+    let minRev = 999999999;
+    Object.entries(pdvsRev).forEach(([name, rev]) => {
+      if (rev < minRev && rev > 0) {
+        minRev = rev;
+        worstName = name;
+      }
+    });
+    if (worstName) {
+      return `O PDV com menor faturamento acumulado é **${worstName}** com **${fmtBRL(minRev)}** (total de ${pdvsSales[worstName]} vendas). 📉`;
+    }
+  }
+
+  // 5. Meta
+  if (clean.includes('meta')) {
+    const numDays = getFilteredDaysCount() || 1;
+    const filterPdv = document.getElementById('filter-pdv').value;
+    const filterOpType = window.filterOpType || 'all';
+    
+    let totalMaquinas = 0;
+    let totalTorres = 0;
+    const pdvsAtivos = new Set();
+    filtered.forEach(r => {
+      const pdv = (r[C.maquina] || '').trim();
+      if (pdv) pdvsAtivos.add(pdv);
+    });
+    pdvsAtivos.forEach(pdvNome => {
+      const c = findCustoPDV(pdvNome);
+      totalTorres += c ? c.stack : 1;
+    });
+    totalMaquinas = totalTorres * 2;
+
+    let dailyGoal = 200;
+    if (filterPdv !== 'all' || filterOpType !== 'all') {
+      dailyGoal = totalMaquinas * 2.56;
+    }
+    const periodGoal = Math.round(dailyGoal * numDays);
+    const periodSales = filtered.length;
+    const diff = periodSales - periodGoal;
+    const pct = periodGoal > 0 ? Math.round((diff / periodGoal) * 100) : 0;
+    
+    if (diff >= 0) {
+      return `A meta para o período selecionado (${numDays} dia(s)) é de **${periodGoal} vendas**. Realizamos **${periodSales} vendas** (+${pct}% acima da meta!). 🎉`;
+    } else {
+      return `A meta para o período selecionado (${numDays} dia(s)) é de **${periodGoal} vendas**. Realizamos **${periodSales} vendas** (${pct}% abaixo da meta). 🎯`;
+    }
+  }
+
+  // 6. Projeção
+  if (clean.includes('proje') || clean.includes('quanto vamos faturar')) {
+    const projVal = document.getElementById('kpi-projection-val').textContent;
+    const projSub = document.getElementById('kpi-projection-sub').textContent;
+    return `A projeção estimada de faturamento para o final do período selecionado é de **${projVal}**. Subtexto: ${projSub}. 📈`;
+  }
+
+  // 7. Clima
+  if (clean.includes('clima') || clean.includes('temperatura') || clean.includes('chuva') || clean.includes('tempo')) {
+    const tempVal = document.getElementById('kpi-weather-temp').textContent;
+    const subVal = document.getElementById('kpi-weather-sub').textContent;
+    return `O clima atual em São Paulo registrado é de **${tempVal}** (${subVal}). ⛅`;
+  }
+
+  // 8. Specific PDV stats check
+  for (const custo of CUSTOS_PDV) {
+    const shortName = custo.pdv.replace(/^\d+#\s*/, '').toLowerCase();
+    if (clean.includes(shortName)) {
+      const pdvRows = allRows.filter(r => {
+        const maq = (r[C.maquina] || '').trim();
+        const c = findCustoPDV(maq);
+        return c && c.pdv === custo.pdv;
+      });
+      const totalRev = pdvRows.reduce((s, r) => s + toNum(r[C.total]), 0);
+      const wash = pdvRows.filter(r => isMaqWash(r)).length;
+      const dry = pdvRows.filter(r => isMaqDry(r)).length;
+      
+      return `Dados de **${custo.pdv}**:<br>
+        • Faturamento total: **${fmtBRL(totalRev)}**<br>
+        • Vendas totais: **${pdvRows.length}**<br>
+        • Ciclos: **${wash} lavagens** e **${dry} secagens**<br>
+        • Tipo: **${custo.tipo === 'RUA' ? 'Rua 🏪' : 'Condomínio 🏢'}** com **${custo.stack} stacks** (maquinas: ${custo.stack*2})`;
+    }
+  }
+
+  // Default fallback response
+  return `Entendi sua pergunta, mas não consegui cruzar com uma consulta exata do banco de dados local. Posso te informar sobre **Faturamento de Hoje/Ontem**, **Melhor/Pior PDV**, **Metas de Vendas**, **Projeções** ou detalhes de algum **PDV específico** (escreva o nome do PDV). 🤖`;
+}
+
 </script>
+  <!-- ROBÔ LAVAÍ - ASSISTENTE IA -->
+  <div class="lavai-bot-container" id="lavai-bot-container">
+    <div class="lavai-bot-chat" id="lavai-bot-chat">
+      <div class="lavai-bot-chat-header">
+        <div class="lavai-bot-header-info">
+          <div class="lavai-bot-header-avatar">🤖</div>
+          <div>
+            <div class="lavai-bot-header-name">Robô LAVAÍ</div>
+            <div class="lavai-bot-header-status">IA Assistente Operacional</div>
+          </div>
+        </div>
+        <button class="lavai-bot-close" onclick="toggleLavaiBot()">✕</button>
+      </div>
+      <div class="lavai-bot-chat-body" id="lavai-bot-messages">
+        <div class="lavai-bot-msg bot">
+          Olá! Sou o Robô LAVAÍ. Como posso te ajudar com a análise dos dados de faturamento e vendas da operação hoje? 🤖📈
+        </div>
+        <div class="lavai-bot-msg bot suggestions">
+          Tente perguntar:<br>
+          • <em>"Qual faturamento de hoje?"</em><br>
+          • <em>"Quantas vendas ontem?"</em><br>
+          • <em>"Qual PDV faturou mais este mês?"</em><br>
+          • <em>"Como está a projeção?"</em><br>
+          • <em>"Status das máquinas no Itaquera"</em>
+        </div>
+      </div>
+      <div class="lavai-bot-chat-footer">
+        <input type="text" id="lavai-bot-input" placeholder="Escreva sua pergunta aqui..." onkeydown="handleLavaiBotKey(event)">
+        <button class="lavai-bot-audio-btn" id="lavai-bot-audio-btn" onclick="startSpeechToText()" title="Falar pergunta (Áudio)">
+          <i class="fas fa-microphone"></i>
+        </button>
+        <button class="lavai-bot-send-btn" onclick="sendLavaiBotMessage()">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+    <div class="lavai-bot-avatar" onclick="toggleLavaiBot()" id="lavai-bot-trigger">
+      <div class="lavai-bot-antenna"></div>
+      <div class="lavai-bot-head">
+        <div class="lavai-bot-eyes">
+          <div class="lavai-bot-eye"></div>
+          <div class="lavai-bot-eye"></div>
+        </div>
+      </div>
+    </div>
+    <div class="lavai-bot-shadow"></div>
+  </div>
+
 </body>
 </html>
