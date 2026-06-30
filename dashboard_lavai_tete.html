@@ -2017,8 +2017,9 @@ function renderKPIs(){
     document.getElementById('kpi-projection-sub').innerHTML = `<span>Período encerrado · Faturamento consolidado</span>`;
   } else {
     const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    const yesterdayStr = getYesterdayStr();
 
-    // Soma apenas transações até o dia anterior (exclusive hoje)
+    // 1. Soma transações até ontem
     const totalAteOntem = filtered.reduce((s, r) => {
       const d = parseDate(r[C.data]);
       if (!d) return s;
@@ -2026,27 +2027,27 @@ function renderKPIs(){
       return dDay <= yesterday ? s + toNum(r[C.total]) : s;
     }, 0);
 
-    // Conta dias com transações até ontem para calcular média mais precisa
-    const diasComDados = new Set(
-      filtered
-        .map(r => r[C.data])
-        .filter(dt => {
-          const d = parseDate(dt);
-          if (!d) return false;
-          return new Date(d.getFullYear(), d.getMonth(), d.getDate()) <= yesterday;
-        })
-    ).size || 1;
+    // 2. Faturamento de ontem
+    const faturamentoDeOntem = filtered.reduce((s, r) => {
+      return r[C.data] === yesterdayStr ? s + toNum(r[C.total]) : s;
+    }, 0);
 
-    const avgDay = totalAteOntem / diasComDados;
+    // 3. Dias faltantes no mês (inclui hoje)
+    const filterYearNum = parseInt(filterYear, 10) || now.getFullYear();
+    const filterMonthNum = parseInt(filterMonth, 10) || (now.getMonth() + 1);
+    const totalDiasMes = new Date(filterYearNum, filterMonthNum, 0).getDate();
+    
+    const diasPassados = now.getDate() - 1; // dias passados até ontem
+    const diasRestantes = Math.max(0, totalDiasMes - diasPassados); // dias faltantes incluindo hoje
 
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    // Dias restantes a partir de hoje até fim do mês + 1 dia de média adicional
-    const remaining = daysInMonth - now.getDate() + 1 + 1;
+    // Projeção = Vendas até ontem + (Venda de ontem * dias restantes)
+    const projecao = totalAteOntem + (faturamentoDeOntem * diasRestantes);
 
-    const projection = total + avgDay * remaining;
-
-    document.getElementById('kpi-projection-val').textContent = fmtBRL(projection);
-    document.getElementById('kpi-projection-sub').innerHTML = `<span>Média R$ ${fmtN(avgDay)}/dia (até ontem) · ${remaining} dias projetados</span>`;
+    document.getElementById('kpi-projection-val').textContent = fmtBRL(projecao);
+    document.getElementById('kpi-projection-sub').innerHTML = `
+      <i class="fas fa-calculator" style="color:var(--green)"></i>
+      <span>Ontem: ${fmtBRL(faturamentoDeOntem)} | ${diasRestantes} dias rest.</span>
+    `;
   }
 }
 
