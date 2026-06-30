@@ -141,7 +141,7 @@ window.LAVAI_CUSTOS_PDV = [
   },
   {
     "pdv": "21# Graça Teotônio",
-    "stack": 1,
+    "stack": 2,
     "tipo": "RUA",
     "internet": 80.0,
     "mp": 100.0,
@@ -155,7 +155,7 @@ window.LAVAI_CUSTOS_PDV = [
   },
   {
     "pdv": "22# Dia - Br. De Limeira",
-    "stack": 1,
+    "stack": 2,
     "tipo": "RUA",
     "internet": 80.0,
     "mp": 100.0,
@@ -197,7 +197,7 @@ window.LAVAI_CUSTOS_PDV = [
   },
   {
     "pdv": "31# Gestão PUQ - Perdizes",
-    "stack": 5,
+    "stack": 3,
     "tipo": "CONDO",
     "internet": 0.0,
     "mp": 100.0,
@@ -342,7 +342,7 @@ window.LAVAI_CUSTOS_PDV = [
     "internet": 0.0,
     "mp": 100.0,
     "aluguel": 0.0,
-    "comissao": 0.0,
+    "comissao": 0.15,
     "produto": 0.54,
     "tecnico": 400.0,
     "energiaLav": 0.0,
