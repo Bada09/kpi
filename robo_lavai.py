@@ -1955,6 +1955,7 @@ def publicar_dados_github():
         "vendtef_local.js",
         "payblu_local.js",
         "sqi_local.js",
+        "custos_pdv_local.js",
         "dados_relatorios.json",
     ]
 
@@ -2031,6 +2032,7 @@ def publicar_dados_github():
             "vendtef_local.js",
             "payblu_local.js",
             "sqi_local.js",
+            "custos_pdv_local.js",
             "dados_relatorios.json",
         ]
 
@@ -2252,6 +2254,156 @@ async def coletar_tudo():
     (root_dir / "dados_relatorios.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     if kpi_dir.is_dir() and kpi_dir != root_dir:
         (kpi_dir / "dados_relatorios.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    # ── Processar Custo operação.xlsx ──
+    try:
+        path_custo = obter_caminho_excel("Custo operação.xlsx")
+        if not path_custo:
+            path_custo = obter_caminho_excel("Custo operacao.xlsx")
+        if path_custo:
+            log.info(f"Lendo custos de: {path_custo}")
+            wb_custo = openpyxl.load_workbook(path_custo, data_only=True)
+            sheet_custo = wb_custo.active
+            rows_custo = list(sheet_custo.iter_rows(values_only=True))
+            
+            # Map headers robustly
+            headers = []
+            for cell in rows_custo[0]:
+                if cell is not None:
+                    h = str(cell).strip().lower()
+                    h = h.replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u')
+                    h = h.replace('ã', 'a').replace('õ', 'o').replace('ç', 'c')
+                    h = h.replace('ê', 'e').replace('ô', 'o')
+                    headers.append(h)
+                else:
+                    headers.append('')
+            
+            def get_val(r, h_name, default=None):
+                for idx, h in enumerate(headers):
+                    if h_name in h:
+                        if idx < len(r):
+                            return r[idx]
+                return default
+            
+            pdv_list = []
+            for r in rows_custo[1:]:
+                if not r or r[0] is None:
+                    continue
+                pdv_name = str(r[0]).strip()
+                
+                # Stack
+                stack_val = get_val(r, 'stack', 1)
+                stack = int(stack_val) if stack_val is not None else 1
+                
+                # Tipo
+                tipo_val = get_val(r, 'tipo', None)
+                if not tipo_val:
+                    tipo_val = get_val(r, 'operacao', 'CONDO')
+                tipo = str(tipo_val).strip() if tipo_val is not None else 'CONDO'
+                
+                # Internet
+                internet_val = get_val(r, 'internet', 0.0)
+                internet = float(internet_val) if internet_val is not None else 0.0
+                
+                # MP
+                mp_val = get_val(r, 'meio de pagamento', 0.0)
+                mp = float(mp_val) if mp_val is not None else 0.0
+                
+                # Aluguel
+                aluguel_val = get_val(r, 'aluguel', 0.0)
+                aluguel = float(aluguel_val) if aluguel_val is not None else 0.0
+                
+                # Agua
+                agua_col = get_val(r, 'agua', None)
+                if agua_col is not None:
+                    agua_str = str(agua_col).strip().upper()
+                    if 'SIM' in agua_str:
+                        agua = 0.90
+                    elif 'NÃO' in agua_str or 'NAO' in agua_str:
+                        agua = 0.0
+                    else:
+                        try:
+                            agua = float(agua_col)
+                        except:
+                            agua = 0.0
+                else:
+                    agua = 0.0
+                
+                # Energia
+                energia_lav_val = get_val(r, 'energia lavadora', None)
+                energia_sec_val = get_val(r, 'energia secadora', None)
+                if energia_lav_val is not None or energia_sec_val is not None:
+                    energiaLav = float(energia_lav_val) if energia_lav_val is not None else 0.0
+                    energiaSec = float(energia_sec_val) if energia_sec_val is not None else 0.0
+                else:
+                    energia_col = get_val(r, 'energia', None)
+                    if energia_col is not None:
+                        energia_str = str(energia_col).strip().upper()
+                        if 'SIM' in energia_str:
+                            energiaLav = 0.18
+                            energiaSec = 1.65
+                        else:
+                            try:
+                                energiaLav = float(energia_col)
+                                energiaSec = float(energia_col)
+                            except:
+                                energiaLav = 0.0
+                                energiaSec = 0.0
+                    else:
+                        energiaLav = 0.0
+                        energiaSec = 0.0
+                
+                # Comissão
+                comissao_val = get_val(r, 'comissao', 0.0)
+                if comissao_val is not None:
+                    if str(comissao_val).strip().upper() in ('NÃO', 'NAO', 'NO'):
+                        comissao = 0.0
+                    else:
+                        try:
+                            comissao = float(comissao_val)
+                        except:
+                            comissao = 0.0
+                else:
+                    comissao = 0.0
+                
+                # Produto
+                produto_val = get_val(r, 'produto', 0.54)
+                produto = float(produto_val) if produto_val is not None else 0.54
+                
+                # Custo Técnico
+                tecnico_val = get_val(r, 'tecnico', 400.0)
+                if tecnico_val is not None:
+                    try:
+                        tecnico = float(tecnico_val)
+                    except:
+                        tecnico = 400.0
+                else:
+                    tecnico = 400.0
+                
+                pdv_list.append({
+                    'pdv': pdv_name,
+                    'stack': stack,
+                    'tipo': tipo,
+                    'internet': internet,
+                    'mp': mp,
+                    'aluguel': aluguel,
+                    'comissao': comissao,
+                    'produto': produto,
+                    'tecnico': tecnico,
+                    'energiaLav': energiaLav,
+                    'energiaSec': energiaSec,
+                    'agua': agua
+                })
+            
+            custos_js = f"window.LAVAI_CUSTOS_PDV = {json.dumps(pdv_list, ensure_ascii=False, indent=2)};"
+            (root_dir / "custos_pdv_local.js").write_text(custos_js, encoding="utf-8")
+            if kpi_dir.is_dir() and kpi_dir != root_dir:
+                (kpi_dir / "custos_pdv_local.js").write_text(custos_js, encoding="utf-8")
+            log.info("custos_pdv_local.js gerado com sucesso!")
+        else:
+            log.warning("Custo operação.xlsx não encontrado. custos_pdv_local.js não atualizado.")
+    except Exception as e:
+        log.error(f"Erro ao processar custos: {e}")
 
     # ── Todas as fontes salvas como JS local — zero envio para o Sheets ──────
     salvar_fonte_local(portal_rows_dedup,   root_dir / "vendtef_local.js",  "LAVAI_VENDTEF_DATA")
