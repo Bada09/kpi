@@ -600,7 +600,7 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
         <i class="fas fa-chart-pie"></i> Resultados Financeiros
       </button>
     </div>
-    <button class="btn-op-type" onclick="openOpModal()">
+    <button class="btn-op-type" id="btn-op-type-filter" onclick="openOpModal()">
       <i class="fas fa-building"></i> Tipo de Operação <i class="fas fa-chevron-down" style="font-size:10px"></i>
     </button>
   </div>
@@ -1608,7 +1608,14 @@ function updatePdvFilter() {
   const pdvs = new Set();
   dateFiltered.forEach(r => {
     const maq = (r[C.maquina] || '').trim();
-    if (maq) pdvs.add(maq);
+    if (maq) {
+      if (filterOpType !== 'all') {
+        const c = findCustoPDV(maq);
+        const pdvTipo = c ? c.tipo : 'RUA';
+        if (pdvTipo !== filterOpType) return;
+      }
+      pdvs.add(maq);
+    }
   });
   
   selPdv.innerHTML = '<option value="all">Todos os PDVs</option>';
@@ -1730,6 +1737,14 @@ function applyFilter(){
     // Month filter
     if (filterMonth !== 'all') {
       if (d.getMonth() + 1 !== parseInt(filterMonth, 10)) return false;
+    }
+    
+    // Operation Type filter
+    if (filterOpType !== 'all') {
+      const maq = (r[C.maquina] || '').trim();
+      const custoObj = findCustoPDV(maq);
+      const pdvTipo = custoObj ? custoObj.tipo : 'RUA';
+      if (pdvTipo !== filterOpType) return false;
     }
     
     // PDV filter
@@ -2980,9 +2995,10 @@ renderKPIs = function() {
 // MODAL TIPO DE OPERAÇÃO
 // ══════════════════════════════════════════════════════
 let opModalTipoAtivo = 'TODOS';
+let filterOpType = 'all';
 
 function openOpModal() {
-  buildOpModal('TODOS');
+  buildOpModal(opModalTipoAtivo);
   document.getElementById('op-modal-overlay').classList.add('open');
 }
 function closeOpModal(e) {
@@ -2996,21 +3012,52 @@ function filterOpTab(btn, tipo) {
   if (tipo === 'RUA') btn.classList.add('rua');
   else if (tipo === 'CONDO') btn.classList.add('condo');
   else btn.classList.add('rua');
+  
   opModalTipoAtivo = tipo;
+  filterOpType = tipo === 'TODOS' ? 'all' : tipo;
+  
+  // Atualiza texto do botao do seletor
+  const btnTrigger = document.getElementById('btn-op-type-filter');
+  if (btnTrigger) {
+    if (tipo === 'TODOS') {
+      btnTrigger.innerHTML = `<i class="fas fa-building"></i> Tipo de Operação <i class="fas fa-chevron-down" style="font-size:10px"></i>`;
+    } else if (tipo === 'RUA') {
+      btnTrigger.innerHTML = `<i class="fas fa-store"></i> Op: Rua <i class="fas fa-chevron-down" style="font-size:10px"></i>`;
+    } else if (tipo === 'CONDO') {
+      btnTrigger.innerHTML = `<i class="fas fa-building"></i> Op: Condo <i class="fas fa-chevron-down" style="font-size:10px"></i>`;
+    }
+  }
+  
   buildOpModal(tipo);
+  applyFilter();
 }
 function buildOpModal(tipo) {
   const lista = tipo === 'TODOS' ? CUSTOS_PDV
     : CUSTOS_PDV.filter(c => c.tipo === tipo);
 
   document.getElementById('op-pdv-grid').innerHTML = lista.map(c => `
-    <div class="op-pdv-card ${c.tipo.toLowerCase()}">
+    <div class="op-pdv-card ${c.tipo.toLowerCase()}" style="cursor:pointer" onclick="selectPdvFromModal('${c.pdv}')">
       <div class="op-pdv-name">${c.pdv}</div>
       <div class="op-pdv-meta">${c.stack} stack(s) · Aluguel: ${c.aluguel > 0 ? fmtBRL(c.aluguel)+'/mês' : '–'}</div>
       <div class="op-pdv-meta">Comissão: ${c.comissao > 0 ? (c.comissao*100).toFixed(1)+'%' : '–'} · MP: ${c.mp > 0 ? (c.mp*100).toFixed(1)+'%' : '–'}</div>
       <span class="op-pdv-badge ${c.tipo.toLowerCase()}">${c.tipo === 'RUA' ? '🏪 Rua' : '🏢 Condomínio'}</span>
     </div>
   `).join('');
+}
+function selectPdvFromModal(pdvName) {
+  const selPdv = document.getElementById('filter-pdv');
+  if (selPdv) {
+    let opt = Array.from(selPdv.options).find(o => o.value === pdvName);
+    if (!opt) {
+      const newOpt = document.createElement('option');
+      newOpt.value = pdvName;
+      newOpt.textContent = pdvName;
+      selPdv.appendChild(newOpt);
+    }
+    selPdv.value = pdvName;
+    applyFilter();
+  }
+  closeOpModal();
 }
 
 // ══════════════════════════════════════════════════════
