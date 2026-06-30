@@ -3069,10 +3069,35 @@ function getFilteredPdvData() {
       ) || null;
     }
 
+    if (dadoKey) {
+      pdvNomesComDados.delete(dadoKey);
+    }
     const dados = dadoKey ? pdvMap[dadoKey] : {wash:0, dry:0, receita:0};
     const calc = calcCustoPDV(custo, dados.wash, dados.dry, dados.receita, diasPeriodo);
 
     result.push({custo, calc, dadosEncontrados: !!dadoKey});
+  });
+
+  // Qualquer PDV remanescente que tenha dados mas nao esteja na planilha de custos,
+  // criamos um registro de custos padrao (com custos zerados e stack=1) para nao perder o faturamento
+  pdvNomesComDados.forEach(maqName => {
+    const defaultCusto = {
+      pdv: maqName,
+      stack: 1,
+      tipo: 'RUA',
+      internet: 0,
+      mp: 0,
+      aluguel: 0,
+      comissao: 0,
+      produto: 0.54,
+      tecnico: 0,
+      energiaLav: 0.18,
+      energiaSec: 1.65,
+      agua: 0.90
+    };
+    const dados = pdvMap[maqName];
+    const calc = calcCustoPDV(defaultCusto, dados.wash, dados.dry, dados.receita, diasPeriodo);
+    result.push({custo: defaultCusto, calc, dadosEncontrados: true});
   });
 
   // Filtrar pelo PDV selecionado no filtro principal
