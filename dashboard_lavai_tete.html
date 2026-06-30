@@ -1966,7 +1966,11 @@ function renderKPIs(){
   const filterPdv = document.getElementById('filter-pdv').value;
   
   // A meta diaria de vendas e proporcional ao numero de maquinas ativas filtradas (2.56 vendas/maquina/dia)
-  const dailyGoal = totalMaquinas * 2.56;
+  // Se nenhum filtro de PDV ou Tipo de Operacao estiver ativo, a meta padrao e 200 vendas por dia.
+  let dailyGoal = 200;
+  if (filterPdv !== 'all' || filterOpType !== 'all') {
+    dailyGoal = totalMaquinas * 2.56;
+  }
   const periodGoal = Math.round(dailyGoal * numDays);
   const periodSales = filtered.length;
   
