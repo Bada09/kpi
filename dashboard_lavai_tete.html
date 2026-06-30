@@ -2041,7 +2041,6 @@ function renderKPIs(){
     document.getElementById('kpi-projection-sub').innerHTML = `<span>Período encerrado · Faturamento consolidado</span>`;
   } else {
     const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-    const yesterdayStr = getYesterdayStr();
 
     // 1. Soma transações até ontem
     const totalAteOntem = filtered.reduce((s, r) => {
@@ -2051,12 +2050,7 @@ function renderKPIs(){
       return dDay <= yesterday ? s + toNum(r[C.total]) : s;
     }, 0);
 
-    // 2. Faturamento de ontem
-    const faturamentoDeOntem = filtered.reduce((s, r) => {
-      return r[C.data] === yesterdayStr ? s + toNum(r[C.total]) : s;
-    }, 0);
-
-    // 3. Dias faltantes no mês (inclui hoje)
+    // 2. Dias faltantes no mês (inclui hoje)
     const filterYearNum = parseInt(filterYear, 10) || now.getFullYear();
     const filterMonthNum = parseInt(filterMonth, 10) || (now.getMonth() + 1);
     const totalDiasMes = new Date(filterYearNum, filterMonthNum, 0).getDate();
@@ -2064,13 +2058,17 @@ function renderKPIs(){
     const diasPassados = now.getDate() - 1; // dias passados até ontem
     const diasRestantes = Math.max(0, totalDiasMes - diasPassados); // dias faltantes incluindo hoje
 
-    // Projeção = Vendas até ontem + (Venda de ontem * dias restantes)
-    const projecao = totalAteOntem + (faturamentoDeOntem * diasRestantes);
+    // Média diária real acumulada até ontem
+    const diasFaturadosCount = Math.max(1, diasPassados);
+    const mediaDiariaAteOntem = totalAteOntem / diasFaturadosCount;
+
+    // Projeção = Vendas até ontem + (Média diária até ontem * dias restantes)
+    const projecao = totalAteOntem + (mediaDiariaAteOntem * diasRestantes);
 
     document.getElementById('kpi-projection-val').textContent = fmtBRL(projecao);
     document.getElementById('kpi-projection-sub').innerHTML = `
       <i class="fas fa-calculator" style="color:var(--green)"></i>
-      <span>Ontem: ${fmtBRL(faturamentoDeOntem)} | ${diasRestantes} dias rest.</span>
+      <span>Média: ${fmtBRL(mediaDiariaAteOntem)}/dia | ${diasRestantes} dias rest.</span>
     `;
   }
 }
