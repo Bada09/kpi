@@ -579,6 +579,8 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
       </div>
       <div class="quick-ranges" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <button class="btn-range active" id="btn-range-all" onclick="setRange('all')">Ver Tudo</button>
+        <button class="btn-range" id="btn-range-hoje" onclick="setRange('hoje')">Hoje</button>
+        <button class="btn-range" id="btn-range-ontem" onclick="setRange('ontem')">Ontem</button>
         <button class="btn-range" id="btn-range-15" onclick="setRange(15)">Últimos 15d</button>
         <button class="btn-range" id="btn-range-7" onclick="setRange(7)">Últimos 7d</button>
         <span id="elapsed-time-badge" style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#2563eb;background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);padding:5px 12px;border-radius:20px;margin-left:6px">
@@ -1666,8 +1668,30 @@ function setRange(r){
   clearDateInputs();
   document.getElementById('filter-year').value='all';
   document.getElementById('filter-month').value='all';
-  if(r==='all'){ dtFrom=null; dtTo=null; }
-  else{
+  if(r==='all'){ 
+    dtFrom=null; dtTo=null; 
+  } else if(r==='hoje'){
+    dtTo=new Date(); dtFrom=new Date();
+    dtFrom = new Date(dtFrom.getFullYear(), dtFrom.getMonth(), dtFrom.getDate(), 0, 0, 0);
+    dtTo = new Date(dtTo.getFullYear(), dtTo.getMonth(), dtTo.getDate(), 23, 59, 59);
+    
+    if (fpStart) fpStart.setDate(dtFrom, false);
+    else document.getElementById('date-start').value=dtFrom.toISOString().slice(0,10);
+    
+    if (fpEnd) fpEnd.setDate(dtTo, false);
+    else document.getElementById('date-end').value=dtTo.toISOString().slice(0,10);
+  } else if(r==='ontem'){
+    dtTo=new Date(); dtTo.setDate(dtTo.getDate() - 1);
+    dtFrom=new Date(); dtFrom.setDate(dtFrom.getDate() - 1);
+    dtFrom = new Date(dtFrom.getFullYear(), dtFrom.getMonth(), dtFrom.getDate(), 0, 0, 0);
+    dtTo = new Date(dtTo.getFullYear(), dtTo.getMonth(), dtTo.getDate(), 23, 59, 59);
+    
+    if (fpStart) fpStart.setDate(dtFrom, false);
+    else document.getElementById('date-start').value=dtFrom.toISOString().slice(0,10);
+    
+    if (fpEnd) fpEnd.setDate(dtTo, false);
+    else document.getElementById('date-end').value=dtTo.toISOString().slice(0,10);
+  } else {
     dtTo=new Date(); dtFrom=new Date();
     dtFrom.setDate(dtFrom.getDate()-r);
     
