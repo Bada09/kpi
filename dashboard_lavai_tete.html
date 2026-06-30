@@ -119,29 +119,159 @@ function startSpeechToText() {
 function answerQuestionLocal(q) {
   const clean = q.toLowerCase().trim();
   
-  // 1. Hoje
-  if (clean.includes('hoje') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
-    const todayStr = getTodayStr();
-    const rows = allRows.filter(r => r[C.data] === todayStr);
-    const sales = rows.length;
-    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
-    return `Hoje tivemos **${sales} vendas**, totalizando **${fmtBRL(revenue)}** faturados até o momento. 📊`;
+  // ── Identificar Periodo Solicitado ──
+  let timeframe = 'periodo'; 
+  let timeframeLabel = 'no período filtrado';
+  
+  if (clean.includes('este mês') || clean.includes('neste mês') || clean.includes('desse mês')) {
+    timeframe = 'este_mes';
+    timeframeLabel = 'neste mês (Junho 2026)';
+  } else if (clean.includes('mês passado') || clean.includes('no mês passado')) {
+    timeframe = 'mes_passado';
+    timeframeLabel = 'no mês passado (Maio 2026)';
+  } else if (clean.includes('este ano') || clean.includes('neste ano') || clean.includes('desse ano')) {
+    timeframe = 'este_ano';
+    timeframeLabel = 'neste ano (2026)';
+  } else if (clean.includes('hoje')) {
+    timeframe = 'hoje';
+    timeframeLabel = 'hoje';
+  } else if (clean.includes('ontem')) {
+    timeframe = 'ontem';
+    timeframeLabel = 'ontem';
+  }
+
+  let targetRows = [];
+  const todayStr = getTodayStr();
+  const yesterdayStr = getYesterdayStr();
+  
+  if (timeframe === 'hoje') {
+    targetRows = allRows.filter(r => r[C.data] === todayStr);
+  } else if (timeframe === 'ontem') {
+    targetRows = allRows.filter(r => r[C.data] === yesterdayStr);
+  } else if (timeframe === 'este_mes') {
+    targetRows = allRows.filter(r => {
+      const d = parseDate(r[C.data]);
+      return d && (d.getMonth() + 1) === 6 && d.getFullYear() === 2026;
+    });
+  } else if (timeframe === 'mes_passado') {
+    targetRows = allRows.filter(r => {
+      const d = parseDate(r[C.data]);
+      return d && (d.getMonth() + 1) === 5 && d.getFullYear() === 2026;
+    });
+  } else if (timeframe === 'este_ano') {
+    targetRows = allRows.filter(r => {
+      const d = parseDate(r[C.data]);
+      return d && d.getFullYear() === 2026;
+    });
+  } else {
+    targetRows = filtered;
+  }
+
+  // Se o usuario pediu sugestoes ou melhorias
+  if (clean.includes('sugest') || clean.includes('melhoria') || clean.includes('analis') || clean.includes('conselh') || clean.includes('consult')) {
+    try {
+      const pdvData = getFilteredPdvData();
+      if (!pdvData || pdvData.length === 0) {
+        return "Não encontrei dados financeiros suficientes no período selecionado para sugerir melhorias. 📊";
+      }
+
+      let totalReceita = 0;
+      let totalCmv = 0;
+      let totalOpex = 0;
+      let totalMargem = 0;
+      let totalWash = 0;
+      let totalDry = 0;
+      let pdvsSobAnalise = [];
+
+      pdvData.forEach(p => {
+        totalReceita += p.calc.receita;
+        totalCmv += p.calc.cmvTotal;
+        totalOpex += p.calc.opexTotal;
+        totalMargem += p.calc.lucro;
+        totalWash += p.calc.washCount;
+        totalDry += p.calc.dryCount;
+
+        pdvsSobAnalise.push({
+          name: p.custo.pdv,
+          receita: p.calc.receita,
+          lucro: p.calc.lucro,
+          opex: p.calc.opexTotal,
+          rentPct: p.calc.receita > 0 ? (p.custo.aluguel / p.calc.receita) * 100 : 0,
+          wash: p.calc.washCount,
+          dry: p.calc.dryCount,
+          dryWashRatio: p.calc.washCount > 0 ? (p.calc.dryCount / p.calc.washCount) : 1,
+          cyclesPerMachine: p.calc.cyclesPerDayPerMachine
+        });
+      });
+
+      const opexPct = totalReceita > 0 ? (totalOpex / totalReceita) * 100 : 0;
+      const cmvPct = totalReceita > 0 ? (totalCmv / totalReceita) * 100 : 0;
+      const profitPct = totalReceita > 0 ? (totalMargem / totalReceita) * 100 : 0;
+      const globalDryRatio = totalWash > 0 ? (totalDry / totalWash) : 1;
+
+      let recs = [];
+
+      if (globalDryRatio < 0.85) {
+        recs.push(`🔴 **Taxa de Secagem Baixa (${(globalDryRatio*100).toFixed(0)}%)**: Muitos clientes estão lavando, mas não secando. Sugerimos criar um banner promocional para secadoras no app ou reduzir temporariamente o valor da secagem nas terças/quartas para induzir o hábito.`);
+      }
+
+      const highRentPdvs = pdvsSobAnalise.filter(p => p.rentPct > 35 && p.receita > 500);
+      if (highRentPdvs.length > 0) {
+        highRentPdvs.forEach(p => {
+          recs.push(`⚠️ **Aluguel Crítico em ${p.name}**: O aluguel representa **${p.rentPct.toFixed(0)}%** do faturamento deste PDV. Sugerimos renegociar o valor do ponto ou realizar marketing local (panfletagem, cupom de primeira lavagem) para alavancar a receita neste local.`);
+        });
+      }
+
+      const lowPerformancePdvs = pdvsSobAnalise.filter(p => p.cyclesPerMachine < 2.0 && p.receita > 200);
+      if (lowPerformancePdvs.length > 0) {
+        const pdvList = lowPerformancePdvs.map(p => `**${p.name}** (${p.cyclesPerMachine.toFixed(1)} ciclos)`).join(', ');
+        recs.push(`📉 **Baixo Giro de Máquinas**: Os PDVs [${pdvList}] estão operando abaixo de 2 ciclos/máquina por dia. Recomendamos verificar se há máquinas fora do ar, instabilidades de internet local ou se o ponto precisa de sinalização externa mais chamativa.`);
+      }
+
+      let bestPdv = null;
+      let maxLucro = -1;
+      pdvsSobAnalise.forEach(p => {
+        if (p.lucro > maxLucro) {
+          maxLucro = p.lucro;
+          bestPdv = p;
+        }
+      });
+      if (bestPdv && bestPdv.receita > 2000) {
+        recs.push(`💎 **Ponto Forte de Lucro**: O PDV **${bestPdv.name}** gerou o maior lucro líquido (**${fmtBRL(bestPdv.lucro)}**) no período. Se houver reclamação de filas de espera, este é o local ideal para expandir com mais uma torre/stack.`);
+      }
+
+      if (recs.length === 0) {
+        recs.push("✅ **Operação Saudável**: Todos os PDVs estão operando com boa eficiência de ciclos e relação saudável de OPEX/Aluguel. Continue o bom trabalho!");
+      }
+
+      return `📊 **Consultoria LAVAÍ - Análise Operacional e Financeira**:<br><br>
+        • Faturamento: **${fmtBRL(totalReceita)}**<br>
+        • OPEX (Fixo): **${fmtBRL(totalOpex)}** (${opexPct.toFixed(1)}% da receita)<br>
+        • CMV (Variável): **${fmtBRL(totalCmv)}** (${cmvPct.toFixed(1)}% da receita)<br>
+        • Lucro Líquido: **${fmtBRL(totalMargem)}** (Margem: **${profitPct.toFixed(1)}%**)<br><br>
+        💡 **Sugestões de Melhorias Comerciais**:<br>
+        ${recs.map(r => `• ${r}`).join('<br><br>')}`;
+
+    } catch (e) {
+      console.error(e);
+      return "Não foi possível rodar o motor financeiro de análise local. Certifique-se de que a página de Resultados Financeiros está carregada. 🤖⚠️";
+    }
+  }
+
+  // 1. Hoje / Ontem / Periodo Vendas & Faturamento
+  if (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit')) {
+    const sales = targetRows.length;
+    const revenue = targetRows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    return `Análise de faturamento **${timeframeLabel}**:<br>
+      • Quantidade de vendas: **${sales}**<br>
+      • Valor faturado: **${fmtBRL(revenue)}** 📊`;
   }
   
-  // 2. Ontem
-  if (clean.includes('ontem') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
-    const yesterdayStr = getYesterdayStr();
-    const rows = allRows.filter(r => r[C.data] === yesterdayStr);
-    const sales = rows.length;
-    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
-    return `Ontem tivemos **${sales} vendas**, faturando um total de **${fmtBRL(revenue)}**. 💰`;
-  }
-  
-  // 3. Melhor PDV
+  // 2. Melhor PDV
   if (clean.includes('melhor pdv') || clean.includes('pdv faturou mais') || clean.includes('mais vendeu') || clean.includes('pdv mais faturou')) {
     const pdvsSales = {};
     const pdvsRev = {};
-    allRows.forEach(r => {
+    targetRows.forEach(r => {
       const maq = (r[C.maquina] || '').trim();
       const c = findCustoPDV(maq);
       const name = c ? c.pdv : maq;
@@ -159,15 +289,17 @@ function answerQuestionLocal(q) {
       }
     });
     if (bestName) {
-      return `O PDV com maior faturamento histórico acumulado é **${bestName}** com **${fmtBRL(maxRev)}** (total de ${pdvsSales[bestName]} vendas). 👑`;
+      return `O melhor PDV **${timeframeLabel}** é **${bestName}** com **${fmtBRL(maxRev)}** faturados (${pdvsSales[bestName]} vendas). 👑`;
+    } else {
+      return `Não encontrei dados de vendas **${timeframeLabel}** para indicar o melhor PDV.`;
     }
   }
   
-  // 4. Pior PDV
+  // 3. Pior PDV
   if (clean.includes('pior pdv') || clean.includes('pdv faturou menos') || clean.includes('menos vendeu') || clean.includes('pdv menos faturou')) {
     const pdvsSales = {};
     const pdvsRev = {};
-    allRows.forEach(r => {
+    targetRows.forEach(r => {
       const maq = (r[C.maquina] || '').trim();
       const c = findCustoPDV(maq);
       const name = c ? c.pdv : maq;
@@ -185,11 +317,13 @@ function answerQuestionLocal(q) {
       }
     });
     if (worstName) {
-      return `O PDV com menor faturamento acumulado é **${worstName}** com **${fmtBRL(minRev)}** (total de ${pdvsSales[worstName]} vendas). 📉`;
+      return `O pior PDV em faturamento **${timeframeLabel}** é **${worstName}** com **${fmtBRL(minRev)}** faturados (${pdvsSales[worstName]} vendas). 📉`;
+    } else {
+      return `Não encontrei dados de vendas **${timeframeLabel}** para indicar o pior PDV.`;
     }
   }
 
-  // 5. Meta
+  // 4. Meta
   if (clean.includes('meta')) {
     const numDays = getFilteredDaysCount() || 1;
     const filterPdv = document.getElementById('filter-pdv').value;
@@ -224,25 +358,25 @@ function answerQuestionLocal(q) {
     }
   }
 
-  // 6. Projeção
+  // 5. Projeção
   if (clean.includes('proje') || clean.includes('quanto vamos faturar')) {
     const projVal = document.getElementById('kpi-projection-val').textContent;
     const projSub = document.getElementById('kpi-projection-sub').textContent;
     return `A projeção estimada de faturamento para o final do período selecionado é de **${projVal}**. Subtexto: ${projSub}. 📈`;
   }
 
-  // 7. Clima
+  // 6. Clima
   if (clean.includes('clima') || clean.includes('temperatura') || clean.includes('chuva') || clean.includes('tempo')) {
     const tempVal = document.getElementById('kpi-weather-temp').textContent;
     const subVal = document.getElementById('kpi-weather-sub').textContent;
     return `O clima atual em São Paulo registrado é de **${tempVal}** (${subVal}). ⛅`;
   }
 
-  // 8. Specific PDV stats check
+  // 7. Specific PDV stats check
   for (const custo of CUSTOS_PDV) {
     const shortName = custo.pdv.replace(/^\d+#\s*/, '').toLowerCase();
     if (clean.includes(shortName)) {
-      const pdvRows = allRows.filter(r => {
+      const pdvRows = targetRows.filter(r => {
         const maq = (r[C.maquina] || '').trim();
         const c = findCustoPDV(maq);
         return c && c.pdv === custo.pdv;
@@ -251,16 +385,16 @@ function answerQuestionLocal(q) {
       const wash = pdvRows.filter(r => isMaqWash(r)).length;
       const dry = pdvRows.filter(r => isMaqDry(r)).length;
       
-      return `Dados de **${custo.pdv}**:<br>
-        • Faturamento total: **${fmtBRL(totalRev)}**<br>
-        • Vendas totais: **${pdvRows.length}**<br>
+      return `Dados de **${custo.pdv}** **${timeframeLabel}**:<br>
+        • Faturamento: **${fmtBRL(totalRev)}**<br>
+        • Vendas: **${pdvRows.length}**<br>
         • Ciclos: **${wash} lavagens** e **${dry} secagens**<br>
         • Tipo: **${custo.tipo === 'RUA' ? 'Rua 🏪' : 'Condomínio 🏢'}** com **${custo.stack} stacks** (maquinas: ${custo.stack*2})`;
     }
   }
 
   // Default fallback response
-  return `Entendi sua pergunta, mas não consegui cruzar com uma consulta exata do banco de dados local. Posso te informar sobre **Faturamento de Hoje/Ontem**, **Melhor/Pior PDV**, **Metas de Vendas**, **Projeções** ou detalhes de algum **PDV específico** (escreva o nome do PDV). 🤖`;
+  return `Entendi sua pergunta, mas não consegui cruzar com uma consulta exata do banco de dados local. Posso te informar sobre **Faturamento de Hoje/Ontem/Este Mês/Mês Passado**, **Melhor/Pior PDV**, **Metas de Vendas**, **Projeções** ou **sugerir melhorias** sobre os resultados. 🤖`;
 }
 
 </script>
@@ -377,29 +511,159 @@ function startSpeechToText() {
 function answerQuestionLocal(q) {
   const clean = q.toLowerCase().trim();
   
-  // 1. Hoje
-  if (clean.includes('hoje') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
-    const todayStr = getTodayStr();
-    const rows = allRows.filter(r => r[C.data] === todayStr);
-    const sales = rows.length;
-    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
-    return `Hoje tivemos **${sales} vendas**, totalizando **${fmtBRL(revenue)}** faturados até o momento. 📊`;
+  // ── Identificar Periodo Solicitado ──
+  let timeframe = 'periodo'; 
+  let timeframeLabel = 'no período filtrado';
+  
+  if (clean.includes('este mês') || clean.includes('neste mês') || clean.includes('desse mês')) {
+    timeframe = 'este_mes';
+    timeframeLabel = 'neste mês (Junho 2026)';
+  } else if (clean.includes('mês passado') || clean.includes('no mês passado')) {
+    timeframe = 'mes_passado';
+    timeframeLabel = 'no mês passado (Maio 2026)';
+  } else if (clean.includes('este ano') || clean.includes('neste ano') || clean.includes('desse ano')) {
+    timeframe = 'este_ano';
+    timeframeLabel = 'neste ano (2026)';
+  } else if (clean.includes('hoje')) {
+    timeframe = 'hoje';
+    timeframeLabel = 'hoje';
+  } else if (clean.includes('ontem')) {
+    timeframe = 'ontem';
+    timeframeLabel = 'ontem';
+  }
+
+  let targetRows = [];
+  const todayStr = getTodayStr();
+  const yesterdayStr = getYesterdayStr();
+  
+  if (timeframe === 'hoje') {
+    targetRows = allRows.filter(r => r[C.data] === todayStr);
+  } else if (timeframe === 'ontem') {
+    targetRows = allRows.filter(r => r[C.data] === yesterdayStr);
+  } else if (timeframe === 'este_mes') {
+    targetRows = allRows.filter(r => {
+      const d = parseDate(r[C.data]);
+      return d && (d.getMonth() + 1) === 6 && d.getFullYear() === 2026;
+    });
+  } else if (timeframe === 'mes_passado') {
+    targetRows = allRows.filter(r => {
+      const d = parseDate(r[C.data]);
+      return d && (d.getMonth() + 1) === 5 && d.getFullYear() === 2026;
+    });
+  } else if (timeframe === 'este_ano') {
+    targetRows = allRows.filter(r => {
+      const d = parseDate(r[C.data]);
+      return d && d.getFullYear() === 2026;
+    });
+  } else {
+    targetRows = filtered;
+  }
+
+  // Se o usuario pediu sugestoes ou melhorias
+  if (clean.includes('sugest') || clean.includes('melhoria') || clean.includes('analis') || clean.includes('conselh') || clean.includes('consult')) {
+    try {
+      const pdvData = getFilteredPdvData();
+      if (!pdvData || pdvData.length === 0) {
+        return "Não encontrei dados financeiros suficientes no período selecionado para sugerir melhorias. 📊";
+      }
+
+      let totalReceita = 0;
+      let totalCmv = 0;
+      let totalOpex = 0;
+      let totalMargem = 0;
+      let totalWash = 0;
+      let totalDry = 0;
+      let pdvsSobAnalise = [];
+
+      pdvData.forEach(p => {
+        totalReceita += p.calc.receita;
+        totalCmv += p.calc.cmvTotal;
+        totalOpex += p.calc.opexTotal;
+        totalMargem += p.calc.lucro;
+        totalWash += p.calc.washCount;
+        totalDry += p.calc.dryCount;
+
+        pdvsSobAnalise.push({
+          name: p.custo.pdv,
+          receita: p.calc.receita,
+          lucro: p.calc.lucro,
+          opex: p.calc.opexTotal,
+          rentPct: p.calc.receita > 0 ? (p.custo.aluguel / p.calc.receita) * 100 : 0,
+          wash: p.calc.washCount,
+          dry: p.calc.dryCount,
+          dryWashRatio: p.calc.washCount > 0 ? (p.calc.dryCount / p.calc.washCount) : 1,
+          cyclesPerMachine: p.calc.cyclesPerDayPerMachine
+        });
+      });
+
+      const opexPct = totalReceita > 0 ? (totalOpex / totalReceita) * 100 : 0;
+      const cmvPct = totalReceita > 0 ? (totalCmv / totalReceita) * 100 : 0;
+      const profitPct = totalReceita > 0 ? (totalMargem / totalReceita) * 100 : 0;
+      const globalDryRatio = totalWash > 0 ? (totalDry / totalWash) : 1;
+
+      let recs = [];
+
+      if (globalDryRatio < 0.85) {
+        recs.push(`🔴 **Taxa de Secagem Baixa (${(globalDryRatio*100).toFixed(0)}%)**: Muitos clientes estão lavando, mas não secando. Sugerimos criar um banner promocional para secadoras no app ou reduzir temporariamente o valor da secagem nas terças/quartas para induzir o hábito.`);
+      }
+
+      const highRentPdvs = pdvsSobAnalise.filter(p => p.rentPct > 35 && p.receita > 500);
+      if (highRentPdvs.length > 0) {
+        highRentPdvs.forEach(p => {
+          recs.push(`⚠️ **Aluguel Crítico em ${p.name}**: O aluguel representa **${p.rentPct.toFixed(0)}%** do faturamento deste PDV. Sugerimos renegociar o valor do ponto ou realizar marketing local (panfletagem, cupom de primeira lavagem) para alavancar a receita neste local.`);
+        });
+      }
+
+      const lowPerformancePdvs = pdvsSobAnalise.filter(p => p.cyclesPerMachine < 2.0 && p.receita > 200);
+      if (lowPerformancePdvs.length > 0) {
+        const pdvList = lowPerformancePdvs.map(p => `**${p.name}** (${p.cyclesPerMachine.toFixed(1)} ciclos)`).join(', ');
+        recs.push(`📉 **Baixo Giro de Máquinas**: Os PDVs [${pdvList}] estão operando abaixo de 2 ciclos/máquina por dia. Recomendamos verificar se há máquinas fora do ar, instabilidades de internet local ou se o ponto precisa de sinalização externa mais chamativa.`);
+      }
+
+      let bestPdv = null;
+      let maxLucro = -1;
+      pdvsSobAnalise.forEach(p => {
+        if (p.lucro > maxLucro) {
+          maxLucro = p.lucro;
+          bestPdv = p;
+        }
+      });
+      if (bestPdv && bestPdv.receita > 2000) {
+        recs.push(`💎 **Ponto Forte de Lucro**: O PDV **${bestPdv.name}** gerou o maior lucro líquido (**${fmtBRL(bestPdv.lucro)}**) no período. Se houver reclamação de filas de espera, este é o local ideal para expandir com mais uma torre/stack.`);
+      }
+
+      if (recs.length === 0) {
+        recs.push("✅ **Operação Saudável**: Todos os PDVs estão operando com boa eficiência de ciclos e relação saudável de OPEX/Aluguel. Continue o bom trabalho!");
+      }
+
+      return `📊 **Consultoria LAVAÍ - Análise Operacional e Financeira**:<br><br>
+        • Faturamento: **${fmtBRL(totalReceita)}**<br>
+        • OPEX (Fixo): **${fmtBRL(totalOpex)}** (${opexPct.toFixed(1)}% da receita)<br>
+        • CMV (Variável): **${fmtBRL(totalCmv)}** (${cmvPct.toFixed(1)}% da receita)<br>
+        • Lucro Líquido: **${fmtBRL(totalMargem)}** (Margem: **${profitPct.toFixed(1)}%**)<br><br>
+        💡 **Sugestões de Melhorias Comerciais**:<br>
+        ${recs.map(r => `• ${r}`).join('<br><br>')}`;
+
+    } catch (e) {
+      console.error(e);
+      return "Não foi possível rodar o motor financeiro de análise local. Certifique-se de que a página de Resultados Financeiros está carregada. 🤖⚠️";
+    }
+  }
+
+  // 1. Hoje / Ontem / Periodo Vendas & Faturamento
+  if (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit')) {
+    const sales = targetRows.length;
+    const revenue = targetRows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    return `Análise de faturamento **${timeframeLabel}**:<br>
+      • Quantidade de vendas: **${sales}**<br>
+      • Valor faturado: **${fmtBRL(revenue)}** 📊`;
   }
   
-  // 2. Ontem
-  if (clean.includes('ontem') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
-    const yesterdayStr = getYesterdayStr();
-    const rows = allRows.filter(r => r[C.data] === yesterdayStr);
-    const sales = rows.length;
-    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
-    return `Ontem tivemos **${sales} vendas**, faturando um total de **${fmtBRL(revenue)}**. 💰`;
-  }
-  
-  // 3. Melhor PDV
+  // 2. Melhor PDV
   if (clean.includes('melhor pdv') || clean.includes('pdv faturou mais') || clean.includes('mais vendeu') || clean.includes('pdv mais faturou')) {
     const pdvsSales = {};
     const pdvsRev = {};
-    allRows.forEach(r => {
+    targetRows.forEach(r => {
       const maq = (r[C.maquina] || '').trim();
       const c = findCustoPDV(maq);
       const name = c ? c.pdv : maq;
@@ -417,15 +681,17 @@ function answerQuestionLocal(q) {
       }
     });
     if (bestName) {
-      return `O PDV com maior faturamento histórico acumulado é **${bestName}** com **${fmtBRL(maxRev)}** (total de ${pdvsSales[bestName]} vendas). 👑`;
+      return `O melhor PDV **${timeframeLabel}** é **${bestName}** com **${fmtBRL(maxRev)}** faturados (${pdvsSales[bestName]} vendas). 👑`;
+    } else {
+      return `Não encontrei dados de vendas **${timeframeLabel}** para indicar o melhor PDV.`;
     }
   }
   
-  // 4. Pior PDV
+  // 3. Pior PDV
   if (clean.includes('pior pdv') || clean.includes('pdv faturou menos') || clean.includes('menos vendeu') || clean.includes('pdv menos faturou')) {
     const pdvsSales = {};
     const pdvsRev = {};
-    allRows.forEach(r => {
+    targetRows.forEach(r => {
       const maq = (r[C.maquina] || '').trim();
       const c = findCustoPDV(maq);
       const name = c ? c.pdv : maq;
@@ -443,11 +709,13 @@ function answerQuestionLocal(q) {
       }
     });
     if (worstName) {
-      return `O PDV com menor faturamento acumulado é **${worstName}** com **${fmtBRL(minRev)}** (total de ${pdvsSales[worstName]} vendas). 📉`;
+      return `O pior PDV em faturamento **${timeframeLabel}** é **${worstName}** com **${fmtBRL(minRev)}** faturados (${pdvsSales[worstName]} vendas). 📉`;
+    } else {
+      return `Não encontrei dados de vendas **${timeframeLabel}** para indicar o pior PDV.`;
     }
   }
 
-  // 5. Meta
+  // 4. Meta
   if (clean.includes('meta')) {
     const numDays = getFilteredDaysCount() || 1;
     const filterPdv = document.getElementById('filter-pdv').value;
@@ -482,25 +750,25 @@ function answerQuestionLocal(q) {
     }
   }
 
-  // 6. Projeção
+  // 5. Projeção
   if (clean.includes('proje') || clean.includes('quanto vamos faturar')) {
     const projVal = document.getElementById('kpi-projection-val').textContent;
     const projSub = document.getElementById('kpi-projection-sub').textContent;
     return `A projeção estimada de faturamento para o final do período selecionado é de **${projVal}**. Subtexto: ${projSub}. 📈`;
   }
 
-  // 7. Clima
+  // 6. Clima
   if (clean.includes('clima') || clean.includes('temperatura') || clean.includes('chuva') || clean.includes('tempo')) {
     const tempVal = document.getElementById('kpi-weather-temp').textContent;
     const subVal = document.getElementById('kpi-weather-sub').textContent;
     return `O clima atual em São Paulo registrado é de **${tempVal}** (${subVal}). ⛅`;
   }
 
-  // 8. Specific PDV stats check
+  // 7. Specific PDV stats check
   for (const custo of CUSTOS_PDV) {
     const shortName = custo.pdv.replace(/^\d+#\s*/, '').toLowerCase();
     if (clean.includes(shortName)) {
-      const pdvRows = allRows.filter(r => {
+      const pdvRows = targetRows.filter(r => {
         const maq = (r[C.maquina] || '').trim();
         const c = findCustoPDV(maq);
         return c && c.pdv === custo.pdv;
@@ -509,16 +777,16 @@ function answerQuestionLocal(q) {
       const wash = pdvRows.filter(r => isMaqWash(r)).length;
       const dry = pdvRows.filter(r => isMaqDry(r)).length;
       
-      return `Dados de **${custo.pdv}**:<br>
-        • Faturamento total: **${fmtBRL(totalRev)}**<br>
-        • Vendas totais: **${pdvRows.length}**<br>
+      return `Dados de **${custo.pdv}** **${timeframeLabel}**:<br>
+        • Faturamento: **${fmtBRL(totalRev)}**<br>
+        • Vendas: **${pdvRows.length}**<br>
         • Ciclos: **${wash} lavagens** e **${dry} secagens**<br>
         • Tipo: **${custo.tipo === 'RUA' ? 'Rua 🏪' : 'Condomínio 🏢'}** com **${custo.stack} stacks** (maquinas: ${custo.stack*2})`;
     }
   }
 
   // Default fallback response
-  return `Entendi sua pergunta, mas não consegui cruzar com uma consulta exata do banco de dados local. Posso te informar sobre **Faturamento de Hoje/Ontem**, **Melhor/Pior PDV**, **Metas de Vendas**, **Projeções** ou detalhes de algum **PDV específico** (escreva o nome do PDV). 🤖`;
+  return `Entendi sua pergunta, mas não consegui cruzar com uma consulta exata do banco de dados local. Posso te informar sobre **Faturamento de Hoje/Ontem/Este Mês/Mês Passado**, **Melhor/Pior PDV**, **Metas de Vendas**, **Projeções** ou **sugerir melhorias** sobre os resultados. 🤖`;
 }
 
 </script>
@@ -635,29 +903,159 @@ function startSpeechToText() {
 function answerQuestionLocal(q) {
   const clean = q.toLowerCase().trim();
   
-  // 1. Hoje
-  if (clean.includes('hoje') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
-    const todayStr = getTodayStr();
-    const rows = allRows.filter(r => r[C.data] === todayStr);
-    const sales = rows.length;
-    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
-    return `Hoje tivemos **${sales} vendas**, totalizando **${fmtBRL(revenue)}** faturados até o momento. 📊`;
+  // ── Identificar Periodo Solicitado ──
+  let timeframe = 'periodo'; 
+  let timeframeLabel = 'no período filtrado';
+  
+  if (clean.includes('este mês') || clean.includes('neste mês') || clean.includes('desse mês')) {
+    timeframe = 'este_mes';
+    timeframeLabel = 'neste mês (Junho 2026)';
+  } else if (clean.includes('mês passado') || clean.includes('no mês passado')) {
+    timeframe = 'mes_passado';
+    timeframeLabel = 'no mês passado (Maio 2026)';
+  } else if (clean.includes('este ano') || clean.includes('neste ano') || clean.includes('desse ano')) {
+    timeframe = 'este_ano';
+    timeframeLabel = 'neste ano (2026)';
+  } else if (clean.includes('hoje')) {
+    timeframe = 'hoje';
+    timeframeLabel = 'hoje';
+  } else if (clean.includes('ontem')) {
+    timeframe = 'ontem';
+    timeframeLabel = 'ontem';
+  }
+
+  let targetRows = [];
+  const todayStr = getTodayStr();
+  const yesterdayStr = getYesterdayStr();
+  
+  if (timeframe === 'hoje') {
+    targetRows = allRows.filter(r => r[C.data] === todayStr);
+  } else if (timeframe === 'ontem') {
+    targetRows = allRows.filter(r => r[C.data] === yesterdayStr);
+  } else if (timeframe === 'este_mes') {
+    targetRows = allRows.filter(r => {
+      const d = parseDate(r[C.data]);
+      return d && (d.getMonth() + 1) === 6 && d.getFullYear() === 2026;
+    });
+  } else if (timeframe === 'mes_passado') {
+    targetRows = allRows.filter(r => {
+      const d = parseDate(r[C.data]);
+      return d && (d.getMonth() + 1) === 5 && d.getFullYear() === 2026;
+    });
+  } else if (timeframe === 'este_ano') {
+    targetRows = allRows.filter(r => {
+      const d = parseDate(r[C.data]);
+      return d && d.getFullYear() === 2026;
+    });
+  } else {
+    targetRows = filtered;
+  }
+
+  // Se o usuario pediu sugestoes ou melhorias
+  if (clean.includes('sugest') || clean.includes('melhoria') || clean.includes('analis') || clean.includes('conselh') || clean.includes('consult')) {
+    try {
+      const pdvData = getFilteredPdvData();
+      if (!pdvData || pdvData.length === 0) {
+        return "Não encontrei dados financeiros suficientes no período selecionado para sugerir melhorias. 📊";
+      }
+
+      let totalReceita = 0;
+      let totalCmv = 0;
+      let totalOpex = 0;
+      let totalMargem = 0;
+      let totalWash = 0;
+      let totalDry = 0;
+      let pdvsSobAnalise = [];
+
+      pdvData.forEach(p => {
+        totalReceita += p.calc.receita;
+        totalCmv += p.calc.cmvTotal;
+        totalOpex += p.calc.opexTotal;
+        totalMargem += p.calc.lucro;
+        totalWash += p.calc.washCount;
+        totalDry += p.calc.dryCount;
+
+        pdvsSobAnalise.push({
+          name: p.custo.pdv,
+          receita: p.calc.receita,
+          lucro: p.calc.lucro,
+          opex: p.calc.opexTotal,
+          rentPct: p.calc.receita > 0 ? (p.custo.aluguel / p.calc.receita) * 100 : 0,
+          wash: p.calc.washCount,
+          dry: p.calc.dryCount,
+          dryWashRatio: p.calc.washCount > 0 ? (p.calc.dryCount / p.calc.washCount) : 1,
+          cyclesPerMachine: p.calc.cyclesPerDayPerMachine
+        });
+      });
+
+      const opexPct = totalReceita > 0 ? (totalOpex / totalReceita) * 100 : 0;
+      const cmvPct = totalReceita > 0 ? (totalCmv / totalReceita) * 100 : 0;
+      const profitPct = totalReceita > 0 ? (totalMargem / totalReceita) * 100 : 0;
+      const globalDryRatio = totalWash > 0 ? (totalDry / totalWash) : 1;
+
+      let recs = [];
+
+      if (globalDryRatio < 0.85) {
+        recs.push(`🔴 **Taxa de Secagem Baixa (${(globalDryRatio*100).toFixed(0)}%)**: Muitos clientes estão lavando, mas não secando. Sugerimos criar um banner promocional para secadoras no app ou reduzir temporariamente o valor da secagem nas terças/quartas para induzir o hábito.`);
+      }
+
+      const highRentPdvs = pdvsSobAnalise.filter(p => p.rentPct > 35 && p.receita > 500);
+      if (highRentPdvs.length > 0) {
+        highRentPdvs.forEach(p => {
+          recs.push(`⚠️ **Aluguel Crítico em ${p.name}**: O aluguel representa **${p.rentPct.toFixed(0)}%** do faturamento deste PDV. Sugerimos renegociar o valor do ponto ou realizar marketing local (panfletagem, cupom de primeira lavagem) para alavancar a receita neste local.`);
+        });
+      }
+
+      const lowPerformancePdvs = pdvsSobAnalise.filter(p => p.cyclesPerMachine < 2.0 && p.receita > 200);
+      if (lowPerformancePdvs.length > 0) {
+        const pdvList = lowPerformancePdvs.map(p => `**${p.name}** (${p.cyclesPerMachine.toFixed(1)} ciclos)`).join(', ');
+        recs.push(`📉 **Baixo Giro de Máquinas**: Os PDVs [${pdvList}] estão operando abaixo de 2 ciclos/máquina por dia. Recomendamos verificar se há máquinas fora do ar, instabilidades de internet local ou se o ponto precisa de sinalização externa mais chamativa.`);
+      }
+
+      let bestPdv = null;
+      let maxLucro = -1;
+      pdvsSobAnalise.forEach(p => {
+        if (p.lucro > maxLucro) {
+          maxLucro = p.lucro;
+          bestPdv = p;
+        }
+      });
+      if (bestPdv && bestPdv.receita > 2000) {
+        recs.push(`💎 **Ponto Forte de Lucro**: O PDV **${bestPdv.name}** gerou o maior lucro líquido (**${fmtBRL(bestPdv.lucro)}**) no período. Se houver reclamação de filas de espera, este é o local ideal para expandir com mais uma torre/stack.`);
+      }
+
+      if (recs.length === 0) {
+        recs.push("✅ **Operação Saudável**: Todos os PDVs estão operando com boa eficiência de ciclos e relação saudável de OPEX/Aluguel. Continue o bom trabalho!");
+      }
+
+      return `📊 **Consultoria LAVAÍ - Análise Operacional e Financeira**:<br><br>
+        • Faturamento: **${fmtBRL(totalReceita)}**<br>
+        • OPEX (Fixo): **${fmtBRL(totalOpex)}** (${opexPct.toFixed(1)}% da receita)<br>
+        • CMV (Variável): **${fmtBRL(totalCmv)}** (${cmvPct.toFixed(1)}% da receita)<br>
+        • Lucro Líquido: **${fmtBRL(totalMargem)}** (Margem: **${profitPct.toFixed(1)}%**)<br><br>
+        💡 **Sugestões de Melhorias Comerciais**:<br>
+        ${recs.map(r => `• ${r}`).join('<br><br>')}`;
+
+    } catch (e) {
+      console.error(e);
+      return "Não foi possível rodar o motor financeiro de análise local. Certifique-se de que a página de Resultados Financeiros está carregada. 🤖⚠️";
+    }
+  }
+
+  // 1. Hoje / Ontem / Periodo Vendas & Faturamento
+  if (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit')) {
+    const sales = targetRows.length;
+    const revenue = targetRows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    return `Análise de faturamento **${timeframeLabel}**:<br>
+      • Quantidade de vendas: **${sales}**<br>
+      • Valor faturado: **${fmtBRL(revenue)}** 📊`;
   }
   
-  // 2. Ontem
-  if (clean.includes('ontem') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
-    const yesterdayStr = getYesterdayStr();
-    const rows = allRows.filter(r => r[C.data] === yesterdayStr);
-    const sales = rows.length;
-    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
-    return `Ontem tivemos **${sales} vendas**, faturando um total de **${fmtBRL(revenue)}**. 💰`;
-  }
-  
-  // 3. Melhor PDV
+  // 2. Melhor PDV
   if (clean.includes('melhor pdv') || clean.includes('pdv faturou mais') || clean.includes('mais vendeu') || clean.includes('pdv mais faturou')) {
     const pdvsSales = {};
     const pdvsRev = {};
-    allRows.forEach(r => {
+    targetRows.forEach(r => {
       const maq = (r[C.maquina] || '').trim();
       const c = findCustoPDV(maq);
       const name = c ? c.pdv : maq;
@@ -675,15 +1073,17 @@ function answerQuestionLocal(q) {
       }
     });
     if (bestName) {
-      return `O PDV com maior faturamento histórico acumulado é **${bestName}** com **${fmtBRL(maxRev)}** (total de ${pdvsSales[bestName]} vendas). 👑`;
+      return `O melhor PDV **${timeframeLabel}** é **${bestName}** com **${fmtBRL(maxRev)}** faturados (${pdvsSales[bestName]} vendas). 👑`;
+    } else {
+      return `Não encontrei dados de vendas **${timeframeLabel}** para indicar o melhor PDV.`;
     }
   }
   
-  // 4. Pior PDV
+  // 3. Pior PDV
   if (clean.includes('pior pdv') || clean.includes('pdv faturou menos') || clean.includes('menos vendeu') || clean.includes('pdv menos faturou')) {
     const pdvsSales = {};
     const pdvsRev = {};
-    allRows.forEach(r => {
+    targetRows.forEach(r => {
       const maq = (r[C.maquina] || '').trim();
       const c = findCustoPDV(maq);
       const name = c ? c.pdv : maq;
@@ -701,11 +1101,13 @@ function answerQuestionLocal(q) {
       }
     });
     if (worstName) {
-      return `O PDV com menor faturamento acumulado é **${worstName}** com **${fmtBRL(minRev)}** (total de ${pdvsSales[worstName]} vendas). 📉`;
+      return `O pior PDV em faturamento **${timeframeLabel}** é **${worstName}** com **${fmtBRL(minRev)}** faturados (${pdvsSales[worstName]} vendas). 📉`;
+    } else {
+      return `Não encontrei dados de vendas **${timeframeLabel}** para indicar o pior PDV.`;
     }
   }
 
-  // 5. Meta
+  // 4. Meta
   if (clean.includes('meta')) {
     const numDays = getFilteredDaysCount() || 1;
     const filterPdv = document.getElementById('filter-pdv').value;
@@ -740,25 +1142,25 @@ function answerQuestionLocal(q) {
     }
   }
 
-  // 6. Projeção
+  // 5. Projeção
   if (clean.includes('proje') || clean.includes('quanto vamos faturar')) {
     const projVal = document.getElementById('kpi-projection-val').textContent;
     const projSub = document.getElementById('kpi-projection-sub').textContent;
     return `A projeção estimada de faturamento para o final do período selecionado é de **${projVal}**. Subtexto: ${projSub}. 📈`;
   }
 
-  // 7. Clima
+  // 6. Clima
   if (clean.includes('clima') || clean.includes('temperatura') || clean.includes('chuva') || clean.includes('tempo')) {
     const tempVal = document.getElementById('kpi-weather-temp').textContent;
     const subVal = document.getElementById('kpi-weather-sub').textContent;
     return `O clima atual em São Paulo registrado é de **${tempVal}** (${subVal}). ⛅`;
   }
 
-  // 8. Specific PDV stats check
+  // 7. Specific PDV stats check
   for (const custo of CUSTOS_PDV) {
     const shortName = custo.pdv.replace(/^\d+#\s*/, '').toLowerCase();
     if (clean.includes(shortName)) {
-      const pdvRows = allRows.filter(r => {
+      const pdvRows = targetRows.filter(r => {
         const maq = (r[C.maquina] || '').trim();
         const c = findCustoPDV(maq);
         return c && c.pdv === custo.pdv;
@@ -767,16 +1169,16 @@ function answerQuestionLocal(q) {
       const wash = pdvRows.filter(r => isMaqWash(r)).length;
       const dry = pdvRows.filter(r => isMaqDry(r)).length;
       
-      return `Dados de **${custo.pdv}**:<br>
-        • Faturamento total: **${fmtBRL(totalRev)}**<br>
-        • Vendas totais: **${pdvRows.length}**<br>
+      return `Dados de **${custo.pdv}** **${timeframeLabel}**:<br>
+        • Faturamento: **${fmtBRL(totalRev)}**<br>
+        • Vendas: **${pdvRows.length}**<br>
         • Ciclos: **${wash} lavagens** e **${dry} secagens**<br>
         • Tipo: **${custo.tipo === 'RUA' ? 'Rua 🏪' : 'Condomínio 🏢'}** com **${custo.stack} stacks** (maquinas: ${custo.stack*2})`;
     }
   }
 
   // Default fallback response
-  return `Entendi sua pergunta, mas não consegui cruzar com uma consulta exata do banco de dados local. Posso te informar sobre **Faturamento de Hoje/Ontem**, **Melhor/Pior PDV**, **Metas de Vendas**, **Projeções** ou detalhes de algum **PDV específico** (escreva o nome do PDV). 🤖`;
+  return `Entendi sua pergunta, mas não consegui cruzar com uma consulta exata do banco de dados local. Posso te informar sobre **Faturamento de Hoje/Ontem/Este Mês/Mês Passado**, **Melhor/Pior PDV**, **Metas de Vendas**, **Projeções** ou **sugerir melhorias** sobre os resultados. 🤖`;
 }
 
 </script>
@@ -893,29 +1295,159 @@ function startSpeechToText() {
 function answerQuestionLocal(q) {
   const clean = q.toLowerCase().trim();
   
-  // 1. Hoje
-  if (clean.includes('hoje') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
-    const todayStr = getTodayStr();
-    const rows = allRows.filter(r => r[C.data] === todayStr);
-    const sales = rows.length;
-    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
-    return `Hoje tivemos **${sales} vendas**, totalizando **${fmtBRL(revenue)}** faturados até o momento. 📊`;
+  // ── Identificar Periodo Solicitado ──
+  let timeframe = 'periodo'; 
+  let timeframeLabel = 'no período filtrado';
+  
+  if (clean.includes('este mês') || clean.includes('neste mês') || clean.includes('desse mês')) {
+    timeframe = 'este_mes';
+    timeframeLabel = 'neste mês (Junho 2026)';
+  } else if (clean.includes('mês passado') || clean.includes('no mês passado')) {
+    timeframe = 'mes_passado';
+    timeframeLabel = 'no mês passado (Maio 2026)';
+  } else if (clean.includes('este ano') || clean.includes('neste ano') || clean.includes('desse ano')) {
+    timeframe = 'este_ano';
+    timeframeLabel = 'neste ano (2026)';
+  } else if (clean.includes('hoje')) {
+    timeframe = 'hoje';
+    timeframeLabel = 'hoje';
+  } else if (clean.includes('ontem')) {
+    timeframe = 'ontem';
+    timeframeLabel = 'ontem';
+  }
+
+  let targetRows = [];
+  const todayStr = getTodayStr();
+  const yesterdayStr = getYesterdayStr();
+  
+  if (timeframe === 'hoje') {
+    targetRows = allRows.filter(r => r[C.data] === todayStr);
+  } else if (timeframe === 'ontem') {
+    targetRows = allRows.filter(r => r[C.data] === yesterdayStr);
+  } else if (timeframe === 'este_mes') {
+    targetRows = allRows.filter(r => {
+      const d = parseDate(r[C.data]);
+      return d && (d.getMonth() + 1) === 6 && d.getFullYear() === 2026;
+    });
+  } else if (timeframe === 'mes_passado') {
+    targetRows = allRows.filter(r => {
+      const d = parseDate(r[C.data]);
+      return d && (d.getMonth() + 1) === 5 && d.getFullYear() === 2026;
+    });
+  } else if (timeframe === 'este_ano') {
+    targetRows = allRows.filter(r => {
+      const d = parseDate(r[C.data]);
+      return d && d.getFullYear() === 2026;
+    });
+  } else {
+    targetRows = filtered;
+  }
+
+  // Se o usuario pediu sugestoes ou melhorias
+  if (clean.includes('sugest') || clean.includes('melhoria') || clean.includes('analis') || clean.includes('conselh') || clean.includes('consult')) {
+    try {
+      const pdvData = getFilteredPdvData();
+      if (!pdvData || pdvData.length === 0) {
+        return "Não encontrei dados financeiros suficientes no período selecionado para sugerir melhorias. 📊";
+      }
+
+      let totalReceita = 0;
+      let totalCmv = 0;
+      let totalOpex = 0;
+      let totalMargem = 0;
+      let totalWash = 0;
+      let totalDry = 0;
+      let pdvsSobAnalise = [];
+
+      pdvData.forEach(p => {
+        totalReceita += p.calc.receita;
+        totalCmv += p.calc.cmvTotal;
+        totalOpex += p.calc.opexTotal;
+        totalMargem += p.calc.lucro;
+        totalWash += p.calc.washCount;
+        totalDry += p.calc.dryCount;
+
+        pdvsSobAnalise.push({
+          name: p.custo.pdv,
+          receita: p.calc.receita,
+          lucro: p.calc.lucro,
+          opex: p.calc.opexTotal,
+          rentPct: p.calc.receita > 0 ? (p.custo.aluguel / p.calc.receita) * 100 : 0,
+          wash: p.calc.washCount,
+          dry: p.calc.dryCount,
+          dryWashRatio: p.calc.washCount > 0 ? (p.calc.dryCount / p.calc.washCount) : 1,
+          cyclesPerMachine: p.calc.cyclesPerDayPerMachine
+        });
+      });
+
+      const opexPct = totalReceita > 0 ? (totalOpex / totalReceita) * 100 : 0;
+      const cmvPct = totalReceita > 0 ? (totalCmv / totalReceita) * 100 : 0;
+      const profitPct = totalReceita > 0 ? (totalMargem / totalReceita) * 100 : 0;
+      const globalDryRatio = totalWash > 0 ? (totalDry / totalWash) : 1;
+
+      let recs = [];
+
+      if (globalDryRatio < 0.85) {
+        recs.push(`🔴 **Taxa de Secagem Baixa (${(globalDryRatio*100).toFixed(0)}%)**: Muitos clientes estão lavando, mas não secando. Sugerimos criar um banner promocional para secadoras no app ou reduzir temporariamente o valor da secagem nas terças/quartas para induzir o hábito.`);
+      }
+
+      const highRentPdvs = pdvsSobAnalise.filter(p => p.rentPct > 35 && p.receita > 500);
+      if (highRentPdvs.length > 0) {
+        highRentPdvs.forEach(p => {
+          recs.push(`⚠️ **Aluguel Crítico em ${p.name}**: O aluguel representa **${p.rentPct.toFixed(0)}%** do faturamento deste PDV. Sugerimos renegociar o valor do ponto ou realizar marketing local (panfletagem, cupom de primeira lavagem) para alavancar a receita neste local.`);
+        });
+      }
+
+      const lowPerformancePdvs = pdvsSobAnalise.filter(p => p.cyclesPerMachine < 2.0 && p.receita > 200);
+      if (lowPerformancePdvs.length > 0) {
+        const pdvList = lowPerformancePdvs.map(p => `**${p.name}** (${p.cyclesPerMachine.toFixed(1)} ciclos)`).join(', ');
+        recs.push(`📉 **Baixo Giro de Máquinas**: Os PDVs [${pdvList}] estão operando abaixo de 2 ciclos/máquina por dia. Recomendamos verificar se há máquinas fora do ar, instabilidades de internet local ou se o ponto precisa de sinalização externa mais chamativa.`);
+      }
+
+      let bestPdv = null;
+      let maxLucro = -1;
+      pdvsSobAnalise.forEach(p => {
+        if (p.lucro > maxLucro) {
+          maxLucro = p.lucro;
+          bestPdv = p;
+        }
+      });
+      if (bestPdv && bestPdv.receita > 2000) {
+        recs.push(`💎 **Ponto Forte de Lucro**: O PDV **${bestPdv.name}** gerou o maior lucro líquido (**${fmtBRL(bestPdv.lucro)}**) no período. Se houver reclamação de filas de espera, este é o local ideal para expandir com mais uma torre/stack.`);
+      }
+
+      if (recs.length === 0) {
+        recs.push("✅ **Operação Saudável**: Todos os PDVs estão operando com boa eficiência de ciclos e relação saudável de OPEX/Aluguel. Continue o bom trabalho!");
+      }
+
+      return `📊 **Consultoria LAVAÍ - Análise Operacional e Financeira**:<br><br>
+        • Faturamento: **${fmtBRL(totalReceita)}**<br>
+        • OPEX (Fixo): **${fmtBRL(totalOpex)}** (${opexPct.toFixed(1)}% da receita)<br>
+        • CMV (Variável): **${fmtBRL(totalCmv)}** (${cmvPct.toFixed(1)}% da receita)<br>
+        • Lucro Líquido: **${fmtBRL(totalMargem)}** (Margem: **${profitPct.toFixed(1)}%**)<br><br>
+        💡 **Sugestões de Melhorias Comerciais**:<br>
+        ${recs.map(r => `• ${r}`).join('<br><br>')}`;
+
+    } catch (e) {
+      console.error(e);
+      return "Não foi possível rodar o motor financeiro de análise local. Certifique-se de que a página de Resultados Financeiros está carregada. 🤖⚠️";
+    }
+  }
+
+  // 1. Hoje / Ontem / Periodo Vendas & Faturamento
+  if (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit')) {
+    const sales = targetRows.length;
+    const revenue = targetRows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    return `Análise de faturamento **${timeframeLabel}**:<br>
+      • Quantidade de vendas: **${sales}**<br>
+      • Valor faturado: **${fmtBRL(revenue)}** 📊`;
   }
   
-  // 2. Ontem
-  if (clean.includes('ontem') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
-    const yesterdayStr = getYesterdayStr();
-    const rows = allRows.filter(r => r[C.data] === yesterdayStr);
-    const sales = rows.length;
-    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
-    return `Ontem tivemos **${sales} vendas**, faturando um total de **${fmtBRL(revenue)}**. 💰`;
-  }
-  
-  // 3. Melhor PDV
+  // 2. Melhor PDV
   if (clean.includes('melhor pdv') || clean.includes('pdv faturou mais') || clean.includes('mais vendeu') || clean.includes('pdv mais faturou')) {
     const pdvsSales = {};
     const pdvsRev = {};
-    allRows.forEach(r => {
+    targetRows.forEach(r => {
       const maq = (r[C.maquina] || '').trim();
       const c = findCustoPDV(maq);
       const name = c ? c.pdv : maq;
@@ -933,15 +1465,17 @@ function answerQuestionLocal(q) {
       }
     });
     if (bestName) {
-      return `O PDV com maior faturamento histórico acumulado é **${bestName}** com **${fmtBRL(maxRev)}** (total de ${pdvsSales[bestName]} vendas). 👑`;
+      return `O melhor PDV **${timeframeLabel}** é **${bestName}** com **${fmtBRL(maxRev)}** faturados (${pdvsSales[bestName]} vendas). 👑`;
+    } else {
+      return `Não encontrei dados de vendas **${timeframeLabel}** para indicar o melhor PDV.`;
     }
   }
   
-  // 4. Pior PDV
+  // 3. Pior PDV
   if (clean.includes('pior pdv') || clean.includes('pdv faturou menos') || clean.includes('menos vendeu') || clean.includes('pdv menos faturou')) {
     const pdvsSales = {};
     const pdvsRev = {};
-    allRows.forEach(r => {
+    targetRows.forEach(r => {
       const maq = (r[C.maquina] || '').trim();
       const c = findCustoPDV(maq);
       const name = c ? c.pdv : maq;
@@ -959,11 +1493,13 @@ function answerQuestionLocal(q) {
       }
     });
     if (worstName) {
-      return `O PDV com menor faturamento acumulado é **${worstName}** com **${fmtBRL(minRev)}** (total de ${pdvsSales[worstName]} vendas). 📉`;
+      return `O pior PDV em faturamento **${timeframeLabel}** é **${worstName}** com **${fmtBRL(minRev)}** faturados (${pdvsSales[worstName]} vendas). 📉`;
+    } else {
+      return `Não encontrei dados de vendas **${timeframeLabel}** para indicar o pior PDV.`;
     }
   }
 
-  // 5. Meta
+  // 4. Meta
   if (clean.includes('meta')) {
     const numDays = getFilteredDaysCount() || 1;
     const filterPdv = document.getElementById('filter-pdv').value;
@@ -998,25 +1534,25 @@ function answerQuestionLocal(q) {
     }
   }
 
-  // 6. Projeção
+  // 5. Projeção
   if (clean.includes('proje') || clean.includes('quanto vamos faturar')) {
     const projVal = document.getElementById('kpi-projection-val').textContent;
     const projSub = document.getElementById('kpi-projection-sub').textContent;
     return `A projeção estimada de faturamento para o final do período selecionado é de **${projVal}**. Subtexto: ${projSub}. 📈`;
   }
 
-  // 7. Clima
+  // 6. Clima
   if (clean.includes('clima') || clean.includes('temperatura') || clean.includes('chuva') || clean.includes('tempo')) {
     const tempVal = document.getElementById('kpi-weather-temp').textContent;
     const subVal = document.getElementById('kpi-weather-sub').textContent;
     return `O clima atual em São Paulo registrado é de **${tempVal}** (${subVal}). ⛅`;
   }
 
-  // 8. Specific PDV stats check
+  // 7. Specific PDV stats check
   for (const custo of CUSTOS_PDV) {
     const shortName = custo.pdv.replace(/^\d+#\s*/, '').toLowerCase();
     if (clean.includes(shortName)) {
-      const pdvRows = allRows.filter(r => {
+      const pdvRows = targetRows.filter(r => {
         const maq = (r[C.maquina] || '').trim();
         const c = findCustoPDV(maq);
         return c && c.pdv === custo.pdv;
@@ -1025,16 +1561,16 @@ function answerQuestionLocal(q) {
       const wash = pdvRows.filter(r => isMaqWash(r)).length;
       const dry = pdvRows.filter(r => isMaqDry(r)).length;
       
-      return `Dados de **${custo.pdv}**:<br>
-        • Faturamento total: **${fmtBRL(totalRev)}**<br>
-        • Vendas totais: **${pdvRows.length}**<br>
+      return `Dados de **${custo.pdv}** **${timeframeLabel}**:<br>
+        • Faturamento: **${fmtBRL(totalRev)}**<br>
+        • Vendas: **${pdvRows.length}**<br>
         • Ciclos: **${wash} lavagens** e **${dry} secagens**<br>
         • Tipo: **${custo.tipo === 'RUA' ? 'Rua 🏪' : 'Condomínio 🏢'}** com **${custo.stack} stacks** (maquinas: ${custo.stack*2})`;
     }
   }
 
   // Default fallback response
-  return `Entendi sua pergunta, mas não consegui cruzar com uma consulta exata do banco de dados local. Posso te informar sobre **Faturamento de Hoje/Ontem**, **Melhor/Pior PDV**, **Metas de Vendas**, **Projeções** ou detalhes de algum **PDV específico** (escreva o nome do PDV). 🤖`;
+  return `Entendi sua pergunta, mas não consegui cruzar com uma consulta exata do banco de dados local. Posso te informar sobre **Faturamento de Hoje/Ontem/Este Mês/Mês Passado**, **Melhor/Pior PDV**, **Metas de Vendas**, **Projeções** ou **sugerir melhorias** sobre os resultados. 🤖`;
 }
 
 </script>
@@ -5214,29 +5750,159 @@ function startSpeechToText() {
 function answerQuestionLocal(q) {
   const clean = q.toLowerCase().trim();
   
-  // 1. Hoje
-  if (clean.includes('hoje') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
-    const todayStr = getTodayStr();
-    const rows = allRows.filter(r => r[C.data] === todayStr);
-    const sales = rows.length;
-    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
-    return `Hoje tivemos **${sales} vendas**, totalizando **${fmtBRL(revenue)}** faturados até o momento. 📊`;
+  // ── Identificar Periodo Solicitado ──
+  let timeframe = 'periodo'; 
+  let timeframeLabel = 'no período filtrado';
+  
+  if (clean.includes('este mês') || clean.includes('neste mês') || clean.includes('desse mês')) {
+    timeframe = 'este_mes';
+    timeframeLabel = 'neste mês (Junho 2026)';
+  } else if (clean.includes('mês passado') || clean.includes('no mês passado')) {
+    timeframe = 'mes_passado';
+    timeframeLabel = 'no mês passado (Maio 2026)';
+  } else if (clean.includes('este ano') || clean.includes('neste ano') || clean.includes('desse ano')) {
+    timeframe = 'este_ano';
+    timeframeLabel = 'neste ano (2026)';
+  } else if (clean.includes('hoje')) {
+    timeframe = 'hoje';
+    timeframeLabel = 'hoje';
+  } else if (clean.includes('ontem')) {
+    timeframe = 'ontem';
+    timeframeLabel = 'ontem';
+  }
+
+  let targetRows = [];
+  const todayStr = getTodayStr();
+  const yesterdayStr = getYesterdayStr();
+  
+  if (timeframe === 'hoje') {
+    targetRows = allRows.filter(r => r[C.data] === todayStr);
+  } else if (timeframe === 'ontem') {
+    targetRows = allRows.filter(r => r[C.data] === yesterdayStr);
+  } else if (timeframe === 'este_mes') {
+    targetRows = allRows.filter(r => {
+      const d = parseDate(r[C.data]);
+      return d && (d.getMonth() + 1) === 6 && d.getFullYear() === 2026;
+    });
+  } else if (timeframe === 'mes_passado') {
+    targetRows = allRows.filter(r => {
+      const d = parseDate(r[C.data]);
+      return d && (d.getMonth() + 1) === 5 && d.getFullYear() === 2026;
+    });
+  } else if (timeframe === 'este_ano') {
+    targetRows = allRows.filter(r => {
+      const d = parseDate(r[C.data]);
+      return d && d.getFullYear() === 2026;
+    });
+  } else {
+    targetRows = filtered;
+  }
+
+  // Se o usuario pediu sugestoes ou melhorias
+  if (clean.includes('sugest') || clean.includes('melhoria') || clean.includes('analis') || clean.includes('conselh') || clean.includes('consult')) {
+    try {
+      const pdvData = getFilteredPdvData();
+      if (!pdvData || pdvData.length === 0) {
+        return "Não encontrei dados financeiros suficientes no período selecionado para sugerir melhorias. 📊";
+      }
+
+      let totalReceita = 0;
+      let totalCmv = 0;
+      let totalOpex = 0;
+      let totalMargem = 0;
+      let totalWash = 0;
+      let totalDry = 0;
+      let pdvsSobAnalise = [];
+
+      pdvData.forEach(p => {
+        totalReceita += p.calc.receita;
+        totalCmv += p.calc.cmvTotal;
+        totalOpex += p.calc.opexTotal;
+        totalMargem += p.calc.lucro;
+        totalWash += p.calc.washCount;
+        totalDry += p.calc.dryCount;
+
+        pdvsSobAnalise.push({
+          name: p.custo.pdv,
+          receita: p.calc.receita,
+          lucro: p.calc.lucro,
+          opex: p.calc.opexTotal,
+          rentPct: p.calc.receita > 0 ? (p.custo.aluguel / p.calc.receita) * 100 : 0,
+          wash: p.calc.washCount,
+          dry: p.calc.dryCount,
+          dryWashRatio: p.calc.washCount > 0 ? (p.calc.dryCount / p.calc.washCount) : 1,
+          cyclesPerMachine: p.calc.cyclesPerDayPerMachine
+        });
+      });
+
+      const opexPct = totalReceita > 0 ? (totalOpex / totalReceita) * 100 : 0;
+      const cmvPct = totalReceita > 0 ? (totalCmv / totalReceita) * 100 : 0;
+      const profitPct = totalReceita > 0 ? (totalMargem / totalReceita) * 100 : 0;
+      const globalDryRatio = totalWash > 0 ? (totalDry / totalWash) : 1;
+
+      let recs = [];
+
+      if (globalDryRatio < 0.85) {
+        recs.push(`🔴 **Taxa de Secagem Baixa (${(globalDryRatio*100).toFixed(0)}%)**: Muitos clientes estão lavando, mas não secando. Sugerimos criar um banner promocional para secadoras no app ou reduzir temporariamente o valor da secagem nas terças/quartas para induzir o hábito.`);
+      }
+
+      const highRentPdvs = pdvsSobAnalise.filter(p => p.rentPct > 35 && p.receita > 500);
+      if (highRentPdvs.length > 0) {
+        highRentPdvs.forEach(p => {
+          recs.push(`⚠️ **Aluguel Crítico em ${p.name}**: O aluguel representa **${p.rentPct.toFixed(0)}%** do faturamento deste PDV. Sugerimos renegociar o valor do ponto ou realizar marketing local (panfletagem, cupom de primeira lavagem) para alavancar a receita neste local.`);
+        });
+      }
+
+      const lowPerformancePdvs = pdvsSobAnalise.filter(p => p.cyclesPerMachine < 2.0 && p.receita > 200);
+      if (lowPerformancePdvs.length > 0) {
+        const pdvList = lowPerformancePdvs.map(p => `**${p.name}** (${p.cyclesPerMachine.toFixed(1)} ciclos)`).join(', ');
+        recs.push(`📉 **Baixo Giro de Máquinas**: Os PDVs [${pdvList}] estão operando abaixo de 2 ciclos/máquina por dia. Recomendamos verificar se há máquinas fora do ar, instabilidades de internet local ou se o ponto precisa de sinalização externa mais chamativa.`);
+      }
+
+      let bestPdv = null;
+      let maxLucro = -1;
+      pdvsSobAnalise.forEach(p => {
+        if (p.lucro > maxLucro) {
+          maxLucro = p.lucro;
+          bestPdv = p;
+        }
+      });
+      if (bestPdv && bestPdv.receita > 2000) {
+        recs.push(`💎 **Ponto Forte de Lucro**: O PDV **${bestPdv.name}** gerou o maior lucro líquido (**${fmtBRL(bestPdv.lucro)}**) no período. Se houver reclamação de filas de espera, este é o local ideal para expandir com mais uma torre/stack.`);
+      }
+
+      if (recs.length === 0) {
+        recs.push("✅ **Operação Saudável**: Todos os PDVs estão operando com boa eficiência de ciclos e relação saudável de OPEX/Aluguel. Continue o bom trabalho!");
+      }
+
+      return `📊 **Consultoria LAVAÍ - Análise Operacional e Financeira**:<br><br>
+        • Faturamento: **${fmtBRL(totalReceita)}**<br>
+        • OPEX (Fixo): **${fmtBRL(totalOpex)}** (${opexPct.toFixed(1)}% da receita)<br>
+        • CMV (Variável): **${fmtBRL(totalCmv)}** (${cmvPct.toFixed(1)}% da receita)<br>
+        • Lucro Líquido: **${fmtBRL(totalMargem)}** (Margem: **${profitPct.toFixed(1)}%**)<br><br>
+        💡 **Sugestões de Melhorias Comerciais**:<br>
+        ${recs.map(r => `• ${r}`).join('<br><br>')}`;
+
+    } catch (e) {
+      console.error(e);
+      return "Não foi possível rodar o motor financeiro de análise local. Certifique-se de que a página de Resultados Financeiros está carregada. 🤖⚠️";
+    }
+  }
+
+  // 1. Hoje / Ontem / Periodo Vendas & Faturamento
+  if (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit')) {
+    const sales = targetRows.length;
+    const revenue = targetRows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    return `Análise de faturamento **${timeframeLabel}**:<br>
+      • Quantidade de vendas: **${sales}**<br>
+      • Valor faturado: **${fmtBRL(revenue)}** 📊`;
   }
   
-  // 2. Ontem
-  if (clean.includes('ontem') && (clean.includes('venda') || clean.includes('fatur') || clean.includes('ganho') || clean.includes('receit'))) {
-    const yesterdayStr = getYesterdayStr();
-    const rows = allRows.filter(r => r[C.data] === yesterdayStr);
-    const sales = rows.length;
-    const revenue = rows.reduce((s, r) => s + toNum(r[C.total]), 0);
-    return `Ontem tivemos **${sales} vendas**, faturando um total de **${fmtBRL(revenue)}**. 💰`;
-  }
-  
-  // 3. Melhor PDV
+  // 2. Melhor PDV
   if (clean.includes('melhor pdv') || clean.includes('pdv faturou mais') || clean.includes('mais vendeu') || clean.includes('pdv mais faturou')) {
     const pdvsSales = {};
     const pdvsRev = {};
-    allRows.forEach(r => {
+    targetRows.forEach(r => {
       const maq = (r[C.maquina] || '').trim();
       const c = findCustoPDV(maq);
       const name = c ? c.pdv : maq;
@@ -5254,15 +5920,17 @@ function answerQuestionLocal(q) {
       }
     });
     if (bestName) {
-      return `O PDV com maior faturamento histórico acumulado é **${bestName}** com **${fmtBRL(maxRev)}** (total de ${pdvsSales[bestName]} vendas). 👑`;
+      return `O melhor PDV **${timeframeLabel}** é **${bestName}** com **${fmtBRL(maxRev)}** faturados (${pdvsSales[bestName]} vendas). 👑`;
+    } else {
+      return `Não encontrei dados de vendas **${timeframeLabel}** para indicar o melhor PDV.`;
     }
   }
   
-  // 4. Pior PDV
+  // 3. Pior PDV
   if (clean.includes('pior pdv') || clean.includes('pdv faturou menos') || clean.includes('menos vendeu') || clean.includes('pdv menos faturou')) {
     const pdvsSales = {};
     const pdvsRev = {};
-    allRows.forEach(r => {
+    targetRows.forEach(r => {
       const maq = (r[C.maquina] || '').trim();
       const c = findCustoPDV(maq);
       const name = c ? c.pdv : maq;
@@ -5280,11 +5948,13 @@ function answerQuestionLocal(q) {
       }
     });
     if (worstName) {
-      return `O PDV com menor faturamento acumulado é **${worstName}** com **${fmtBRL(minRev)}** (total de ${pdvsSales[worstName]} vendas). 📉`;
+      return `O pior PDV em faturamento **${timeframeLabel}** é **${worstName}** com **${fmtBRL(minRev)}** faturados (${pdvsSales[worstName]} vendas). 📉`;
+    } else {
+      return `Não encontrei dados de vendas **${timeframeLabel}** para indicar o pior PDV.`;
     }
   }
 
-  // 5. Meta
+  // 4. Meta
   if (clean.includes('meta')) {
     const numDays = getFilteredDaysCount() || 1;
     const filterPdv = document.getElementById('filter-pdv').value;
@@ -5319,25 +5989,25 @@ function answerQuestionLocal(q) {
     }
   }
 
-  // 6. Projeção
+  // 5. Projeção
   if (clean.includes('proje') || clean.includes('quanto vamos faturar')) {
     const projVal = document.getElementById('kpi-projection-val').textContent;
     const projSub = document.getElementById('kpi-projection-sub').textContent;
     return `A projeção estimada de faturamento para o final do período selecionado é de **${projVal}**. Subtexto: ${projSub}. 📈`;
   }
 
-  // 7. Clima
+  // 6. Clima
   if (clean.includes('clima') || clean.includes('temperatura') || clean.includes('chuva') || clean.includes('tempo')) {
     const tempVal = document.getElementById('kpi-weather-temp').textContent;
     const subVal = document.getElementById('kpi-weather-sub').textContent;
     return `O clima atual em São Paulo registrado é de **${tempVal}** (${subVal}). ⛅`;
   }
 
-  // 8. Specific PDV stats check
+  // 7. Specific PDV stats check
   for (const custo of CUSTOS_PDV) {
     const shortName = custo.pdv.replace(/^\d+#\s*/, '').toLowerCase();
     if (clean.includes(shortName)) {
-      const pdvRows = allRows.filter(r => {
+      const pdvRows = targetRows.filter(r => {
         const maq = (r[C.maquina] || '').trim();
         const c = findCustoPDV(maq);
         return c && c.pdv === custo.pdv;
@@ -5346,16 +6016,16 @@ function answerQuestionLocal(q) {
       const wash = pdvRows.filter(r => isMaqWash(r)).length;
       const dry = pdvRows.filter(r => isMaqDry(r)).length;
       
-      return `Dados de **${custo.pdv}**:<br>
-        • Faturamento total: **${fmtBRL(totalRev)}**<br>
-        • Vendas totais: **${pdvRows.length}**<br>
+      return `Dados de **${custo.pdv}** **${timeframeLabel}**:<br>
+        • Faturamento: **${fmtBRL(totalRev)}**<br>
+        • Vendas: **${pdvRows.length}**<br>
         • Ciclos: **${wash} lavagens** e **${dry} secagens**<br>
         • Tipo: **${custo.tipo === 'RUA' ? 'Rua 🏪' : 'Condomínio 🏢'}** com **${custo.stack} stacks** (maquinas: ${custo.stack*2})`;
     }
   }
 
   // Default fallback response
-  return `Entendi sua pergunta, mas não consegui cruzar com uma consulta exata do banco de dados local. Posso te informar sobre **Faturamento de Hoje/Ontem**, **Melhor/Pior PDV**, **Metas de Vendas**, **Projeções** ou detalhes de algum **PDV específico** (escreva o nome do PDV). 🤖`;
+  return `Entendi sua pergunta, mas não consegui cruzar com uma consulta exata do banco de dados local. Posso te informar sobre **Faturamento de Hoje/Ontem/Este Mês/Mês Passado**, **Melhor/Pior PDV**, **Metas de Vendas**, **Projeções** ou **sugerir melhorias** sobre os resultados. 🤖`;
 }
 
 </script>
