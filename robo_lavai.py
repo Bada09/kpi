@@ -120,12 +120,25 @@ def normalizar_pdv(nome_raw):
 
 
 def normalizar_nsu(nsu_raw):
-    """Converte NSU em notação científica (ex: '6,15212E+11') para inteiro string ('615212000000')."""
+    """Normaliza NSUs removendo zeros à esquerda de inteiros, tratando notações científicas e decimais float."""
     if not nsu_raw:
         return nsu_raw
     s = str(nsu_raw).strip()
     if not s or s in ('-', '–', 'Não Informado', 'None'):
         return s
+    
+    # 1. Se for composto apenas por dígitos (incluindo possíveis zeros à esquerda), remove zeros à esquerda
+    if s.isdigit():
+        return str(int(s))
+        
+    # 2. Se for float como "12345.0" ou "12345,0"
+    try:
+        val_float = float(s.replace(',', '.'))
+        if val_float == int(val_float):
+            return str(int(val_float))
+    except Exception:
+        pass
+
     import re as _re
     if _re.search(r'[Ee][+\-]\d+', s):
         try:
@@ -1024,14 +1037,21 @@ def merge_and_deduplicate(portal_rows, api_rows):
         maq = r[1].strip()
         dt = r[11].strip()
         hr = r[12].strip()
-        val = r[9].strip()
+        val_raw = r[9].strip()
+        
+        # Normaliza valor para a chave de deduplicação (evita discrepâncias como '7,0' vs '7,00')
+        try:
+            val_clean = float(val_raw.replace('R$', '').replace(' ', '').replace(',', '.'))
+            val_norm = f"{val_clean:.2f}"
+        except Exception:
+            val_norm = val_raw
         
         if nsu and nsu not in ("Não Informado", "–", ""):
             key = f"nsu:{nsu}"
         elif auth and auth not in ("–", ""):
             key = f"auth:{auth}"
         else:
-            key = f"dt:{maq}|{dt}|{hr}|{val}"
+            key = f"dt:{maq}|{dt}|{hr}|{val_norm}"
             
         if key not in seen:
             seen.add(key)
