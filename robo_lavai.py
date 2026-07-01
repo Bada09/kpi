@@ -1030,6 +1030,12 @@ def merge_and_deduplicate(portal_rows, api_rows):
     for r in portal_rows + api_rows:
         if len(r) < 22:
             continue
+            
+        # Filtra transações de outros operadores (ex: Luciano Tiago Maciel / aeroporto)
+        cliente = r[0].strip()
+        if cliente == "Estoque - Luciano Tiago Maciel":
+            continue
+            
         nsu = normalizar_nsu(r[14].strip())
         r[14] = nsu  # normaliza in-place antes de enviar
         r[1]  = normalizar_pdv(r[1])  # normaliza nome do PDV in-place
