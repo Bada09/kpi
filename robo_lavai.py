@@ -2513,12 +2513,12 @@ if __name__ == "__main__":
         log.info("Modo --agora: coleta concluída, encerrando.")
         sys.exit(0)
     else:
-        log.info("Modo continuo: coleta agendada a cada 15 minutos.")
+        log.info("Modo continuo: coleta agendada a cada 6 minutos.")
         log.info("Pressione Ctrl+C para parar.\n")
 
         job()
 
-        schedule.every(15).minutes.do(job)
+        schedule.every(6).minutes.do(job)
         while True:
             schedule.run_pending()
             time.sleep(30)
