@@ -4169,13 +4169,11 @@ function renderKPIs(){
   let pctText = "";
   let pctColor = "";
   if (periodGoal > 0) {
-    const diff = periodSales - periodGoal;
-    const pct = Math.abs(Math.round((diff / periodGoal) * 100));
-    if (diff >= 0) {
-      pctText = `+${pct}% acima da meta`;
+    const pct = Math.round((periodSales / periodGoal) * 100);
+    pctText = `${pct}% da meta atingida`;
+    if (pct >= 100) {
       pctColor = '#10b981'; // green
     } else {
-      pctText = `-${pct}% abaixo da meta`;
       pctColor = '#ef4444'; // red
     }
   } else {

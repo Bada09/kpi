@@ -33,7 +33,7 @@ SENHA = "L@v#35554"
 
 URL_ERP = "https://www.erpvending.com.br/"
 URL_DOWNLOAD  = "https://www.portalvendtef.com.br/relatoriogeral/relatorioVendasGeralDownload"
-URL_PAYBLU    = "https://www.portalpayblu.com.br/private-label/relatorio-vendas-private-label-download"
+URL_PAYBLU    = "https://www.portalpayblu.com.br/relatoriogeral/relatorioVendasGeralDownload"
 
 # URL do Google Apps Script
 APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzGx-piTEHw8GdINEU4fFSspAWQU5kh83OrABUsGDBZrd58mOnalEOQxIQNHhs_5GL/exec"
@@ -76,6 +76,8 @@ log = logging.getLogger(__name__)
 PDV_NOME_MAP = {
     # Por fragmento de nome (match parcial)
     "barra funda":          "11# Extra Barra Funda",
+    "4# gestão you go":     "34# Gestão You Go Vila Mariana",
+    "4# gestão you go vila mariana": "34# Gestão You Go Vila Mariana",
     "glicério":             "5# Extra Glicério",
     "glicerio":             "5# Extra Glicério",
     "2a torre":             "5# Extra Glicério",
@@ -91,13 +93,13 @@ PDV_NOME_MAP = {
     "tef 78:21:84:ee:80:c6": "34# Gestão You Go Vila Mariana",
     "tef 78:21:84:ee:8a:fe": "34# Gestão You Go Vila Mariana",
     "tef b8:d6:1a:83:2e:7a": "34# Gestão You Go Vila Mariana",
-    "tef b8:d6:1a:83:2f:5e": "4# Gestão You Go Vila Mariana",
+    "tef b8:d6:1a:83:2f:5e": "34# Gestão You Go Vila Mariana",
     "tef b8:d6:1a:83:2f:6a": "34# Gestão You Go Vila Mariana",
     "tef b8:d6:1a:83:2f:86": "34# Gestão You Go Vila Mariana",
     "78:21:84:ee:80:c6":     "34# Gestão You Go Vila Mariana",
     "78:21:84:ee:8a:fe":     "34# Gestão You Go Vila Mariana",
     "b8:d6:1a:83:2e:7a":     "34# Gestão You Go Vila Mariana",
-    "b8:d6:1a:83:2f:5e":     "4# Gestão You Go Vila Mariana",
+    "b8:d6:1a:83:2f:5e":     "34# Gestão You Go Vila Mariana",
     "b8:d6:1a:83:2f:6a":     "34# Gestão You Go Vila Mariana",
     "b8:d6:1a:83:2f:86":     "34# Gestão You Go Vila Mariana",
 }
@@ -1052,12 +1054,21 @@ def merge_and_deduplicate(portal_rows, api_rows):
         except Exception:
             val_norm = val_raw
         
-        if nsu and nsu not in ("Não Informado", "–", ""):
-            key = f"nsu:{nsu}"
-        elif auth and auth not in ("–", ""):
-            key = f"auth:{auth}"
+        # Determina a chave de deduplicação
+        is_payblu = "payblu" in str(r[2]).lower() or "payblu" in str(r[3]).lower()
+        if is_payblu:
+            matr = r[21].strip()
+            if hr and hr not in ("0", ""):
+                key = f"payblu_dt:{matr}|{dt}|{hr}|{val_norm}"
+            else:
+                key = f"nsu:{nsu}"
         else:
-            key = f"dt:{maq}|{dt}|{hr}|{val_norm}"
+            if nsu and nsu not in ("Não Informado", "–", ""):
+                key = f"nsu:{nsu}"
+            elif auth and auth not in ("–", ""):
+                key = f"auth:{auth}"
+            else:
+                key = f"dt:{maq}|{dt}|{hr}|{val_norm}"
             
         if key not in seen:
             seen.add(key)
@@ -1478,6 +1489,48 @@ def map_payblu_csv_row(row):
     ]
 
 
+def map_payblu_21col_row(row):
+    """
+    Mapeia uma linha do CSV PayBlu Geral (21 colunas) para o formato padrão de 22 colunas.
+    Colunas CSV: Cliente[0]; Nº Serial[1]; MAC Address[2]; Matricula[3]; Nome Terminal[4];
+                 Pagamento[5]; Produto[6]; Mola[7]; Venda (R$)[8]; Preço (R$)[9];
+                 Valor Pago (R$)[10]; Desconto (R$)[11]; Data[12]; Hora[13];
+                 Nº Logico[14]; NSU[15]; Autorização[16]; Tipo Cartão[17];
+                 Rede[18]; Bandeira[19]; Usuário[20]
+    """
+    def g(i):
+        return row[i].strip() if i < len(row) else ""
+
+    cliente     = g(0) or "LAVAÍ - You Go"
+    serial      = g(1)
+    mac         = g(2)
+    matricula   = g(3)
+    maquina     = g(4) or serial or mac
+    pagamento   = g(5) or "TEF"
+    produto     = g(6) or "1 Pulso(s)"
+    mola_id     = g(7)
+    venda_val   = g(8)
+    preco_val   = g(9)
+    total_val   = g(10)
+    data_br     = g(12)
+    hora_br     = g(13)
+    n_logico    = g(14)
+    nsu         = g(15) or f"PB-{serial}|{data_br}|{hora_br}"
+    auth        = g(16)
+    tipo_cartao = g(17) or "Private Label"
+    rede        = g(18) or "PayBlu"
+    bandeira    = g(19) or "Private Label"
+    usuario     = g(20)
+
+    return [
+        cliente, maquina, "PayBlu", "PayBlu", pagamento,
+        produto, mola_id, venda_val, preco_val, total_val,
+        "Não utilizado", data_br, hora_br, n_logico, nsu,
+        auth, tipo_cartao, rede, bandeira, usuario,
+        "", matricula
+    ]
+
+
 async def _payblu_estabelecer_sso(page):
     """Estabelece sessão SSO no PayBlu via navbar do ERP. Retorna True se OK."""
     try:
@@ -1588,11 +1641,15 @@ async def _payblu_baixar_mes(page, ano: int, mes: int, pasta_saida: Path) -> lis
         with open(temp_csv, encoding="latin-1") as f:
             raw_lines = f.readlines()
 
-        header_idx = 0
+        header_idx = -1
         for i, line in enumerate(raw_lines):
             if "Cliente" in line and "Pagamento" in line:
                 header_idx = i
                 break
+
+        if header_idx == -1:
+            log.warning(f"PayBlu {label_mes}: cabeçalho não encontrado no CSV.")
+            return rows
 
         reader = csv.reader(raw_lines[header_idx + 1:], delimiter=";")
         count = 0
@@ -1602,7 +1659,13 @@ async def _payblu_baixar_mes(page, ano: int, mes: int, pasta_saida: Path) -> lis
             if r[0].strip().startswith("Total"):
                 continue
             r = [c.strip().strip('"') for c in r]
-            if len(r) >= 11:
+            if len(r) >= 22:
+                rows.append(r)
+                count += 1
+            elif len(r) == 21:
+                rows.append(map_payblu_21col_row(r))
+                count += 1
+            elif len(r) >= 11:
                 rows.append(map_payblu_csv_row(r))
                 count += 1
 
@@ -2221,8 +2284,7 @@ async def coletar_tudo():
                 temp_zip.unlink()
 
             # Coletar PayBlu com a mesma sessão autenticada
-            # payblu_rows = await coletar_payblu(page) # desativado por solicitacao do usuario
-            payblu_rows = []
+            payblu_rows = await coletar_payblu(page)
 
         except Exception as e:
             log.error(f"Erro durante extracao ERP/VendTEF/PayBlu: {e}")
@@ -2292,8 +2354,8 @@ async def coletar_tudo():
             if payblu_antigos:
                 break
                 
-    # PayBlu: deduplica o histórico carregado + YouGo 2025
-    payblu_rows_dedup   = merge_and_deduplicate(payblu_antigos + yougo_excel_rows, [])
+    # PayBlu: deduplica o histórico carregado + YouGo 2025 + novas transações
+    payblu_rows_dedup   = merge_and_deduplicate(payblu_antigos + yougo_excel_rows, payblu_rows)
 
     total_count = (len(portal_rows_dedup) + len(vmpay_rows_dedup) + len(sq_rows_dedup)
                    + len(payblu_rows_dedup))
