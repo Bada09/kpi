@@ -869,13 +869,16 @@ def coletar_vmpay_api(vmpay_antigos=None):
     return rows
 
 
-def is_june_2026(dt_val):
+def is_current_month(dt_val):
     if not dt_val:
         return False
+    now = datetime.now(FUSO_SP)
     if isinstance(dt_val, datetime):
-        return dt_val.year == 2026 and dt_val.month == 6
+        return dt_val.year == now.year and dt_val.month == now.month
     dt_str = str(dt_val).strip()
-    return "/06/2026" in dt_str or "2026-06" in dt_str
+    curr_suffix_br = f"/{now.month:02d}/{now.year}"
+    curr_suffix_iso = f"{now.year}-{now.month:02d}"
+    return curr_suffix_br in dt_str or curr_suffix_iso in dt_str
 
 def obter_caminho_excel(nome_arquivo):
     def normalizar(s):
@@ -993,7 +996,7 @@ def coletar_vmpay_excel():
                     continue
 
             dt_val = row[date_idx] if date_idx < len(row) else None
-            if not dt_val or is_june_2026(dt_val):
+            if not dt_val or is_current_month(dt_val):
                 continue
 
             mapped_row = map_vmpay_excel_row(row, headers_idx)
@@ -1340,7 +1343,7 @@ def coletar_vendpago_excel():
                 continue
 
             dt_val = row[date_idx] if date_idx < len(row) else None
-            if not dt_val or is_june_2026(dt_val):
+            if not dt_val or is_current_month(dt_val):
                 continue
 
             def get(i):
@@ -2136,7 +2139,28 @@ async def coletar_tudo():
             
             await dispensar_modal(page)
             
-            # Clicar em Continuar para gerar o relatorio do mês corrente
+            # Selecionar período: do dia 1 do mês anterior até o dia de hoje
+            now_dt = datetime.now(FUSO_SP)
+            if now_dt.month == 1:
+                prev_m, prev_y = 12, now_dt.year - 1
+            else:
+                prev_m, prev_y = now_dt.month - 1, now_dt.year
+            dt_inicio_str = f"01/{prev_m:02d}/{prev_y}"
+            dt_fim_str = now_dt.strftime("%d/%m/%Y")
+            
+            log.info(f"Preenchendo período de busca: {dt_inicio_str} até {dt_fim_str}")
+            
+            try:
+                # Preenche campos de data
+                await page.locator("input#inicio").click(click_count=3)
+                await page.locator("input#inicio").type(dt_inicio_str)
+                await page.locator("input#fim").click(click_count=3)
+                await page.locator("input#fim").type(dt_fim_str)
+                log.info("Período preenchido com sucesso.")
+            except Exception as de:
+                log.warning(f"Erro ao preencher datas de busca (usando default do portal): {de}")
+
+            # Clicar em Continuar para gerar o relatorio
             log.info("Clicando em 'Continuar'...")
             await page.locator("input[value='Continuar']").click(timeout=10000)
             await page.wait_for_load_state("networkidle", timeout=TIMEOUT_MS)
