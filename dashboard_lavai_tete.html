@@ -2727,6 +2727,14 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
         </select>
       </div>
       <div class="filter-group">
+        <label>Núcleo</label>
+        <select id="filter-nucleo">
+          <option value="all">Todos</option>
+          <option value="GPA">GPA</option>
+          <option value="OUTROS">Outros</option>
+        </select>
+      </div>
+      <div class="filter-group">
         <label>PDV</label>
         <select id="filter-pdv">
           <option value="all">Todos</option>
@@ -3099,7 +3107,10 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
 
     <!-- Tabela consolidada view -->
     <div id="fin-view-table" style="display:none">
-      <div class="fin-section-title"><i class="fas fa-table" style="color:#2563eb"></i> Tabela Consolidada por PDV</div>
+      <div class="fin-section-title" style="display:flex; justify-content:space-between; align-items:center;">
+        <span><i class="fas fa-table" style="color:#2563eb"></i> Tabela Consolidada por PDV</span>
+        <button class="btn-export" onclick="exportFinTableExcel()" style="margin-bottom:0; font-size:12px; padding:6px 12px;"><i class="fas fa-file-excel"></i> Exportar Tabela Excel</button>
+      </div>
       <div class="fin-table-wrapper">
         <table class="fin-table" id="fin-summary-table">
           <thead>
@@ -3769,13 +3780,20 @@ function updatePdvFilter() {
   
   // Extract unique PDVs
   const pdvs = new Set();
+  const filterNucleo = document.getElementById('filter-nucleo').value;
   dateFiltered.forEach(r => {
     const maq = (r[C.maquina] || '').trim();
     if (maq) {
+      const c = findCustoPDV(maq);
       if (filterOpType !== 'all') {
-        const c = findCustoPDV(maq);
         const pdvTipo = c ? c.tipo : 'RUA';
         if (pdvTipo !== filterOpType) return;
+      }
+      const pdvName = c ? c.pdv : maq;
+      if (filterNucleo !== 'all') {
+        const isGpa = pdvName.toLowerCase().includes('extra');
+        if (filterNucleo === 'GPA' && !isGpa) return;
+        if (filterNucleo === 'OUTROS' && isGpa) return;
       }
       pdvs.add(maq);
     }
@@ -3910,6 +3928,17 @@ function applyFilter(){
       if (pdvTipo !== filterOpType) return false;
     }
     
+    // Núcleo filter (GPA vs OUTROS)
+    const filterNucleo = document.getElementById('filter-nucleo').value;
+    if (filterNucleo !== 'all') {
+      const maq = (r[C.maquina] || '').trim();
+      const custoObj = findCustoPDV(maq);
+      const pdvName = custoObj ? custoObj.pdv : maq;
+      const isGpa = pdvName.toLowerCase().includes('extra');
+      if (filterNucleo === 'GPA' && !isGpa) return false;
+      if (filterNucleo === 'OUTROS' && isGpa) return false;
+    }
+
     // PDV filter
     if (filterPdv !== 'all') {
       const maq = (r[C.maquina] || '').trim();
@@ -4927,6 +4956,13 @@ function exportExcel(){
   XLSX.writeFile(wb, "relatorio_geral_vendas_lavai.xlsx");
 }
 
+function exportFinTableExcel() {
+  const table = document.getElementById('fin-summary-table');
+  if (!table) return;
+  const wb = XLSX.utils.table_to_book(table, { sheet: "Consolidado por PDV" });
+  XLSX.writeFile(wb, "consolidado_pdv_lavai.xlsx");
+}
+
 // ══════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════
@@ -4958,6 +4994,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Registrar onchange dos filtros de ano/mes/pdv UMA única vez
   document.getElementById('filter-year').onchange = () => { clearDateInputs(); applyFilter(); };
   document.getElementById('filter-month').onchange = () => { clearDateInputs(); applyFilter(); };
+  document.getElementById('filter-nucleo').onchange = () => { clearDateInputs(); applyFilter(); };
   document.getElementById('filter-pdv').onchange = () => applyFilter();
   document.getElementById('date-start').onchange =
   document.getElementById('date-end').onchange = function() {
