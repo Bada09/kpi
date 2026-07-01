@@ -2194,6 +2194,22 @@ async def coletar_tudo():
             if vmpay_antigos:
                 break
 
+    # Carrega dados VendTEF já existentes para obter o histórico e mesclar (evita perder histórico se o portal falhar)
+    vendtef_antigos = []
+    for p_cache in [CSV_VENDTEF_LOCAL, Path(__file__).parent / "vendtef_local.js", Path(__file__).parent.parent / "vendtef_local.js"]:
+        if p_cache.exists() and p_cache.stat().st_size >= 100:
+            vendtef_antigos = carregar_fonte_local(p_cache)
+            if vendtef_antigos:
+                break
+
+    # Carrega dados SQInsights já existentes para obter o histórico e mesclar (evita perder histórico se o Excel/API falhar)
+    sqi_antigos = []
+    for p_cache in [CSV_SQI_LOCAL, Path(__file__).parent / "sqi_local.js", Path(__file__).parent.parent / "sqi_local.js"]:
+        if p_cache.exists() and p_cache.stat().st_size >= 100:
+            sqi_antigos = carregar_fonte_local(p_cache)
+            if sqi_antigos:
+                break
+
     # Coletar dados da API VMPay Cashless, SQInsights, VendPago Excel e unificar com os dados raspados
     api_rows = coletar_vmpay_api(vmpay_antigos)
     # excel_rows removido: VMPay local não é mais usado; fonte única = API VMPay
@@ -2203,7 +2219,10 @@ async def coletar_tudo():
 
     # Deduplicar cada fonte antes de enviar (evitar duplicatas dentro do mesmo lote)
     api_rows_to_merge = api_rows if api_rows is not None else []
-    portal_rows_dedup   = merge_and_deduplicate(rows + vendpago_excel_rows, [])
+    
+    # Filtra as transações de portal (não-VendPago) do histórico para mesclar
+    vendtef_antigos_portal = [r for r in vendtef_antigos if len(r) >= 22 and r[3] != "VendPago"]
+    portal_rows_dedup   = merge_and_deduplicate(rows + vendtef_antigos_portal + vendpago_excel_rows, [])
     
     # Se a API teve sucesso, mescla o novo lote com o histórico. Se falhou, preserva o histórico intacto.
     if api_rows is not None:
@@ -2213,7 +2232,7 @@ async def coletar_tudo():
         vmpay_rows_dedup = merge_and_deduplicate(vmpay_antigos, [])
         log.warning(f"VMPay: mantendo {len(vmpay_rows_dedup)} registros históricos devido a falha na API.")
         
-    sq_rows_dedup       = merge_and_deduplicate(sq_rows, [])
+    sq_rows_dedup       = merge_and_deduplicate(sq_rows + sqi_antigos, [])
     
     # Carrega dados PayBlu já existentes para mesclar (mantém o histórico já que a coleta automática foi desativada)
     payblu_antigos = []
