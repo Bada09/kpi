@@ -1,9 +1,9 @@
 {
-  "gerado_em": "2026-07-30T11:03:28.799476-03:00",
+  "gerado_em": "2026-07-30T11:12:11.285495-03:00",
   "proxima_coleta": null,
   "status": "ok",
-  "total_transacoes": 259002,
-  "portal_transacoes": 80797,
+  "total_transacoes": 259004,
+  "portal_transacoes": 80799,
   "api_transacoes": 74,
   "excel_transacoes": 87811,
   "sq_transacoes": 2326,
