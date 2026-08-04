@@ -1,10 +1,10 @@
 {
-  "gerado_em": "2026-08-04T14:55:56.214426-03:00",
+  "gerado_em": "2026-08-04T15:03:23.303000-03:00",
   "proxima_coleta": null,
   "status": "ok",
-  "total_transacoes": 261829,
+  "total_transacoes": 261830,
   "portal_transacoes": 81669,
-  "api_transacoes": 110,
+  "api_transacoes": 111,
   "excel_transacoes": 87811,
   "sq_transacoes": 2414,
   "payblu_transacoes": 10582
