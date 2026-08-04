@@ -6,6 +6,7 @@
 <title>Dashboard LAVAÍ — Consolidado</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/apexcharts">
 // ══════════════════════════════════════════════════════
 // ROBÔ LAVAÍ IA ASSISTENTE ENGINE
@@ -2008,6 +2009,8 @@ header{background:#fff;border:1px solid var(--border);border-radius:var(--r);
 
 .btn-source.sqi    {background:rgba(16,185,129,.08);color:var(--green);border-color:rgba(16,185,129,.25)}
 .btn-source.sqi.active    {background:var(--green);color:#fff;border-color:var(--green)}
+.btn-source.payblu {background:rgba(236,72,153,.08);color:#ec4899;border-color:rgba(236,72,153,.25)}
+.btn-source.payblu.active {background:#ec4899;color:#fff;border-color:#ec4899}
 .source-count{font-size:10px;background:rgba(255,255,255,.35);padding:1px 6px;border-radius:10px;font-weight:700}
 
 /* ── Section labels ─────────────────────────────── */
@@ -2821,6 +2824,9 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
     <button class="btn-source sqi" id="btn-fonte-sqi" onclick="setFonte('sqi')">
       <i class="fas fa-coins"></i> SQInsights <span class="source-count" id="cnt-sqi"></span>
     </button>
+    <button class="btn-source payblu" id="btn-fonte-payblu" onclick="setFonte('payblu')">
+      <i class="fas fa-credit-card"></i> PayBlu <span class="source-count" id="cnt-payblu"></span>
+    </button>
   </div>
 
   <!-- KPI MAIN -->
@@ -3054,11 +3060,14 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
 
     <!-- Filtros financeiros -->
     <!-- Titulo consolidado com toggle de visualização integrado -->
-    <div class="fin-section-title" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div class="fin-section-title" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
       <span><i class="fas fa-chart-pie" style="color:var(--cyan)"></i> Consolidado Financeiro</span>
-      <div class="fin-view-toggle" style="margin:0">
-        <button class="fin-view-btn active" id="finview-cards" onclick="setFinView('cards')"><i class="fas fa-th-large"></i> Cards</button>
-        <button class="fin-view-btn" id="finview-table" onclick="setFinView('table')"><i class="fas fa-table"></i> Tabela</button>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <button class="btn-export" onclick="openReportModal()" style="background:linear-gradient(135deg,#059669,#10b981);font-size:12px;padding:7px 14px;display:flex;align-items:center;gap:6px"><i class="fas fa-file-excel"></i> Relatório Excel por PDV</button>
+        <div class="fin-view-toggle" style="margin:0">
+          <button class="fin-view-btn active" id="finview-cards" onclick="setFinView('cards')"><i class="fas fa-th-large"></i> Cards</button>
+          <button class="fin-view-btn" id="finview-table" onclick="setFinView('table')"><i class="fas fa-table"></i> Tabela</button>
+        </div>
       </div>
     </div>
     <div class="fin-kpi-grid" id="fin-kpi-grid">
@@ -3107,9 +3116,12 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
 
     <!-- Tabela consolidada view -->
     <div id="fin-view-table" style="display:none">
-      <div class="fin-section-title" style="display:flex; justify-content:space-between; align-items:center;">
+      <div class="fin-section-title" style="display:flex; justify-content:space-between; align-items:center;flex-wrap:wrap;gap:8px">
         <span><i class="fas fa-table" style="color:#2563eb"></i> Tabela Consolidada por PDV</span>
-        <button class="btn-export" onclick="exportFinTableExcel()" style="margin-bottom:0; font-size:12px; padding:6px 12px;"><i class="fas fa-file-excel"></i> Exportar Tabela Excel</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-export" onclick="openReportModal()" style="margin-bottom:0; font-size:12px; padding:6px 12px;background:linear-gradient(135deg,#059669,#10b981)"><i class="fas fa-file-excel"></i> Relatório Excel por PDV</button>
+          <button class="btn-export" onclick="exportFinTableExcel()" style="margin-bottom:0; font-size:12px; padding:6px 12px;"><i class="fas fa-table"></i> Exportar Tabela Simples</button>
+        </div>
       </div>
       <div class="fin-table-wrapper">
         <table class="fin-table" id="fin-summary-table">
@@ -3140,6 +3152,75 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
     </div>
 
   </div><!-- /page-resultados -->
+
+  <!-- ══════════════════════════════════════════════
+       MODAL: RELATÓRIO FINANCEIRO POR PDV
+  ══════════════════════════════════════════════ -->
+  <div id="report-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);z-index:9000;overflow-y:auto;padding:20px" onclick="closeReportModal(event)">
+    <div style="max-width:1100px;margin:0 auto;background:#0f172a;border-radius:20px;border:1px solid rgba(255,255,255,.1);box-shadow:0 32px 80px rgba(0,0,0,.6);overflow:hidden" onclick="event.stopPropagation()">
+      <!-- Header do Modal -->
+      <div style="background:linear-gradient(135deg,#059669 0%,#0ea5e9 100%);padding:24px 28px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:22px;font-weight:800;color:#fff;display:flex;align-items:center;gap:10px"><i class="fas fa-file-excel"></i> Relatório Financeiro por PDV</div>
+          <div id="report-modal-subtitle" style="font-size:13px;color:rgba(255,255,255,.8);margin-top:4px">Carregando...</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button onclick="exportRelatorioExcel()" style="background:#fff;color:#059669;border:none;border-radius:10px;padding:10px 20px;font-weight:800;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform=''"><i class="fas fa-download"></i> Baixar Excel Dinâmico</button>
+          <button onclick="closeReportModal()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:10px;width:40px;height:40px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+      <!-- Sumário KPIs -->
+      <div id="report-kpi-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:rgba(255,255,255,.05)"></div>
+      <!-- Tabela por PDV -->
+      <div style="padding:20px 24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <div style="color:#e2e8f0;font-weight:700;font-size:14px"><i class="fas fa-store" style="color:#10b981"></i> Detalhamento por PDV</div>
+          <div style="display:flex;gap:8px">
+            <input id="report-search" type="text" placeholder="Filtrar PDV..." oninput="filterReportTable(this.value)" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 12px;color:#e2e8f0;font-size:12px;outline:none">
+            <select id="report-filter-tipo" onchange="filterReportTable()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 10px;color:#e2e8f0;font-size:12px;outline:none">
+              <option value="all">Todos os Tipos</option>
+              <option value="RUA">🏪 Rua</option>
+              <option value="CONDO">🏢 Condomínio</option>
+            </select>
+            <select id="report-sort" onchange="sortReportTable(this.value)" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 10px;color:#e2e8f0;font-size:12px;outline:none">
+              <option value="receita">↓ Receita</option>
+              <option value="resultado">↓ Resultado</option>
+              <option value="ebitda">↓ EBITDA%</option>
+              <option value="ciclos">↓ Ciclos</option>
+              <option value="pdv">A→Z PDV</option>
+            </select>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="report-pdv-table" style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="background:rgba(255,255,255,.05)">
+                <th style="padding:10px 12px;text-align:left;color:#94a3b8;font-weight:700;border-bottom:1px solid rgba(255,255,255,.08);white-space:nowrap">PDV</th>
+                <th style="padding:10px 8px;text-align:center;color:#94a3b8;font-weight:700;border-bottom:1px solid rgba(255,255,255,.08)">Tipo</th>
+                <th style="padding:10px 8px;text-align:right;color:#94a3b8;font-weight:700;border-bottom:1px solid rgba(255,255,255,.08)">Lav.</th>
+                <th style="padding:10px 8px;text-align:right;color:#94a3b8;font-weight:700;border-bottom:1px solid rgba(255,255,255,.08)">Sec.</th>
+                <th style="padding:10px 8px;text-align:right;color:#10b981;font-weight:700;border-bottom:1px solid rgba(255,255,255,.08)">Receita</th>
+                <th style="padding:10px 8px;text-align:right;color:#f97316;font-weight:700;border-bottom:1px solid rgba(255,255,255,.08)">CMV</th>
+                <th style="padding:10px 8px;text-align:right;color:#8b5cf6;font-weight:700;border-bottom:1px solid rgba(255,255,255,.08)">OPEX</th>
+                <th style="padding:10px 8px;text-align:right;color:#94a3b8;font-weight:700;border-bottom:1px solid rgba(255,255,255,.08)">M.Bruta</th>
+                <th style="padding:10px 8px;text-align:right;color:#94a3b8;font-weight:700;border-bottom:1px solid rgba(255,255,255,.08)">Resultado</th>
+                <th style="padding:10px 8px;text-align:right;color:#0ea5e9;font-weight:700;border-bottom:1px solid rgba(255,255,255,.08)">EBITDA%</th>
+                <th style="padding:10px 8px;text-align:right;color:#94a3b8;font-weight:700;border-bottom:1px solid rgba(255,255,255,.08)">BE Ciclos</th>
+                <th style="padding:10px 8px;text-align:center;color:#94a3b8;font-weight:700;border-bottom:1px solid rgba(255,255,255,.08)">Status</th>
+              </tr>
+            </thead>
+            <tbody id="report-table-body"></tbody>
+            <tfoot id="report-table-foot"></tfoot>
+          </table>
+        </div>
+      </div>
+      <!-- Notas de rodapé -->
+      <div style="padding:16px 24px;border-top:1px solid rgba(255,255,255,.07);color:#64748b;font-size:11px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <span><i class="fas fa-info-circle"></i> Valores proporcionalizados ao período filtrado. OPEX fixo ÷ dias no mês × dias no período.</span>
+        <span id="report-footer-date"></span>
+      </div>
+    </div>
+  </div>
 
 </div><!-- /app-container -->
 
@@ -3305,6 +3386,52 @@ function enrichRowsFromMatricula(rows) {
 }
 
 // ══════════════════════════════════════════════════════
+// MERGE / ALIAS DE PDVs
+// Quando um PDV recebe um nome diferente nos dados brutos
+// (ex: "3# inativa", "3# Rio Branco Inativa") ele deve ser
+// unificado no PDV canônico definido abaixo.
+// Chave: padrão (string ou RegExp string) → PDV canônico
+// ══════════════════════════════════════════════════════
+const PDV_MERGE_MAP = [
+  // ── 3# Extra Rio Branco ──────────────────────────
+  // Qualquer variante iniciada por "3#" que contenha "inativ" é unificada
+  { pattern: /^3#.*inativ/i, canonical: '3# Extra Rio Branco' },
+  // Variantes com espaço/grafia diferentes do nome canônico
+  { pattern: /^3#\s*extra\s*rio\s*branco$/i, canonical: '3# Extra Rio Branco' },
+];
+
+// ══════════════════════════════════════════════════════
+// CLIENTES / PDVs FANTASMA A IGNORAR
+// Linhas cujo col 0 (Cliente) ou col 1 (Máquina) bater
+// com qualquer entrada desta lista serão descartadas.
+// Use strings em minúsculo (a comparação é case-insensitive).
+// ══════════════════════════════════════════════════════
+const CLIENTES_IGNORADOS = [
+  'elaine cristina dallalibera',
+];
+
+function isRowIgnorada(r) {
+  const cliente = (r[0] || '').toLowerCase().trim();
+  const maquina = (r[C.maquina] || '').toLowerCase().trim();
+  return CLIENTES_IGNORADOS.some(nome =>
+    cliente.includes(nome) || maquina.includes(nome)
+  );
+}
+
+/**
+ * Normaliza o nome de um PDV aplicando PDV_MERGE_MAP.
+ * Se alguma regra casar, retorna o nome canônico; caso contrário retorna o original.
+ */
+function normalizePdvName(name) {
+  if (!name) return name;
+  const n = name.trim();
+  for (const rule of PDV_MERGE_MAP) {
+    if (rule.pattern.test(n)) return rule.canonical;
+  }
+  return n;
+}
+
+// ══════════════════════════════════════════════════════
 // ENRICHMENT VENDTEF: "Seca 1" / "Lava 2" → Torre + PDV
 // No VendTEF, col 1 (maquina) pode ter "Seca 1", "Lava 2" etc.
 // Col 0 tem o nome do PDV ("3# Extra Rio Branco").
@@ -3325,15 +3452,21 @@ function enrichVendtefMachineStack(rows) {
     const isSeca   = m[1].toLowerCase().startsWith('sec');
     const stackNum = m[2];  // número fixo da torre: "1", "2", "3"
 
+    // Aplica merge de alias ANTES de buscar o custo (ex: "3# inativa" → "3# Extra Rio Branco")
+    const pdvNorm  = normalizePdvName(pdvField);
+
     // Busca nome curto da torre para este PDV
-    const custoPDV = findCustoPDV(pdvField);
-    const pdvNome  = custoPDV ? custoPDV.pdv : pdvField;
+    const custoPDV = findCustoPDV(pdvNorm);
+    const pdvNome  = custoPDV ? custoPDV.pdv : pdvNorm;
     const baseNome = PDV_TORRE_NOME[pdvNome];
 
     if (baseNome) {
       r[C.maquina] = pdvNome;                      // normaliza col 1 para nome completo do PDV
       r[C.torre]   = baseNome + ' ' + stackNum;    // ex: "Rio Branco 1"
       r[C.produto] = isSeca ? 'Secadora' : 'Lavadora';  // garante isMaqWash/isMaqDry correto
+    } else if (pdvNorm !== pdvField) {
+      // Mesmo sem torre, normaliza o nome do PDV na coluna maquina
+      r[C.maquina] = pdvNorm;
     }
     return r;
   });
@@ -3398,8 +3531,15 @@ function enrichVmpayLocations(rows) {
 
   return rows.map(r => {
     while (r.length < 23) r.push('');
-    const locName = (r[C.maquina] || '').trim();
-    if (!locName) return r;
+    const locRaw  = (r[C.maquina] || '').trim();
+    if (!locRaw) return r;
+
+    // Aplica merge de alias (ex: "3# inativa" → "3# Extra Rio Branco")
+    const locName = normalizePdvName(locRaw);
+    if (locName !== locRaw) {
+      r[C.maquina] = locName;
+      return r; // já normalizado — não precisa continuar o enriquecimento
+    }
 
     // Já enriquecido pela matrícula — não sobrescreve
     if (r[C.torre]) return r;
@@ -3504,6 +3644,7 @@ const BAND_COLORS = ['#2563eb','#0ea5e9','#8b5cf6','#f59e0b','#10b981','#ef4444'
 // VendPago: NSU numérico e Pagamento contém VEND/PAGO/PIX/op ou campo Fabricante é 'VendPago'
 // VMPay: Fabricante 'VMPay' ou Rede contém 'VMPay' ou Pagamento 'CASHLESS'
 // SQInsights: NSU começa com 'SQ-' ou Pagamento/Produto contém 'FICHA'/'APP'/'SQI'
+// PayBlu: Fabricante 'PayBlu', Rede 'PayBlu', NSU começa com 'PB-', ou Pagamento 'PRIVATE LABEL'
 function getRowSource(r) {
   const nsu      = (r[C.nsu]      || '').trim();
   const pag      = (r[C.pagamento]|| '').trim().toUpperCase();
@@ -3526,6 +3667,10 @@ function getRowSource(r) {
   if (pag.includes('CASHLESS') || pag.includes('VMPAY') ||
       rede.includes('VMPAY') || rede.includes('VERTIPAY') || fab.includes('VMPAY') ||
       fab.includes('SPEED QUEEN') || cliente.includes('VMPAY')) return 'vmpay';
+
+  // PayBlu: Fabricante/Rede 'PayBlu', NSU prefixo 'PB-', ou Pagamento 'PRIVATE LABEL'
+  if (fab.includes('PAYBLU') || rede.includes('PAYBLU') ||
+      nsu.startsWith('PB-') || pag.includes('PRIVATE LABEL')) return 'payblu';
 
   // Default: VendTEF (portal)
   return 'vendtef';
@@ -3702,6 +3847,8 @@ async function loadData(){
   }
 
   allRows = desduplicarRows(allRows);
+  // Remove linhas de clientes/PDVs fantasma (como Elaine)
+  allRows = allRows.filter(r => !isRowIgnorada(r));
   detectDateFormat(allRows);
   buildFilters();
   applyFilter();
@@ -3782,8 +3929,9 @@ function updatePdvFilter() {
   const pdvs = new Set();
   const filterNucleo = document.getElementById('filter-nucleo').value;
   dateFiltered.forEach(r => {
-    const maq = (r[C.maquina] || '').trim();
-    if (maq) {
+    const maqRaw = (r[C.maquina] || '').trim();
+    if (maqRaw) {
+      const maq = normalizePdvName(maqRaw);
       const c = findCustoPDV(maq);
       if (filterOpType !== 'all') {
         const pdvTipo = c ? c.tipo : 'RUA';
@@ -3795,7 +3943,7 @@ function updatePdvFilter() {
         if (filterNucleo === 'GPA' && !isGpa) return;
         if (filterNucleo === 'OUTROS' && isGpa) return;
       }
-      pdvs.add(maq);
+      pdvs.add(pdvName); // usa nome canônico, não o bruto
     }
   });
   
@@ -3816,13 +3964,13 @@ function updatePdvFilter() {
 }
 
 function updateSourceCounts() {
-  const counts = {all:0, vendtef:0, vmpay:0, sqi:0};
+  const counts = {all:0, vendtef:0, vmpay:0, sqi:0, payblu:0};
   allRows.forEach(r => {
     const src = getRowSource(r);
     counts[src] = (counts[src] || 0) + 1;
     counts.all++;
   });
-  ['all','vendtef','vmpay','sqi'].forEach(k => {
+  ['all','vendtef','vmpay','sqi','payblu'].forEach(k => {
     const el = document.getElementById('cnt-' + k);
     if (el) el.textContent = counts[k] ? counts[k].toLocaleString('pt-BR') : '';
   });
@@ -4109,16 +4257,20 @@ function renderKPIs(){
   document.getElementById('kpi-dry-val').textContent=dryCycles.toLocaleString('pt-BR');
 
   // Calcular PDVs ativos e somar torres/máquinas a partir da planilha (CUSTOS_PDV)
+  // Só conta PDVs que existem no cadastro (findCustoPDV), usando o nome canônico.
+  // Isso evita contar PDVs inativos, variantes de nome e lixo de dados.
   const pdvsAtivos = new Set();
-  filtered.forEach(r => {
-    const pdv = (r[C.maquina] || '').trim();
-    if (pdv) pdvsAtivos.add(pdv);
-  });
-
   let totalTorres = 0;
-  pdvsAtivos.forEach(pdvNome => {
-    const c = findCustoPDV(pdvNome);
-    totalTorres += c ? c.stack : 1;
+  filtered.forEach(r => {
+    const pdvRaw = (r[C.maquina] || '').trim();
+    const pdv = normalizePdvName(pdvRaw);
+    if (!pdv) return;
+    const custoObj = findCustoPDV(pdv);
+    if (!custoObj) return; // ignora PDVs não cadastrados
+    if (!pdvsAtivos.has(custoObj.pdv)) {
+      pdvsAtivos.add(custoObj.pdv);
+      totalTorres += custoObj.stack;
+    }
   });
   
   let totalMaquinas = totalTorres * 2;
@@ -4506,19 +4658,33 @@ function renderPdvList(){
   }).join('');
 }
 
-// ══════════════════════════════════════════════════════
-// TABLE
-// ══════════════════════════════════════════════════════
+// Retorna o nome canônico do PDV de uma linha (igual ao exibido na tabela e filtros)
+function getCanonicalPdvName(r) {
+  const maqRaw = (r[C.maquina] || '').trim();
+  const maqNorm = normalizePdvName(maqRaw);
+  const custoObj = findCustoPDV(maqNorm);
+  return custoObj ? custoObj.pdv : (maqNorm || 'Desconhecido');
+}
+
 function renderTable(){
   tableRows=[...filtered];
   if(tableSearch){
     const q=tableSearch.toLowerCase();
-    tableRows=tableRows.filter(r=>r.some(c=>(c||'').toLowerCase().includes(q)));
+    tableRows=tableRows.filter(r=>{
+      // busca também no nome canônico do PDV
+      if (getCanonicalPdvName(r).toLowerCase().includes(q)) return true;
+      return r.some(c=>(c||'').toLowerCase().includes(q));
+    });
   }
   if(tableSortCol>=0){
     const idxMap=[C.data,C.maquina,C.produto,C.tipo,C.bandeira,C.total,C.auth];
     const ci=idxMap[tableSortCol];
     tableRows.sort((a,b)=>{
+      // Coluna PDV (col 1): ordenar pelo nome canônico
+      if(tableSortCol===1){
+        const va=getCanonicalPdvName(a), vb=getCanonicalPdvName(b);
+        return tableSortDir*va.localeCompare(vb,'pt-BR');
+      }
       const va=a[ci]||'',vb=b[ci]||'';
       if(tableSortCol===5) return tableSortDir*(toNum(va)-toNum(vb));
       if(tableSortCol===0){
@@ -4554,9 +4720,10 @@ function paintTable(){
     const torreTd = torre
       ? `<span style="font-size:11px;font-weight:700;color:#8b5cf6;background:rgba(139,92,246,.1);padding:2px 8px;border-radius:8px;display:inline-block;">${torre}</span>`
       : '<span style="color:var(--text-muted);font-size:11px;">–</span>';
+    const pdvNome = getCanonicalPdvName(r);
     return `<tr>
     <td>${fmtDate(r[C.data])} ${r[C.hora]||''}</td>
-    <td style="font-weight: 700; color: var(--text);">${r[C.maquina] || 'Desconhecido'}</td>
+    <td style="font-weight: 700; color: var(--text);">${pdvNome}</td>
     <td>
       ${isMaqWash(r)?'<span class="badge badge-wash">🫧 Lavagem</span>':'<span class="badge badge-dry">💨 Secagem</span>'}
     </td>
@@ -5046,7 +5213,8 @@ let CUSTOS_PDV = [
 // Helper: busca custo pelo nome do PDV (fuzzy match pelo número inicial)
 function findCustoPDV(pdvName) {
   if (!pdvName) return null;
-  const nome = pdvName.trim();
+  // Aplica merge de alias antes de qualquer busca
+  const nome = normalizePdvName(pdvName.trim());
   // exact match primeiro
   let c = CUSTOS_PDV.find(x => x.pdv.toLowerCase() === nome.toLowerCase());
   if (c) return c;
@@ -5316,6 +5484,8 @@ function getFilteredPdvData() {
   filtered.forEach(r => {
     let maqName = (r[C.maquina] || '').trim();
     if (/^\d+$/.test(maqName)) maqName = (r[0] || maqName).trim();
+    // Aplica merge de alias: "3# inativa" → "3# Extra Rio Branco"
+    maqName = normalizePdvName(maqName);
     if (!maqName) return;
 
     if (!pdvMap[maqName]) pdvMap[maqName] = {wash:0, dry:0, receita:0};
@@ -5640,6 +5810,402 @@ function renderFinanceiro() {
       </tr>`;
     }
   }
+}
+
+// ══════════════════════════════════════════════════════
+// RELATÓRIO FINANCEIRO POR PDV — MODAL + EXCEL DINÂMICO
+// ══════════════════════════════════════════════════════
+
+let _reportData = null; // cache dos dados para reutilizar no export
+
+function openReportModal() {
+  // Garante que temos dados financeiros
+  const rawData = getFilteredPdvData();
+  const result = rawData.result || rawData; // compatível com ambas as assinaturas
+  const diasPeriodo = rawData.diasPeriodo || getFilteredDaysCount();
+  _reportData = {result, diasPeriodo};
+
+  // Período legível
+  const fv = document.getElementById('date-start').value;
+  const tv = document.getElementById('date-end').value;
+  const filterYear = document.getElementById('filter-year').value;
+  const filterMonth = document.getElementById('filter-month').value;
+  const monthNames = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  let periodoLabel = '';
+  if (fv && tv) periodoLabel = `${fv} a ${tv}`;
+  else if (filterYear !== 'all' && filterMonth !== 'all') periodoLabel = `${monthNames[parseInt(filterMonth)-1]}/${filterYear}`;
+  else if (filterYear !== 'all') periodoLabel = `Ano ${filterYear}`;
+  else periodoLabel = 'Todo o período disponível';
+
+  document.getElementById('report-modal-subtitle').textContent =
+    `${result.length} PDVs · ${diasPeriodo} dias · Período: ${periodoLabel} · Gerado em ${new Date().toLocaleString('pt-BR')}`;
+  document.getElementById('report-footer-date').textContent =
+    `Exportado em ${new Date().toLocaleString('pt-BR')}`;
+
+  // KPIs consolidados
+  let totR=0, totCMV=0, totOPEX=0, totRes=0, totCic=0;
+  result.forEach(({calc}) => {
+    totR    += calc.receita;
+    totCMV  += calc.totalCMV;
+    totOPEX += calc.totalOPEX;
+    totRes  += calc.resultado;
+    totCic  += (calc.washCycles + calc.dryCycles);
+  });
+  const mBruta = totR > 0 ? ((totR - totCMV) / totR) * 100 : 0;
+  const mLiq   = totR > 0 ? (totRes / totR) * 100 : 0;
+
+  const kpis = [
+    {label:'Receita Total', value: fmtBRL(totR), color:'#10b981', icon:'fa-wallet'},
+    {label:'CMV Total', value: fmtBRL(totCMV), color:'#f97316', icon:'fa-box'},
+    {label:'OPEX Total', value: fmtBRL(totOPEX), color:'#8b5cf6', icon:'fa-building'},
+    {label:'Margem Bruta', value: fmtN(mBruta,1)+'%', color: mBruta>=40?'#10b981':mBruta>=20?'#f59e0b':'#ef4444', icon:'fa-percent'},
+    {label:'Resultado Líquido', value: fmtBRL(totRes), color: totRes>=0?'#10b981':'#ef4444', icon: totRes>=0?'fa-arrow-trend-up':'fa-arrow-trend-down'},
+    {label:'EBITDA', value: fmtN(mLiq,1)+'%', color: mLiq>=20?'#10b981':mLiq>=5?'#f59e0b':'#ef4444', icon:'fa-chart-pie'},
+    {label:'Total de Ciclos', value: totCic.toLocaleString('pt-BR'), color:'#0ea5e9', icon:'fa-rotate'},
+    {label:'PDVs Analisados', value: result.length, color:'#64748b', icon:'fa-store'},
+  ];
+  document.getElementById('report-kpi-row').innerHTML = kpis.map(k => `
+    <div style="padding:16px 20px;text-align:center">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#64748b;margin-bottom:4px"><i class="fas ${k.icon}" style="color:${k.color}"></i> ${k.label}</div>
+      <div style="font-size:17px;font-weight:800;color:${k.color}">${k.value}</div>
+    </div>
+  `).join('');
+
+  // Renderiza tabela
+  _renderReportTable(result);
+
+  document.getElementById('report-modal-overlay').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeReportModal(e) {
+  if (e && e.target !== document.getElementById('report-modal-overlay')) return;
+  document.getElementById('report-modal-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function _renderReportTable(result) {
+  const tbody = document.getElementById('report-table-body');
+  const tfoot = document.getElementById('report-table-foot');
+  if (!tbody) return;
+
+  let totR=0, totCMV=0, totOPEX=0, totRes=0, totWash=0, totDry=0;
+  result.forEach(({calc}) => {
+    totR    += calc.receita;
+    totCMV  += calc.totalCMV;
+    totOPEX += calc.totalOPEX;
+    totRes  += calc.resultado;
+    totWash += calc.washCycles;
+    totDry  += calc.dryCycles;
+  });
+  const mBruta = totR > 0 ? ((totR - totCMV) / totR) * 100 : 0;
+  const mLiq   = totR > 0 ? (totRes / totR) * 100 : 0;
+
+  tbody.innerHTML = result.map(({custo, calc}) => {
+    const res = calc.resultado;
+    const ebitda = calc.margemLiq;
+    const resCls = res >= 0 ? '#10b981' : '#ef4444';
+    const eCls   = ebitda >= 20 ? '#10b981' : ebitda >= 5 ? '#f59e0b' : '#ef4444';
+    const beStr  = calc.ciclosBE === Infinity ? '∞' : Math.ceil(calc.ciclosBE).toLocaleString('pt-BR');
+    const statusHtml = res >= 0
+      ? `<span style="background:rgba(16,185,129,.15);color:#10b981;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700">✅ Lucro</span>`
+      : `<span style="background:rgba(239,68,68,.15);color:#ef4444;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700">🔴 Prejuízo</span>`;
+    return `<tr style="border-bottom:1px solid rgba(255,255,255,.05);transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.background=''">
+      <td style="padding:10px 12px;color:#e2e8f0;font-weight:600;white-space:nowrap">${custo.pdv}</td>
+      <td style="padding:10px 8px;text-align:center"><span style="font-size:10px;padding:2px 6px;border-radius:10px;background:${custo.tipo==='RUA'?'rgba(37,99,235,.2)':'rgba(139,92,246,.2)'};color:${custo.tipo==='RUA'?'#60a5fa':'#c4b5fd'}">${custo.tipo==='RUA'?'🏪 Rua':'🏢 Condo'}</span></td>
+      <td style="padding:10px 8px;text-align:right;color:#94a3b8;font-family:monospace">${calc.washCycles.toLocaleString('pt-BR')}</td>
+      <td style="padding:10px 8px;text-align:right;color:#94a3b8;font-family:monospace">${calc.dryCycles.toLocaleString('pt-BR')}</td>
+      <td style="padding:10px 8px;text-align:right;color:#10b981;font-family:monospace;font-weight:700">${fmtBRL(calc.receita)}</td>
+      <td style="padding:10px 8px;text-align:right;color:#f97316;font-family:monospace">${fmtBRL(calc.totalCMV)}</td>
+      <td style="padding:10px 8px;text-align:right;color:#8b5cf6;font-family:monospace">${fmtBRL(calc.totalOPEX)}</td>
+      <td style="padding:10px 8px;text-align:right;color:${calc.margemBruta>=30?'#10b981':'#f59e0b'};font-family:monospace">${fmtN(calc.margemBruta,1)}%</td>
+      <td style="padding:10px 8px;text-align:right;color:${resCls};font-family:monospace;font-weight:700">${fmtBRL(res)}</td>
+      <td style="padding:10px 8px;text-align:right;color:${eCls};font-family:monospace;font-weight:700">${fmtN(ebitda,1)}%</td>
+      <td style="padding:10px 8px;text-align:right;color:#64748b;font-family:monospace">${beStr}</td>
+      <td style="padding:10px 8px;text-align:center">${statusHtml}</td>
+    </tr>`;
+  }).join('');
+
+  if (tfoot) {
+    const totResCls = totRes >= 0 ? '#10b981' : '#ef4444';
+    tfoot.innerHTML = `<tr style="background:rgba(255,255,255,.06);font-weight:800">
+      <td style="padding:12px 12px;color:#fff;" colspan="2">TOTAL CONSOLIDADO</td>
+      <td style="padding:12px 8px;text-align:right;color:#e2e8f0;font-family:monospace">${totWash.toLocaleString('pt-BR')}</td>
+      <td style="padding:12px 8px;text-align:right;color:#e2e8f0;font-family:monospace">${totDry.toLocaleString('pt-BR')}</td>
+      <td style="padding:12px 8px;text-align:right;color:#10b981;font-family:monospace;font-weight:800">${fmtBRL(totR)}</td>
+      <td style="padding:12px 8px;text-align:right;color:#f97316;font-family:monospace">${fmtBRL(totCMV)}</td>
+      <td style="padding:12px 8px;text-align:right;color:#8b5cf6;font-family:monospace">${fmtBRL(totOPEX)}</td>
+      <td style="padding:12px 8px;text-align:right;color:${mBruta>=30?'#10b981':'#f59e0b'};font-family:monospace">${fmtN(mBruta,1)}%</td>
+      <td style="padding:12px 8px;text-align:right;color:${totResCls};font-family:monospace;font-weight:800">${fmtBRL(totRes)}</td>
+      <td style="padding:12px 8px;text-align:right;color:${mLiq>=20?'#10b981':mLiq>=5?'#f59e0b':'#ef4444'};font-family:monospace;font-weight:800">${fmtN(mLiq,1)}%</td>
+      <td colspan="2"></td>
+    </tr>`;
+  }
+}
+
+function filterReportTable(val) {
+  if (!_reportData) return;
+  const search  = (val !== undefined ? val : document.getElementById('report-search').value).toLowerCase();
+  const tipoSel = document.getElementById('report-filter-tipo').value;
+  let res = _reportData.result.filter(({custo}) => {
+    const matchName = custo.pdv.toLowerCase().includes(search);
+    const matchTipo = tipoSel === 'all' || custo.tipo === tipoSel;
+    return matchName && matchTipo;
+  });
+  _renderReportTable(res);
+}
+
+function sortReportTable(key) {
+  if (!_reportData) return;
+  const search  = document.getElementById('report-search').value.toLowerCase();
+  const tipoSel = document.getElementById('report-filter-tipo').value;
+  let res = _reportData.result.filter(({custo}) => {
+    return custo.pdv.toLowerCase().includes(search) && (tipoSel === 'all' || custo.tipo === tipoSel);
+  });
+  res.sort((a, b) => {
+    if (key === 'receita')   return b.calc.receita - a.calc.receita;
+    if (key === 'resultado') return b.calc.resultado - a.calc.resultado;
+    if (key === 'ebitda')    return b.calc.margemLiq - a.calc.margemLiq;
+    if (key === 'ciclos')    return (b.calc.washCycles+b.calc.dryCycles) - (a.calc.washCycles+a.calc.dryCycles);
+    if (key === 'pdv')       return a.custo.pdv.localeCompare(b.custo.pdv, 'pt-BR');
+    return 0;
+  });
+  _renderReportTable(res);
+}
+
+// ──────────────────────────────────────────────────────
+// EXPORTAÇÃO EXCEL DINÂMICA (SheetJS) — múltiplas abas
+// ──────────────────────────────────────────────────────
+function exportRelatorioExcel() {
+  if (typeof XLSX === 'undefined') {
+    alert('Biblioteca Excel ainda não carregou. Aguarde e tente novamente.');
+    return;
+  }
+  const rawData = _reportData || getFilteredPdvData();
+  const result = rawData.result;
+  const diasPeriodo = rawData.diasPeriodo || getFilteredDaysCount();
+
+  // ── Helpers de formatação ──
+  const num = v => (typeof v === 'number' ? v : parseFloat(String(v).replace(/[^0-9.,-]/g,'').replace(',','.')) || 0);
+
+  // ── Estilos reutilizáveis ──
+  const hdrStyle = (bgHex, fgHex='FFFFFFFF') => ({
+    font: {bold:true, color:{rgb: fgHex.replace('#','')}, sz:11},
+    fill: {fgColor:{rgb: bgHex.replace('#','')}},
+    alignment: {horizontal:'center', vertical:'center', wrapText:true},
+    border: {top:{style:'thin',color:{rgb:'FF94A3B8'}},bottom:{style:'thin',color:{rgb:'FF94A3B8'}},left:{style:'thin',color:{rgb:'FF94A3B8'}},right:{style:'thin',color:{rgb:'FF94A3B8'}}}
+  });
+  const cellStyle = (fgHex, bold=false, align='right') => ({
+    font: {color:{rgb: fgHex.replace('#','')}, bold, sz:10},
+    alignment: {horizontal:align, vertical:'center'},
+    border: {top:{style:'thin',color:{rgb:'FFE2E8F0'}},bottom:{style:'thin',color:{rgb:'FFE2E8F0'}},left:{style:'thin',color:{rgb:'FFE2E8F0'}},right:{style:'thin',color:{rgb:'FFE2E8F0'}}},
+    numFmt: '#,##0.00'
+  });
+  const pctStyle = (fgHex) => ({...cellStyle(fgHex), numFmt:'0.00"%"'});
+  const totStyle = (fgHex) => ({...cellStyle(fgHex,true), fill:{fgColor:{rgb:'FF1E293B'}}});
+
+  // Período
+  const fv = document.getElementById('date-start').value;
+  const tv = document.getElementById('date-end').value;
+  const fy = document.getElementById('filter-year').value;
+  const fm = document.getElementById('filter-month').value;
+  const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  let periodoLabel = fv && tv ? `${fv} a ${tv}` : (fy!=='all' && fm!=='all') ? `${monthNames[parseInt(fm)-1]}/${fy}` : fy!=='all' ? `Ano ${fy}` : 'Todo o período';
+
+  const wb = XLSX.utils.book_new();
+
+  // ════════════════════════════════════════════
+  // ABA 1: RESUMO EXECUTIVO
+  // ════════════════════════════════════════════
+  let totR=0, totCMV=0, totOPEX=0, totRes=0, totWash=0, totDry=0;
+  result.forEach(({calc}) => {
+    totR    += calc.receita;     totCMV  += calc.totalCMV;
+    totOPEX += calc.totalOPEX;  totRes  += calc.resultado;
+    totWash += calc.washCycles; totDry  += calc.dryCycles;
+  });
+  const mBruta = totR>0?((totR-totCMV)/totR)*100:0;
+  const mLiq   = totR>0?(totRes/totR)*100:0;
+
+  const resumoAoA = [
+    [`RELATÓRIO FINANCEIRO LAVAÍ — ${periodoLabel.toUpperCase()}`],
+    [`Gerado em: ${new Date().toLocaleString('pt-BR')}`, '', `Período: ${diasPeriodo} dias`, '', `PDVs analisados: ${result.length}`],
+    [],
+    ['INDICADOR', 'VALOR', 'OBSERVAÇÃO'],
+    ['Receita Total', totR, 'Faturamento bruto no período'],
+    ['CMV Total', totCMV, 'Produto + Água + Energia'],
+    ['Margem Bruta (R$)', totR - totCMV, 'Receita − CMV'],
+    ['Margem Bruta (%)', mBruta/100, 'Percentual sobre receita'],
+    ['OPEX Total', totOPEX, 'Aluguel + Internet + Técnico + MP + Comissão'],
+    ['Resultado Líquido (R$)', totRes, 'Lucro ou Prejuízo consolidado'],
+    ['EBITDA (%)', mLiq/100, 'Margem líquida sobre receita'],
+    ['Total Ciclos Lavagem', totWash, 'Ciclos de lavagem no período'],
+    ['Total Ciclos Secagem', totDry, 'Ciclos de secagem no período'],
+    ['Total de Ciclos', totWash+totDry, 'Soma lavagem + secagem'],
+  ];
+  const wsResumo = XLSX.utils.aoa_to_sheet(resumoAoA);
+  // Larguras
+  wsResumo['!cols'] = [{wch:35},{wch:20},{wch:45}];
+  // Mescla título
+  wsResumo['!merges'] = [{s:{r:0,c:0},e:{r:0,c:4}}];
+  // Formatos numéricos
+  ['B5','B6','B7','B9','B10'].forEach(ref => {
+    if (wsResumo[ref]) wsResumo[ref].z = 'R$\ #,##0.00';
+  });
+  ['B8','B11'].forEach(ref => {
+    if (wsResumo[ref]) wsResumo[ref].z = '0.00%';
+  });
+  XLSX.utils.book_append_sheet(wb, wsResumo, '📊 Resumo Executivo');
+
+  // ════════════════════════════════════════════
+  // ABA 2: RESULTADO POR PDV (tabela principal)
+  // ════════════════════════════════════════════
+  const hdrPdv = [
+    'PDV', 'Tipo', 'Stacks', 'Ciclos Lav.', 'Ciclos Sec.', 'Total Ciclos',
+    'Receita (R$)', 'CMV Produto (R$)', 'CMV Água (R$)', 'CMV Energia (R$)', 'Total CMV (R$)',
+    'Aluguel (R$)', 'Internet (R$)', 'Técnico (R$)', 'MP (R$)', 'Comissão (R$)', 'Total OPEX (R$)',
+    'Margem Bruta (R$)', 'Margem Bruta (%)', 'Resultado Líq. (R$)', 'EBITDA (%)',
+    'BE - Ciclos Necessários', 'Diferença vs BE', 'Status'
+  ];
+  const rowsPdv = result.map(({custo, calc}) => [
+    custo.pdv,
+    custo.tipo === 'RUA' ? 'Rua' : 'Condomínio',
+    custo.stack,
+    calc.washCycles, calc.dryCycles, calc.washCycles + calc.dryCycles,
+    calc.receita, calc.cmvProduto, calc.cmvAgua, calc.cmvEnergia, calc.totalCMV,
+    calc.opexAluguel, calc.opexInternet, calc.opexTecnico, calc.opexMP, calc.opexComissao, calc.totalOPEX,
+    calc.receita - calc.totalCMV,
+    calc.margemBruta / 100,
+    calc.resultado,
+    calc.margemLiq / 100,
+    calc.ciclosBE === Infinity ? 'Impossível' : Math.ceil(calc.ciclosBE),
+    calc.ciclosBE === Infinity ? 'N/A' : Math.round(calc.varCiclosBE),
+    calc.resultado >= 0 ? 'LUCRO' : 'PREJUÍZO'
+  ]);
+  // Linha de totais
+  const totRow = [
+    'TOTAL CONSOLIDADO', '', '',
+    totWash, totDry, totWash+totDry,
+    totR, '', '', '', totCMV,
+    '', '', '', '', '', totOPEX,
+    totR-totCMV, mBruta/100,
+    totRes, mLiq/100,
+    '', '', totRes>=0?'LUCRO':'PREJUÍZO'
+  ];
+  const wsPdv = XLSX.utils.aoa_to_sheet([hdrPdv, ...rowsPdv, totRow]);
+  // Larguras das colunas
+  wsPdv['!cols'] = [
+    {wch:30},{wch:12},{wch:7},{wch:11},{wch:11},{wch:12},
+    {wch:16},{wch:16},{wch:14},{wch:16},{wch:16},
+    {wch:14},{wch:13},{wch:13},{wch:9},{wch:16},{wch:16},
+    {wch:18},{wch:16},{wch:18},{wch:10},
+    {wch:22},{wch:15},{wch:12}
+  ];
+  // Formatos: colunas de moeda (G–Q,R) e percentual (S,U)
+  const moedaCols = [6,7,8,9,10,11,12,13,14,15,16,17,19]; // 0-indexed
+  const pctCols   = [18,20]; // 0-indexed
+  const allDataRows = rowsPdv.length + 1; // +1 para total
+  for (let r = 1; r <= allDataRows; r++) {
+    moedaCols.forEach(c => {
+      const ref = XLSX.utils.encode_cell({r, c});
+      if (wsPdv[ref] && typeof wsPdv[ref].v === 'number') wsPdv[ref].z = 'R$\ #,##0.00';
+    });
+    pctCols.forEach(c => {
+      const ref = XLSX.utils.encode_cell({r, c});
+      if (wsPdv[ref] && typeof wsPdv[ref].v === 'number') wsPdv[ref].z = '0.00%';
+    });
+  }
+  // Freeze top row
+  wsPdv['!freeze'] = {xSplit:0, ySplit:1};
+  XLSX.utils.book_append_sheet(wb, wsPdv, '📋 Resultado por PDV');
+
+  // ════════════════════════════════════════════
+  // ABA 3: DETALHAMENTO POR PDV (uma aba por PDV, se <= 20)
+  // ════════════════════════════════════════════
+  if (result.length <= 20) {
+    result.forEach(({custo, calc}) => {
+      const tabName = custo.pdv.replace(/[\[\]\*\/\\\?:]/g,'').substring(0,28);
+      const aoa = [
+        [`PDV: ${custo.pdv}`],
+        [`Tipo: ${custo.tipo === 'RUA' ? 'Rua' : 'Condomínio'}`, '', `Stacks: ${custo.stack}`, '', `Período: ${diasPeriodo} dias`],
+        [],
+        ['RECEITA', '', ''],
+        ['Faturamento Bruto', calc.receita, '100%'],
+        [],
+        ['CMV — CUSTO DIRETO', '', ''],
+        ['Produto', calc.cmvProduto, calc.receita>0?calc.cmvProduto/calc.receita:0],
+        ['Água', calc.cmvAgua, calc.receita>0?calc.cmvAgua/calc.receita:0],
+        ['Energia', calc.cmvEnergia, calc.receita>0?calc.cmvEnergia/calc.receita:0],
+        ['Total CMV', calc.totalCMV, calc.receita>0?calc.totalCMV/calc.receita:0],
+        ['Margem Bruta', calc.receita-calc.totalCMV, calc.margemBruta/100],
+        [],
+        ['OPEX — CUSTO FIXO/PROP.', '', ''],
+        ['Aluguel', calc.opexAluguel, calc.receita>0?calc.opexAluguel/calc.receita:0],
+        ['Internet', calc.opexInternet, calc.receita>0?calc.opexInternet/calc.receita:0],
+        ['Técnico', calc.opexTecnico, calc.receita>0?calc.opexTecnico/calc.receita:0],
+        ['Meio de Pagamento', calc.opexMP, calc.receita>0?calc.opexMP/calc.receita:0],
+        ['Comissão', calc.opexComissao, calc.receita>0?calc.opexComissao/calc.receita:0],
+        ['Total OPEX', calc.totalOPEX, calc.receita>0?calc.totalOPEX/calc.receita:0],
+        [],
+        ['RESULTADO', '', ''],
+        ['Resultado Líquido', calc.resultado, calc.margemLiq/100],
+        ['EBITDA (%)', '', calc.margemLiq/100],
+        [],
+        ['CICLOS', '', ''],
+        ['Ciclos de Lavagem', calc.washCycles, ''],
+        ['Ciclos de Secagem', calc.dryCycles, ''],
+        ['Total de Ciclos', calc.washCycles+calc.dryCycles, ''],
+        [],
+        ['BREAK-EVEN', '', ''],
+        ['Ciclos Necessários (BE)', calc.ciclosBE===Infinity?'Impossível':Math.ceil(calc.ciclosBE), ''],
+        ['Diferença vs Break-Even', calc.ciclosBE===Infinity?'N/A':Math.round(calc.varCiclosBE), ''],
+        ['Status', calc.resultado>=0?'LUCRO':'PREJUÍZO', ''],
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      ws['!cols'] = [{wch:28},{wch:18},{wch:14}];
+      ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:2}}];
+      // Formatos moeda e percentual
+      const moedaRefs = ['B5','B8','B9','B10','B11','B12','B15','B16','B17','B18','B19','B20','B23'];
+      const pctRefs   = ['C5','C8','C9','C10','C11','C12','C15','C16','C17','C18','C19','C20','C23','C24'];
+      moedaRefs.forEach(ref => { if(ws[ref] && typeof ws[ref].v==='number') ws[ref].z='R$\ #,##0.00'; });
+      pctRefs.forEach(ref => { if(ws[ref] && typeof ws[ref].v==='number') ws[ref].z='0.00%'; });
+      XLSX.utils.book_append_sheet(wb, ws, tabName);
+    });
+  }
+
+  // ════════════════════════════════════════════
+  // ABA 4: DADOS BRUTOS (transações do período)
+  // ════════════════════════════════════════════
+  const hdrBrutos = ['Data','Hora','PDV / Máquina','Tipo Ciclo','Pagamento','Bandeira','Valor (R$)','Ciclos'];
+  const rowsBrutos = filtered.slice(0,5000).map(r => [
+    r[C.data] || '',
+    r[C.hora] || '',
+    r[C.maquina] || '',
+    isMaqWash(r) ? 'Lavagem' : isMaqDry(r) ? 'Secagem' : 'Outro',
+    r[C.pagamento] || '',
+    r[C.bandeira] || '',
+    toNum(r[C.total]),
+    getRowCycles(r)
+  ]);
+  const wsBrutos = XLSX.utils.aoa_to_sheet([hdrBrutos, ...rowsBrutos]);
+  wsBrutos['!cols'] = [{wch:12},{wch:8},{wch:28},{wch:12},{wch:16},{wch:14},{wch:14},{wch:8}];
+  // Formata coluna valor
+  for (let i=1; i<=rowsBrutos.length; i++) {
+    const ref = XLSX.utils.encode_cell({r:i, c:6});
+    if (wsBrutos[ref] && typeof wsBrutos[ref].v==='number') wsBrutos[ref].z='R$\ #,##0.00';
+  }
+  wsBrutos['!freeze'] = {xSplit:0, ySplit:1};
+  XLSX.utils.book_append_sheet(wb, wsBrutos, '📄 Transações Brutas');
+
+  // ── Download ──
+  const now = new Date();
+  const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+  const safePeriodo = periodoLabel.replace(/[^a-zA-Z0-9À-ú_\-]/g,'_');
+  XLSX.writeFile(wb, `LAVAI_Relatorio_${safePeriodo}_${ts}.xlsx`);
+}
+
+// ── Função legado — mantida por compatibilidade ──
+function exportFinTableExcel() {
+  exportRelatorioExcel();
 }
 
 // ══════════════════════════════════════════════════════
@@ -6109,30 +6675,58 @@ function startSpeechToText() {
 function answerQuestionLocal(q) {
   const clean = q.toLowerCase().trim();
   
+  const monthMapping = {
+    'janeiro': 1, 'fevereiro': 2, 'março': 3, 'marco': 3, 'abril': 4,
+    'maio': 5, 'junho': 6, 'julho': 7, 'agosto': 8, 'setembro': 9,
+    'outubro': 10, 'novembro': 11, 'dezembro': 12
+  };
+  const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  // Determinar o mês atual e ano atual nos dados reais de allRows
+  let defaultYear = 2026;
+  let defaultMonth = 8; // Agosto (fuso atual)
+  
+  if (typeof allRows !== 'undefined' && allRows.length > 0) {
+    const dates = allRows.map(r => parseDate(r[C.data])).filter(d => d !== null);
+    if (dates.length > 0) {
+      const maxDt = new Date(Math.max(...dates));
+      defaultYear = maxDt.getFullYear();
+      defaultMonth = maxDt.getMonth() + 1;
+    }
+  }
+
   // ── Pergunta Comparativa: Este Mês x Mês Passado ──
   if (clean.includes('compar') && (clean.includes('mês') || clean.includes('mes')) && (clean.includes('passado') || clean.includes(' x ') || clean.includes(' vs '))) {
-    const juneRows = allRows.filter(r => {
+    const curMonth = defaultMonth;
+    const curYear = defaultYear;
+    const prevMonth = curMonth === 1 ? 12 : curMonth - 1;
+    const prevYear = curMonth === 1 ? curYear - 1 : curYear;
+    
+    const curRows = allRows.filter(r => {
       const d = parseDate(r[C.data]);
-      return d && (d.getMonth() + 1) === 6 && d.getFullYear() === 2026;
+      return d && (d.getMonth() + 1) === curMonth && d.getFullYear() === curYear;
     });
-    const mayRows = allRows.filter(r => {
+    const prevRows = allRows.filter(r => {
       const d = parseDate(r[C.data]);
-      return d && (d.getMonth() + 1) === 5 && d.getFullYear() === 2026;
+      return d && (d.getMonth() + 1) === prevMonth && d.getFullYear() === prevYear;
     });
 
-    const juneSales = juneRows.length;
-    const juneRev = juneRows.reduce((s, r) => s + toNum(r[C.total]), 0);
-    const maySales = mayRows.length;
-    const mayRev = mayRows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    const curSales = curRows.length;
+    const curRev = curRows.reduce((s, r) => s + toNum(r[C.total]), 0);
+    const prevSales = prevRows.length;
+    const prevRev = prevRows.reduce((s, r) => s + toNum(r[C.total]), 0);
 
-    const diffRev = juneRev - mayRev;
-    const pctRev = mayRev > 0 ? (diffRev / mayRev) * 100 : 0;
-    const diffSales = juneSales - maySales;
-    const pctSales = maySales > 0 ? (diffSales / maySales) * 100 : 0;
+    const diffRev = curRev - prevRev;
+    const pctRev = prevRev > 0 ? (diffRev / prevRev) * 100 : 0;
+    const diffSales = curSales - prevSales;
+    const pctSales = prevSales > 0 ? (diffSales / prevSales) * 100 : 0;
 
-    return `⚔️ **Comparativo: Este Mês (Junho/26) vs Mês Passado (Maio/26)**:<br><br>
-      • **Junho/26**: ${fmtBRL(juneRev)} (${juneSales} vendas)<br>
-      • **Maio/26**: ${fmtBRL(mayRev)} (${maySales} vendas)<br><br>
+    const curLabel = `${monthNames[curMonth-1]}/${String(curYear).slice(-2)}`;
+    const prevLabel = `${monthNames[prevMonth-1]}/${String(prevYear).slice(-2)}`;
+
+    return `⚔️ **Comparativo: Este Mês (${curLabel}) vs Mês Passado (${prevLabel})**:<br><br>
+      • **${curLabel}**: ${fmtBRL(curRev)} (${curSales} vendas)<br>
+      • **${prevLabel}**: ${fmtBRL(prevRev)} (${prevSales} vendas)<br><br>
       📊 **Variação**: ${diffRev >= 0 ? '🟢 +' : '🔴 '}${pctRev.toFixed(1)}% no faturamento e ${diffSales >= 0 ? '🟢 +' : '🔴 '}${pctSales.toFixed(1)}% no volume de vendas.`;
   }
 
@@ -6193,22 +6787,38 @@ function answerQuestionLocal(q) {
   // ── Identificar Periodo Solicitado ──
   let timeframe = 'periodo'; 
   let timeframeLabel = 'no período filtrado';
+  let targetMonth = null;
+  let targetYear = 2026;
   
-  if (clean.includes('este mês') || clean.includes('neste mês') || clean.includes('desse mês')) {
-    timeframe = 'este_mes';
-    timeframeLabel = 'neste mês (Junho 2026)';
-  } else if (clean.includes('mês passado') || clean.includes('no mês passado')) {
-    timeframe = 'mes_passado';
-    timeframeLabel = 'no mês passado (Maio 2026)';
-  } else if (clean.includes('este ano') || clean.includes('neste ano') || clean.includes('desse ano')) {
-    timeframe = 'este_ano';
-    timeframeLabel = 'neste ano (2026)';
-  } else if (clean.includes('hoje')) {
-    timeframe = 'hoje';
-    timeframeLabel = 'hoje';
-  } else if (clean.includes('ontem')) {
-    timeframe = 'ontem';
-    timeframeLabel = 'ontem';
+  // Tentar identificar mês específico citado
+  for (const [mName, mNum] of Object.entries(monthMapping)) {
+    if (clean.includes(mName)) {
+      targetMonth = mNum;
+      timeframe = 'mes_especifico';
+      timeframeLabel = `no mês de ${mName.charAt(0).toUpperCase() + mName.slice(1)} de 2026`;
+      break;
+    }
+  }
+
+  if (timeframe !== 'mes_especifico') {
+    if (clean.includes('este mês') || clean.includes('neste mês') || clean.includes('desse mês')) {
+      timeframe = 'este_mes';
+      timeframeLabel = `neste mês (${monthNames[defaultMonth-1]} ${defaultYear})`;
+    } else if (clean.includes('mês passado') || clean.includes('no mês passado')) {
+      timeframe = 'mes_passado';
+      const prevM = defaultMonth === 1 ? 12 : defaultMonth - 1;
+      const prevY = defaultMonth === 1 ? defaultYear - 1 : defaultYear;
+      timeframeLabel = `no mês passado (${monthNames[prevM-1]} ${prevY})`;
+    } else if (clean.includes('este ano') || clean.includes('neste ano') || clean.includes('desse ano')) {
+      timeframe = 'este_ano';
+      timeframeLabel = `neste ano (${defaultYear})`;
+    } else if (clean.includes('hoje')) {
+      timeframe = 'hoje';
+      timeframeLabel = 'hoje';
+    } else if (clean.includes('ontem')) {
+      timeframe = 'ontem';
+      timeframeLabel = 'ontem';
+    }
   }
 
   let targetRows = [];
@@ -6222,17 +6832,24 @@ function answerQuestionLocal(q) {
   } else if (timeframe === 'este_mes') {
     targetRows = allRows.filter(r => {
       const d = parseDate(r[C.data]);
-      return d && (d.getMonth() + 1) === 6 && d.getFullYear() === 2026;
+      return d && (d.getMonth() + 1) === defaultMonth && d.getFullYear() === defaultYear;
     });
   } else if (timeframe === 'mes_passado') {
     targetRows = allRows.filter(r => {
       const d = parseDate(r[C.data]);
-      return d && (d.getMonth() + 1) === 5 && d.getFullYear() === 2026;
+      const prevM = defaultMonth === 1 ? 12 : defaultMonth - 1;
+      const prevY = defaultMonth === 1 ? defaultYear - 1 : defaultYear;
+      return d && (d.getMonth() + 1) === prevM && d.getFullYear() === prevY;
     });
   } else if (timeframe === 'este_ano') {
     targetRows = allRows.filter(r => {
       const d = parseDate(r[C.data]);
-      return d && d.getFullYear() === 2026;
+      return d && d.getFullYear() === defaultYear;
+    });
+  } else if (timeframe === 'mes_especifico') {
+    targetRows = allRows.filter(r => {
+      const d = parseDate(r[C.data]);
+      return d && (d.getMonth() + 1) === targetMonth && d.getFullYear() === targetYear;
     });
   } else {
     targetRows = filtered;

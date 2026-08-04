@@ -932,6 +932,45 @@ def obter_caminho_excel(nome_arquivo):
     log.info(f"obter_caminho_excel('{nome_arquivo}'): selecionado o mais recente: {novo_caminho} (Modificado em: {datetime.fromtimestamp(novo_caminho.stat().st_mtime).strftime('%Y-%m-%d %H:%M:%S')})")
     return novo_caminho
 
+def obter_gateway_excel(nome_arquivo):
+    def normalizar(s):
+        import re
+        s = s.lower()
+        if s.startswith("temp_read_only_"):
+            s = s[len("temp_read_only_"):]
+        s = re.sub(r'[^a-z0-9]', '', s)
+        return s
+
+    nome_norm = normalizar(nome_arquivo)
+
+    # Pastas de busca
+    pastas = [
+        Path(r"C:\Users\badad\OneDrive\Desktop\gateway LAVAI"),
+        Path(__file__).parent / "kpi",
+        Path(__file__).parent
+    ]
+
+    caminhos_existentes = []
+    for pasta in pastas:
+        if not pasta.exists():
+            continue
+        try:
+            for p in pasta.glob("*.xlsx"):
+                if p.name.startswith("temp_read_only_"):
+                    continue
+                if normalizar(p.name) == nome_norm:
+                    caminhos_existentes.append(p)
+        except Exception:
+            pass
+
+    if not caminhos_existentes:
+        return None
+
+    # Retorna o arquivo mais recentemente modificado entre todos os encontrados
+    novo_caminho = max(caminhos_existentes, key=lambda p: p.stat().st_mtime)
+    log.info(f"obter_gateway_excel('{nome_arquivo}'): selecionado: {novo_caminho} (Modificado em: {datetime.fromtimestamp(novo_caminho.stat().st_mtime).strftime('%Y-%m-%d %H:%M:%S')})")
+    return novo_caminho
+
 def map_vmpay_excel_row(row, headers_idx):
     def get(col_name):
         idx = headers_idx.get(col_name)
@@ -981,16 +1020,25 @@ def map_vmpay_excel_row(row, headers_idx):
         nsu, auth, tipo_cartao, rede, bandeira, usuario, no_cartao, matricula
     ]
 
-def coletar_vmpay_excel():
-    master_path = obter_caminho_excel("Vmpay 2025.xlsx")
+def coletar_vmpay_excel(master_path=None):
+    if master_path is None:
+        master_path = obter_caminho_excel("Vmpay 2025.xlsx")
     all_rows = []
     if not master_path or not master_path.exists():
-        log.warning("Arquivo Vmpay 2025.xlsx nao encontrado.")
+        log.warning(f"Arquivo Vmpay 2025 em '{master_path}' nao encontrado.")
         return all_rows
 
     log.info(f"Lendo dados de VMPay 2025 do arquivo: {master_path}")
+    temp_path = None
     try:
-        wb = openpyxl.load_workbook(master_path, read_only=True, data_only=True)
+        try:
+            wb = openpyxl.load_workbook(master_path, read_only=True, data_only=True)
+        except PermissionError:
+            import shutil, uuid, tempfile
+            temp_path = Path(tempfile.gettempdir()) / f"temp_vmpay_{uuid.uuid4().hex}.xlsx"
+            shutil.copy2(master_path, temp_path)
+            wb = openpyxl.load_workbook(temp_path, read_only=True, data_only=True)
+
         sheet = wb.active
 
         headers = []
@@ -1021,6 +1069,10 @@ def coletar_vmpay_excel():
         log.info(f"Processadas {count} transacoes de VMPay 2025 do arquivo.")
     except Exception as e:
         log.error(f"Erro ao ler arquivo Vmpay 2025 {master_path}: {e}")
+    finally:
+        if temp_path and temp_path.exists():
+            try: temp_path.unlink()
+            except: pass
 
     return all_rows
 
@@ -1220,14 +1272,23 @@ def processar_csv_sq(csv_content, start_date):
     return rows
 
 
-async def coletar_sq_excel():
-    master_path = obter_caminho_excel("SQI - Fichas e APP.xlsx")
+async def coletar_sq_excel(master_path=None):
+    if master_path is None:
+        master_path = obter_caminho_excel("SQI - Fichas e APP.xlsx")
     all_rows = []
     
     if master_path and master_path.exists():
         log.info(f"Lendo dados de SQInsights do arquivo mestre: {master_path}")
+        temp_path = None
         try:
-            wb = openpyxl.load_workbook(master_path, read_only=True, data_only=True)
+            try:
+                wb = openpyxl.load_workbook(master_path, read_only=True, data_only=True)
+            except PermissionError:
+                import shutil, uuid, tempfile
+                temp_path = Path(tempfile.gettempdir()) / f"temp_sq_{uuid.uuid4().hex}.xlsx"
+                shutil.copy2(master_path, temp_path)
+                wb = openpyxl.load_workbook(temp_path, read_only=True, data_only=True)
+
             sheet = wb.active
             
             now = datetime.now(FUSO_SP)
@@ -1311,22 +1372,27 @@ async def coletar_sq_excel():
             return all_rows
         except Exception as e:
             log.error(f"Erro ao ler arquivo mestre SQInsights {master_path}: {e}")
+        finally:
+            if temp_path and temp_path.exists():
+                try: temp_path.unlink()
+                except: pass
             
     log.warning("Arquivo mestre do SQInsights não encontrado. Usando fallback para API/CDP.")
     return await coletar_sq_api()
 
 
-def coletar_vendpago_excel():
+def coletar_vendpago_excel(master_path=None):
     """
     Le dados de VendPago (Credito Remoto/Cashless) do arquivo Excel especifico.
     """
     import datetime as dt_mod
 
-    master_path = obter_caminho_excel("vendpago 2026.xlsx")
+    if master_path is None:
+        master_path = obter_caminho_excel("vendpago 2026.xlsx")
     all_rows = []
 
     if not master_path or not master_path.exists():
-        log.warning("Arquivo VendPago nao encontrado.")
+        log.warning(f"Arquivo VendPago em '{master_path}' nao encontrado.")
         return all_rows
 
     log.info(f"Lendo dados de VendPago do arquivo: {master_path}")
@@ -1348,8 +1414,16 @@ def coletar_vendpago_excel():
             return str(v)
         return str(v).strip()
 
+    temp_path = None
     try:
-        wb = openpyxl.load_workbook(master_path, read_only=True, data_only=True)
+        try:
+            wb = openpyxl.load_workbook(master_path, read_only=True, data_only=True)
+        except PermissionError:
+            import shutil, uuid, tempfile
+            temp_path = Path(tempfile.gettempdir()) / f"temp_vendpago_{uuid.uuid4().hex}.xlsx"
+            shutil.copy2(master_path, temp_path)
+            wb = openpyxl.load_workbook(temp_path, read_only=True, data_only=True)
+
         sheet = wb.active
 
         header_row_num, header_values = find_header_row_and_values(sheet)
@@ -1416,6 +1490,8 @@ def coletar_vendpago_excel():
             else:
                 # Layout portal TEF: mapeamento direto
                 mapped_row = [fmt_val(row[i], i) if i < len(row) else "" for i in range(22)]
+                if len(mapped_row) > 3:
+                    mapped_row[3] = "VendPago"
 
             all_rows.append(mapped_row)
             count += 1
@@ -1424,6 +1500,10 @@ def coletar_vendpago_excel():
 
     except Exception as e:
         log.error(f"Erro ao ler arquivo VendPago {master_path}: {e}")
+    finally:
+        if temp_path and temp_path.exists():
+            try: temp_path.unlink()
+            except: pass
 
     return all_rows
 
@@ -1762,7 +1842,7 @@ def _payblu_carregar_csv_mes(arq_path: Path) -> list:
     return rows
 
 
-def coletar_yougo_excel():
+def coletar_yougo_excel(master_path=None):
     """
     Lê dados históricos do relatório Excel PayBlu You Go 2025.
     Colunas: Cliente[0] Serial[1] MAC[2] Matricula[3] NomeTerminal[4]
@@ -1771,13 +1851,14 @@ def coletar_yougo_excel():
     """
     import datetime as _dt
 
-    master_path = obter_caminho_excel("temp_read_only_Vendas_You_Go_25.xlsx")
-    if not master_path:
-        for nome in ["Vendas You Go 25.xlsx", "Vendas_You_Go_25.xlsx",
-                     "vendas you go 25.xlsx", "vendas_you_go_25.xlsx"]:
-            master_path = obter_caminho_excel(nome)
-            if master_path:
-                break
+    if master_path is None:
+        master_path = obter_caminho_excel("temp_read_only_Vendas_You_Go_25.xlsx")
+        if not master_path:
+            for nome in ["Vendas You Go 25.xlsx", "Vendas_You_Go_25.xlsx",
+                         "vendas you go 25.xlsx", "vendas_you_go_25.xlsx"]:
+                master_path = obter_caminho_excel(nome)
+                if master_path:
+                    break
 
     all_rows = []
     if not master_path or not master_path.exists():
@@ -1785,8 +1866,16 @@ def coletar_yougo_excel():
         return all_rows
 
     log.info(f"Lendo dados historicos You Go 2025 de: {master_path}")
+    temp_path = None
     try:
-        wb = openpyxl.load_workbook(master_path, read_only=True, data_only=True)
+        try:
+            wb = openpyxl.load_workbook(master_path, read_only=True, data_only=True)
+        except PermissionError:
+            import shutil, uuid, tempfile
+            temp_path = Path(tempfile.gettempdir()) / f"temp_yougo_{uuid.uuid4().hex}.xlsx"
+            shutil.copy2(master_path, temp_path)
+            wb = openpyxl.load_workbook(temp_path, read_only=True, data_only=True)
+
         ws = wb.active
         count = 0
 
@@ -1868,6 +1957,10 @@ def coletar_yougo_excel():
         log.info(f"You Go 2025: {count} transacoes carregadas de '{master_path.name}'.")
     except Exception as e:
         log.error(f"Erro ao ler You Go 2025 '{master_path}': {e}")
+    finally:
+        if temp_path and temp_path.exists():
+            try: temp_path.unlink()
+            except: pass
 
     return all_rows
 
@@ -2322,52 +2415,96 @@ async def coletar_tudo():
             if sqi_antigos:
                 break
 
-    # Coletar dados da API VMPay Cashless, SQInsights, VendPago Excel e unificar com os dados raspados
-    api_rows = coletar_vmpay_api(vmpay_antigos)
-    # excel_rows removido: VMPay local não é mais usado; fonte única = API VMPay
-    sq_rows = await coletar_sq_excel()
-    vendpago_excel_rows = coletar_vendpago_excel()
-    yougo_excel_rows = coletar_yougo_excel()  # histórico PayBlu You Go 2025
-
-    # Deduplicar cada fonte antes de enviar (evitar duplicatas dentro do mesmo lote)
-    api_rows_to_merge = api_rows if api_rows is not None else []
-    
-    # Filtra as transações de portal (não-VendPago) do histórico para mesclar
-    vendtef_antigos_portal = [r for r in vendtef_antigos if len(r) >= 22 and r[3] != "VendPago"]
-    portal_rows_dedup   = merge_and_deduplicate(rows + vendtef_antigos_portal + vendpago_excel_rows, [])
-    
-    # Se a API teve sucesso, mescla o novo lote com o histórico. Se falhou, preserva o histórico intacto.
-    if api_rows is not None:
-        vmpay_rows_dedup = merge_and_deduplicate(vmpay_antigos + api_rows_to_merge, [])
-        log.info(f"VMPay: mesclados {len(api_rows_to_merge)} novos registros da API com {len(vmpay_antigos)} históricos (Total: {len(vmpay_rows_dedup)}).")
-    else:
-        vmpay_rows_dedup = merge_and_deduplicate(vmpay_antigos, [])
-        log.warning(f"VMPay: mantendo {len(vmpay_rows_dedup)} registros históricos devido a falha na API.")
-        
-    sq_rows_dedup       = merge_and_deduplicate(sq_rows + sqi_antigos, [])
-    
-    # Carrega dados PayBlu já existentes para mesclar (mantém o histórico já que a coleta automática foi desativada)
-    payblu_antigos = []
-    for p_cache in [CSV_PAYBLU_LOCAL, Path(__file__).parent / "payblu_local.js", Path(__file__).parent / "kpi" / "payblu_local.js", Path(__file__).parent.parent / "payblu_local.js"]:
-        if p_cache.exists() and p_cache.stat().st_size >= 100:
-            payblu_antigos = carregar_fonte_local(p_cache)
-            if payblu_antigos:
-                break
-                
-    # PayBlu: deduplica o histórico carregado + YouGo 2025 + novas transações
-    payblu_rows_dedup   = merge_and_deduplicate(payblu_antigos + yougo_excel_rows, payblu_rows)
-
-    total_count = (len(portal_rows_dedup) + len(vmpay_rows_dedup) + len(sq_rows_dedup)
-                   + len(payblu_rows_dedup))
-
-            # Determinar diretórios de gravação baseados no local do script e repositório
+    # Determinar diretórios de gravação baseados no local do script e repositório
     script_dir = Path(__file__).parent
     if script_dir.name == "kpi":
         kpi_dir = script_dir
         root_dir = script_dir.parent
     else:
         root_dir = script_dir
-        kpi_dir = script_dir / "kpi" 
+        kpi_dir = script_dir / "kpi"
+
+    # Buscar caminhos ativos/novos no gateway (ignorando arquivos temp_read_only_)
+    gateway_sq_path = obter_gateway_excel("SQI - Fichas e APP.xlsx")
+    gateway_vendpago_path = obter_gateway_excel("vendpago 2026.xlsx")
+    gateway_yougo_path = obter_gateway_excel("Vendas You Go 25.xlsx")
+
+    # Coletar dados das planilhas temp_read_only locais (pasta local script_dir)
+    temp_vmpay_rows = [] # Desativado para evitar duplicação (usar apenas API)
+    temp_sq_rows = await coletar_sq_excel(root_dir / "temp_read_only_SQI - Fichas e APP.xlsx")
+    temp_vendpago_rows = coletar_vendpago_excel(root_dir / "temp_read_only_vendpago 2026.xlsx")
+    temp_yougo_rows = coletar_yougo_excel(root_dir / "temp_read_only_Vendas You Go 25.xlsx")
+
+    # Coletar dados das planilhas ativas do gateway (novas/recentes)
+    gateway_vmpay_rows = [] # Desativado para evitar duplicação (usar apenas API)
+    gateway_sq_rows = await coletar_sq_excel(gateway_sq_path) if gateway_sq_path else []
+    gateway_vendpago_rows = coletar_vendpago_excel(gateway_vendpago_path) if gateway_vendpago_path else []
+    gateway_yougo_rows = coletar_yougo_excel(gateway_yougo_path) if gateway_yougo_path else []
+
+    # Coletar dados da API VMPay Cashless
+    api_rows = coletar_vmpay_api(vmpay_antigos)
+    api_rows_to_merge = api_rows if api_rows is not None else []
+
+    def is_on_or_before_may_2026(row):
+        if len(row) <= 11:
+            return False
+        dt_str = str(row[11]).strip()
+        try:
+            parts = dt_str.split('/')
+            day = int(parts[0])
+            month = int(parts[1])
+            year = int(parts[2])
+            if year < 2026:
+                return True
+            elif year == 2026:
+                if month <= 5:
+                    return True
+            return False
+        except Exception:
+            return False
+
+    # 1. Mesclagem VendTEF / Portal
+    # Filtra as transações de portal (não-VendPago) do histórico para mesclar
+    vendtef_antigos_portal = [r for r in vendtef_antigos if len(r) >= 22 and r[3] != "VendPago"]
+    # <= 31/05/2026: usar estritamente temp_read_only_vendpago 2026.xlsx
+    portal_lte_may = [r for r in temp_vendpago_rows if is_on_or_before_may_2026(r)]
+    # >= 01/06/2026: usar scraped rows (de julho/agosto), vendtef_antigos_portal e gateway_vendpago_rows
+    portal_gte_june = [r for r in (rows + vendtef_antigos_portal + gateway_vendpago_rows) if not is_on_or_before_may_2026(r)]
+    portal_rows_dedup = merge_and_deduplicate(portal_lte_may + portal_gte_june, [])
+
+    # 2. Mesclagem VMPay
+    # <= 31/05/2026: usar temp_vmpay_rows (para <= 2025) e vmpay_antigos (para Jan-May 2026)
+    vmpay_lte_may_temp = [r for r in temp_vmpay_rows if is_on_or_before_may_2026(r)]
+    vmpay_lte_may_antigos = [r for r in vmpay_antigos if is_on_or_before_may_2026(r)]
+    vmpay_lte_may = merge_and_deduplicate(vmpay_lte_may_temp + vmpay_lte_may_antigos, [])
+    # >= 01/06/2026: usar api_rows_to_merge, vmpay_antigos e gateway_vmpay_rows
+    vmpay_gte_june = [r for r in (vmpay_antigos + api_rows_to_merge + gateway_vmpay_rows) if not is_on_or_before_may_2026(r)]
+    vmpay_rows_dedup = merge_and_deduplicate(vmpay_lte_may + vmpay_gte_june, [])
+
+    # 3. Mesclagem SQInsights
+    # <= 31/05/2026: usar temp_sq_rows
+    sq_lte_may = [r for r in temp_sq_rows if is_on_or_before_may_2026(r)]
+    # >= 01/06/2026: usar sqi_antigos e gateway_sq_rows
+    sq_gte_june = [r for r in (sqi_antigos + gateway_sq_rows) if not is_on_or_before_may_2026(r)]
+    sq_rows_dedup = merge_and_deduplicate(sq_lte_may + sq_gte_june, [])
+
+    # 4. Mesclagem PayBlu
+    payblu_antigos = []
+    for p_cache in [CSV_PAYBLU_LOCAL, Path(__file__).parent / "payblu_local.js", Path(__file__).parent / "kpi" / "payblu_local.js", Path(__file__).parent.parent / "payblu_local.js"]:
+        if p_cache.exists() and p_cache.stat().st_size >= 100:
+            payblu_antigos = carregar_fonte_local(p_cache)
+            if payblu_antigos:
+                break
+    # <= 31/05/2026: usar temp_yougo_rows (para <= 2025) e payblu_antigos (para Jan-May 2026)
+    payblu_lte_may_temp = [r for r in temp_yougo_rows if is_on_or_before_may_2026(r)]
+    payblu_lte_may_antigos = [r for r in payblu_antigos if is_on_or_before_may_2026(r)]
+    payblu_lte_may = merge_and_deduplicate(payblu_lte_may_temp + payblu_lte_may_antigos, [])
+    # >= 01/06/2026: usar payblu_rows, payblu_antigos e gateway_yougo_rows
+    payblu_gte_june = [r for r in (payblu_antigos + payblu_rows + gateway_yougo_rows) if not is_on_or_before_may_2026(r)]
+    payblu_rows_dedup = merge_and_deduplicate(payblu_lte_may + payblu_gte_june, [])
+
+    total_count = (len(portal_rows_dedup) + len(vmpay_rows_dedup) + len(sq_rows_dedup)
+                   + len(payblu_rows_dedup)) 
 
     # Salva JSON de status para manter compatibilidade
     payload = {
@@ -2377,7 +2514,7 @@ async def coletar_tudo():
         "total_transacoes": total_count,
         "portal_transacoes": len(portal_rows_dedup),
         "api_transacoes": len(api_rows_to_merge),
-        "excel_transacoes": len(vendpago_excel_rows) + len(yougo_excel_rows),  # excel VMPay removido
+        "excel_transacoes": len(temp_vendpago_rows) + len(temp_yougo_rows) + len(gateway_vendpago_rows) + len(gateway_yougo_rows),  # excel VMPay removido
         "sq_transacoes": len(sq_rows_dedup),
         "payblu_transacoes": len(payblu_rows_dedup)
     }
