@@ -2218,6 +2218,7 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
    ROBÔ LAVAÍ IA ASSISTENTE ESTILO
 ══════════════════════════════════════════════════ */
 .lavai-bot-container {
+  display: none !important;
   position: fixed;
   bottom: 25px;
   right: 25px;
@@ -7171,53 +7172,7 @@ function answerQuestionLocal(q) {
 }
 
 </script>
-  <!-- ROBÔ LAVAÍ - ASSISTENTE IA -->
-  <div class="lavai-bot-container" id="lavai-bot-container">
-    <div class="lavai-bot-chat" id="lavai-bot-chat">
-      <div class="lavai-bot-chat-header">
-        <div class="lavai-bot-header-info">
-          <div class="lavai-bot-header-avatar">🤖</div>
-          <div>
-            <div class="lavai-bot-header-name">Robô LAVAÍ</div>
-            <div class="lavai-bot-header-status">IA Assistente Operacional</div>
-          </div>
-        </div>
-        <button class="lavai-bot-close" onclick="toggleLavaiBot()">✕</button>
-      </div>
-      <div class="lavai-bot-chat-body" id="lavai-bot-messages">
-        <div class="lavai-bot-msg bot">
-          Olá! Sou o Robô LAVAÍ. Como posso te ajudar com a análise dos dados de faturamento e vendas da operação hoje? 🤖📈
-        </div>
-        <div class="lavai-bot-msg bot suggestions">
-          Tente perguntar:<br>
-          • <em>"Qual faturamento de hoje?"</em><br>
-          • <em>"Quantas vendas ontem?"</em><br>
-          • <em>"Qual PDV faturou mais este mês?"</em><br>
-          • <em>"Como está a projeção?"</em><br>
-          • <em>"Status das máquinas no Itaquera"</em>
-        </div>
-      </div>
-      <div class="lavai-bot-chat-footer">
-        <input type="text" id="lavai-bot-input" placeholder="Escreva sua pergunta aqui..." onkeydown="handleLavaiBotKey(event)">
-        <button class="lavai-bot-audio-btn" id="lavai-bot-audio-btn" onclick="startSpeechToText()" title="Falar pergunta (Áudio)">
-          <i class="fas fa-microphone"></i>
-        </button>
-        <button class="lavai-bot-send-btn" onclick="sendLavaiBotMessage()">
-          <i class="fas fa-paper-plane"></i>
-        </button>
-      </div>
-    </div>
-    <div class="lavai-bot-avatar" onclick="toggleLavaiBot()" id="lavai-bot-trigger">
-      <div class="lavai-bot-antenna"></div>
-      <div class="lavai-bot-head">
-        <div class="lavai-bot-eyes">
-          <div class="lavai-bot-eye"></div>
-          <div class="lavai-bot-eye"></div>
-        </div>
-      </div>
-    </div>
-    <div class="lavai-bot-shadow"></div>
-  </div>
+  <!-- ROBÔ LAVAÍ - ASSISTENTE IA (DESATIVADO) -->
 
 </body>
 </html>
