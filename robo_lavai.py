@@ -33,7 +33,8 @@ SENHA = "L@v#35554"
 
 URL_ERP = "https://www.erpvending.com.br/"
 URL_DOWNLOAD  = "https://www.portalvendtef.com.br/relatoriogeral/relatorioVendasGeralDownload"
-URL_PAYBLU    = "https://www.portalpayblu.com.br/relatoriogeral/relatorioVendasGeralDownload"
+URL_PAYBLU    = "https://www.portalpayblu.com.br/private-label/relatorio-vendas-private-label"
+URL_PAYBLU_GERAL = "https://www.portalpayblu.com.br/relatoriogeral/relatorioVendasGeralDownload"
 
 # URL do Google Apps Script
 APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzGx-piTEHw8GdINEU4fFSspAWQU5kh83OrABUsGDBZrd58mOnalEOQxIQNHhs_5GL/exec"
@@ -1645,9 +1646,8 @@ async def _payblu_estabelecer_sso(page):
 
 async def _payblu_baixar_mes(page, ano: int, mes: int, pasta_saida: Path) -> list:
     """
-    Baixa o relatório PayBlu de um mês específico.
-    Preenche os campos de data inicio/fim do formulário, clica Continuar → Download.
-    Salva o CSV em pasta_saida/payblu_YYYY_MM.csv e retorna as rows mapeadas.
+    Baixa as transações Private Label do PayBlu via API JSON dia a dia do mês especificado.
+    Salva o CSV em pasta_saida/payblu_YYYY_MM.csv e retorna as rows mapeadas de 22 colunas.
     """
     import calendar
     primeiro_dia = f"01/{mes:02d}/{ano}"
@@ -1655,9 +1655,8 @@ async def _payblu_baixar_mes(page, ano: int, mes: int, pasta_saida: Path) -> lis
     ultimo_dia   = f"{ultimo_dia_n:02d}/{mes:02d}/{ano}"
     label_mes    = f"{ano}-{mes:02d}"
 
-    log.info(f"PayBlu: coletando {label_mes} ({primeiro_dia} → {ultimo_dia})...")
+    log.info(f"PayBlu: coletando {label_mes} ({primeiro_dia} → {ultimo_dia}) via API Private Label...")
     rows = []
-    temp_csv = Path(__file__).parent / f"temp_payblu_{ano}_{mes:02d}.csv"
 
     try:
         await page.goto(URL_PAYBLU, timeout=TIMEOUT_MS, wait_until="domcontentloaded")
@@ -1665,91 +1664,60 @@ async def _payblu_baixar_mes(page, ano: int, mes: int, pasta_saida: Path) -> lis
         await asyncio.sleep(2)
         await dispensar_modal(page)
 
-        # Verifica se não foi redirecionado para login
-        if "login" in page.url.lower() or "erpvending" in page.url.lower():
-            log.warning(f"PayBlu {label_mes}: redirecionado para login. Sessão perdida.")
-            return rows
+        # Monta lista de datas ISO para o mês
+        dates_iso = [f"{ano}-{mes:02d}-{dia:02d}" for dia in range(1, ultimo_dia_n + 1)]
 
-        # Inspeciona campos de data disponíveis no formulário
-        campos_data = await page.locator("input[type='date'], input[name*='data'], input[name*='date'], input[name*='inicio'], input[name*='fim'], input[name*='start'], input[name*='end']").all()
-        log.info(f"PayBlu {label_mes}: {len(campos_data)} campos de data encontrados.")
+        # Consulta os dados via evaluate no contexto autenticado
+        consumos_mes = await page.evaluate('''async (dates) => {
+            const list = [];
+            for (const dt of dates) {
+                try {
+                    const data = await new Promise((resolve) => {
+                        $.post('/private-label/relatorio-vendas-private-label/format/json/data/' + dt, {}, function(res) {
+                            resolve(res);
+                        }).fail(() => resolve(null));
+                    });
+                    if (data && data.consumos && Array.isArray(data.consumos)) {
+                        for (const c of data.consumos) {
+                            list.push(c);
+                        }
+                    }
+                } catch(e) {}
+            }
+            return list;
+        }''', dates_iso)
 
-        if len(campos_data) >= 2:
-            # Formulário com campos de data início e fim
-            campo_inicio = campos_data[0]
-            campo_fim    = campos_data[1]
+        log.info(f"PayBlu {label_mes}: {len(consumos_mes)} transações obtidas da API.")
 
-            # Tenta preencher como input[type=date] (formato YYYY-MM-DD)
-            tipo_inicio = await campo_inicio.get_attribute("type") or ""
-            if tipo_inicio == "date":
-                await campo_inicio.fill(f"{ano}-{mes:02d}-01")
-                await campo_fim.fill(f"{ano}-{mes:02d}-{ultimo_dia_n:02d}")
-            else:
-                # Formato brasileiro dd/mm/yyyy
-                await campo_inicio.click(click_count=3)
-                await campo_inicio.type(primeiro_dia)
-                await campo_fim.click(click_count=3)
-                await campo_fim.type(ultimo_dia)
+        for c in consumos_mes:
+            cliente     = c.get("cliente") or "LAVAÍ - You Go"
+            maquina     = "34# Gestão You Go Vila Mariana"
+            modelo      = "PayBlu (Private Label)"
+            fabricante  = "PayBlu"
+            pagamento   = "PRIVATE LABEL"
+            produto     = c.get("produto") or "1 Pulso(s)"
+            mola_id     = c.get("cod_produto") or "1"
+            val_pago    = c.get("valor_pago", 700)
+            try:
+                val_f = float(val_pago) / 100.0 if float(val_pago) >= 100 else float(val_pago)
+            except:
+                val_f = 7.0
+            val_str     = str(val_f).replace(".", ",")
+            data_br     = c.get("data") or ""
+            hora_br     = c.get("hora") or ""
+            matricula   = str(c.get("nserial") or "")
+            n_logico    = matricula
+            nsu         = f"PB-{matricula}|{data_br}|{hora_br}"
+            usuario     = c.get("usuario") or ""
 
-            log.info(f"PayBlu {label_mes}: datas preenchidas ({primeiro_dia} → {ultimo_dia}).")
-        else:
-            # Formulário sem filtro de data (retorna mês corrente) — só funciona para o mês atual
-            now = datetime.now(FUSO_SP)
-            if not (ano == now.year and mes == now.month):
-                log.warning(f"PayBlu {label_mes}: formulário sem campos de data, pulando mês não-corrente.")
-                return rows
-            log.info(f"PayBlu {label_mes}: sem campos de data, baixando mês corrente.")
-
-        # Clica Continuar
-        await page.locator("input[value='Continuar'], input[type='submit'], button[type='submit']").first.click(timeout=10000)
-        await page.wait_for_load_state("networkidle", timeout=TIMEOUT_MS)
-        await asyncio.sleep(4)
-
-        # Clica Download
-        btn_locator = page.locator(
-            "a:has-text('Download'), button:has-text('Download'), input[value='Download']"
-        ).first
-
-        async with page.expect_download(timeout=25000) as dl_info:
-            await btn_locator.click()
-
-        download = await dl_info.value
-        await download.save_as(str(temp_csv))
-        log.info(f"PayBlu {label_mes}: CSV baixado.")
-
-        # Processa CSV
-        with open(temp_csv, encoding="latin-1") as f:
-            raw_lines = f.readlines()
-
-        header_idx = -1
-        for i, line in enumerate(raw_lines):
-            if "Cliente" in line and "Pagamento" in line:
-                header_idx = i
-                break
-
-        if header_idx == -1:
-            log.warning(f"PayBlu {label_mes}: cabeçalho não encontrado no CSV.")
-            return rows
-
-        reader = csv.reader(raw_lines[header_idx + 1:], delimiter=";")
-        count = 0
-        for r in reader:
-            if not r or not r[0].strip():
-                continue
-            if r[0].strip().startswith("Total"):
-                continue
-            r = [c.strip().strip('"') for c in r]
-            if len(r) >= 22:
-                rows.append(r)
-                count += 1
-            elif len(r) == 21:
-                rows.append(map_payblu_21col_row(r))
-                count += 1
-            elif len(r) >= 11:
-                rows.append(map_payblu_csv_row(r))
-                count += 1
-
-        log.info(f"PayBlu {label_mes}: {count} transações processadas.")
+            row_22 = [
+                cliente, maquina, modelo, fabricante, pagamento,
+                produto, mola_id, val_str, "Não Informado", val_str,
+                "Não utilizado", data_br, hora_br, n_logico, nsu,
+                "", "Private Label", "PayBlu", "Private Label", usuario,
+                "", matricula
+            ]
+            rows.append(row_22)
 
         # Salva arquivo mensal persistente
         if rows and pasta_saida:
@@ -1769,10 +1737,9 @@ async def _payblu_baixar_mes(page, ano: int, mes: int, pasta_saida: Path) -> lis
 
     except Exception as e:
         log.error(f"PayBlu {label_mes}: erro — {e}")
-    finally:
-        if temp_csv.exists():
-            try: temp_csv.unlink()
-            except: pass
+
+    except Exception as e:
+        log.error(f"PayBlu {label_mes}: erro — {e}")
 
     return rows
 

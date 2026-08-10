@@ -1,0 +1,2092 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LAVAÍ — Repasse Condomínios (You Go & PUQ Perdizes)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+:root {
+  --bg-body: #0b0f19;
+  --bg-card: rgba(20, 27, 45, 0.75);
+  --bg-card-hover: rgba(26, 36, 61, 0.85);
+  --bg-card-solid: #141b2d;
+  --bg-input: #101626;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(99, 102, 241, 0.5);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  
+  --primary: #6366f1;
+  --primary-glow: rgba(99, 102, 241, 0.35);
+  --secondary: #0ea5e9;
+  --secondary-glow: rgba(14, 165, 233, 0.35);
+  --accent-repasse: #10b981;
+  --accent-repasse-glow: rgba(16, 185, 129, 0.35);
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --wash-color: #3b82f6;
+  --dry-color: #ec4899;
+  
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-glow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  min-height: 100vh;
+  padding: 24px;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.1) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(14, 165, 233, 0.08) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+.container {
+  max-width: 1540px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── LOADER ── */
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 15, 25, 0.92);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+.loader-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+.loader-spinner {
+  width: 58px;
+  height: 58px;
+  border: 4px solid rgba(99, 102, 241, 0.15);
+  border-top-color: var(--primary);
+  border-right-color: var(--accent-repasse);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+  box-shadow: 0 0 25px var(--primary-glow);
+}
+.loader-text {
+  margin-top: 18px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── HEADER ── */
+.header-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+.header-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent-repasse));
+}
+.brand-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.brand-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--primary), #4338ca);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #fff;
+  box-shadow: 0 6px 18px var(--primary-glow);
+}
+.brand-text h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.brand-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.badge-fixed-rate {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 12px;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.btn-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.btn-nav:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+.btn-export-excel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #059669, #10b981);
+  border: none;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+  transition: all 0.2s ease;
+}
+.btn-export-excel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+  filter: brightness(1.08);
+}
+.btn-export-excel:active {
+  transform: translateY(0);
+}
+
+/* ── FILTERS CARD ── */
+.filters-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.filters-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 160px;
+}
+.filter-item label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.filter-input, .filter-select {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: var(--text-main);
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+.filter-input:focus, .filter-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+.quick-period-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.btn-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.btn-pill:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+}
+.btn-pill.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 10px var(--primary-glow);
+}
+
+/* ── KPI SECTION ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+.kpi-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px 22px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+.kpi-card.highlight-repasse {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(6, 78, 59, 0.3));
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+}
+.kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.kpi-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+.kpi-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: var(--text-muted);
+}
+.kpi-card.highlight-repasse .kpi-icon-box {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+.kpi-value {
+  font-family: 'Outfit', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-main);
+}
+.kpi-card.highlight-repasse .kpi-value {
+  color: #34d399;
+  text-shadow: 0 0 20px rgba(52, 211, 153, 0.3);
+}
+.kpi-footer {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── CONDOMINIUM SUMMARY BOXES ── */
+.condo-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 20px;
+}
+.condo-box {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.condo-box.yougo {
+  border-left: 4px solid var(--primary);
+}
+.condo-box.puq {
+  border-left: 4px solid var(--secondary);
+}
+.condo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.condo-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.condo-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 800;
+}
+.condo-box.yougo .condo-avatar {
+  background: rgba(99, 102, 241, 0.2);
+  color: #818cf8;
+}
+.condo-box.puq .condo-avatar {
+  background: rgba(14, 165, 233, 0.2);
+  color: #38bdf8;
+}
+.condo-title {
+  font-size: 17px;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+}
+.condo-loc {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.condo-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+.condo-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.condo-stat-lbl {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.condo-stat-val {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+  font-family: 'Outfit', sans-serif;
+}
+.condo-repasse-val {
+  color: #34d399;
+}
+.condo-cycles-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.progress-bar-wrap {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+}
+.progress-fill-wash {
+  background: var(--wash-color);
+  height: 100%;
+}
+.progress-fill-dry {
+  background: var(--dry-color);
+  height: 100%;
+}
+
+/* ── CHARTS SECTION ── */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 1080px) {
+  .charts-grid { grid-template-columns: 1fr; }
+}
+.chart-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.chart-title {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── ANALYTIC TABLE SECTION ── */
+.table-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: var(--shadow-sm);
+}
+.table-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.table-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.table-title {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+}
+.table-count-badge {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.search-input-wrap {
+  position: relative;
+  min-width: 260px;
+}
+.search-input-wrap i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  font-size: 13px;
+}
+.search-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px 8px 34px;
+  color: var(--text-main);
+  font-size: 13px;
+  width: 100%;
+  outline: none;
+  transition: all 0.2s ease;
+}
+.search-input:focus {
+  border-color: var(--primary);
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+.custom-table th {
+  background: rgba(16, 22, 38, 0.95);
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.custom-table td {
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--text-main);
+  white-space: nowrap;
+}
+.custom-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Badges */
+.badge-machine {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.badge-wash {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.badge-dry {
+  background: rgba(236, 72, 153, 0.15);
+  color: #f472b6;
+  border: 1px solid rgba(236, 72, 153, 0.3);
+}
+.badge-condo {
+  font-weight: 600;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.badge-condo.yougo { color: #818cf8; }
+.badge-condo.puq { color: #38bdf8; }
+
+.badge-repasse-val {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.cell-morador {
+  font-weight: 600;
+  color: #f1f5f9;
+}
+.cell-apto {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* ── PAGINATION ── */
+.table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 4px;
+}
+.pagination-info {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-page {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.btn-page:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.btn-page.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.btn-page:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── CONSOLIDATED TABLE ── */
+.consolidated-table-wrap {
+  margin-top: 6px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  body { padding: 14px; }
+  .header-card { flex-direction: column; align-items: flex-start; }
+  .header-actions { width: 100%; justify-content: space-between; }
+  .filters-row { flex-direction: column; }
+  .filter-item { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader" class="loader-overlay">
+  <div class="loader-spinner"></div>
+  <div class="loader-text">Processando transações dos condomínios You Go e PUQ Perdizes...</div>
+</div>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <header class="header-card">
+    <div class="brand-wrapper">
+      <div class="brand-icon">
+        <i class="fas fa-hand-holding-dollar"></i>
+      </div>
+      <div class="brand-text">
+        <h1>
+          Repasse aos Condomínios
+          <span class="brand-tag">Exclusivo</span>
+        </h1>
+        <div class="brand-subtitle">
+          <span>Unidades: <strong>You Go Vila Mariana</strong> & <strong>PUQ Perdizes</strong></span>
+          <span class="badge-fixed-rate"><i class="fas fa-coins"></i> R$ 2,00 / operação</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <a href="dashboard_lavai_tete.html" class="btn-nav">
+        <i class="fas fa-chart-line"></i> Dashboard Geral
+      </a>
+      <button class="btn-export-excel" onclick="exportAnaliticoExcel()">
+        <i class="fas fa-file-excel"></i> Exportar Analítico (Excel)
+      </button>
+    </div>
+  </header>
+
+  <!-- FILTERS -->
+  <section class="filters-card">
+    <div class="filters-row">
+      <!-- PDV / Condomínio -->
+      <div class="filter-item" style="max-width: 280px;">
+        <label><i class="fas fa-building"></i> Condomínio / PDV</label>
+        <select id="filter-condo" class="filter-select" onchange="applyFilters()">
+          <option value="all">Ambos os Condomínios (You Go + PUQ)</option>
+          <option value="YOU_GO">You Go Vila Mariana (34#)</option>
+          <option value="PUQ_PERDIZES">PUQ Perdizes (31#)</option>
+        </select>
+      </div>
+
+      <!-- Tipo de Máquina -->
+      <div class="filter-item" style="max-width: 220px;">
+        <label><i class="fas fa-soap"></i> Tipo de Máquina</label>
+        <select id="filter-maq-type" class="filter-select" onchange="applyFilters()">
+          <option value="all">Todas as Operações</option>
+          <option value="wash">Apenas Lavadoras</option>
+          <option value="dry">Apenas Secadoras</option>
+        </select>
+      </div>
+
+      <!-- Período Data De/Até -->
+      <div class="filter-item" style="max-width: 170px;">
+        <label><i class="fas fa-calendar-day"></i> De</label>
+        <input type="text" id="date-start" class="filter-input" placeholder="dd/mm/aaaa">
+      </div>
+      <div class="filter-item" style="max-width: 170px;">
+        <label><i class="fas fa-calendar-day"></i> Até</label>
+        <input type="text" id="date-end" class="filter-input" placeholder="dd/mm/aaaa">
+      </div>
+
+      <!-- Botão Limpar Filtros -->
+      <div class="filter-item" style="max-width: 120px; align-self: flex-end;">
+        <button class="btn-nav" style="width: 100%; justify-content: center; padding: 10px;" onclick="resetFilters()">
+          <i class="fas fa-rotate-left"></i> Limpar
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Period Pills -->
+    <div class="quick-period-pills">
+      <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-right: 6px;">Atalhos:</span>
+      <button class="btn-pill" data-period="today" onclick="setQuickPeriod('today')">Hoje</button>
+      <button class="btn-pill" data-period="yesterday" onclick="setQuickPeriod('yesterday')">Ontem</button>
+      <button class="btn-pill" data-period="7days" onclick="setQuickPeriod('7days')">Últimos 7 dias</button>
+      <button class="btn-pill" data-period="this_month" onclick="setQuickPeriod('this_month')">Este Mês</button>
+      <button class="btn-pill" data-period="last_month" onclick="setQuickPeriod('last_month')">Mês Passado</button>
+      <button class="btn-pill" data-period="year_2026" onclick="setQuickPeriod('year_2026')">Ano 2026</button>
+      <button class="btn-pill" data-period="year_2025" onclick="setQuickPeriod('year_2025')">Ano 2025</button>
+      <button class="btn-pill active" data-period="all" onclick="setQuickPeriod('all')">Todo o Período</button>
+    </div>
+  </section>
+
+  <!-- KPI CARDS -->
+  <section class="kpi-grid">
+    <!-- Repasse Total -->
+    <div class="kpi-card highlight-repasse">
+      <div class="kpi-header">
+        <span class="kpi-title">Total a Repassar (Condomínios)</span>
+        <div class="kpi-icon-box"><i class="fas fa-hand-holding-dollar"></i></div>
+      </div>
+      <div class="kpi-value" id="kpi-repasse-total">R$ 0,00</div>
+      <div class="kpi-footer">
+        <i class="fas fa-check-circle" style="color: #34d399;"></i>
+        <span>Calculado a R$ 2,00 por ciclo</span>
+      </div>
+    </div>
+
+    <!-- Total de Operações -->
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Total de Operações / Ciclos</span>
+        <div class="kpi-icon-box"><i class="fas fa-rotate"></i></div>
+      </div>
+      <div class="kpi-value" id="kpi-total-operacoes">0</div>
+      <div class="kpi-footer">
+        <i class="fas fa-tag"></i>
+        <span id="kpi-operacoes-sub">Lavagens e Secagens</span>
+      </div>
+    </div>
+
+    <!-- Repasse You Go -->
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Repasse You Go Vila Mariana</span>
+        <div class="kpi-icon-box" style="color: #818cf8; background: rgba(99, 102, 241, 0.15);"><i class="fas fa-building"></i></div>
+      </div>
+      <div class="kpi-value" id="kpi-repasse-yougo" style="color: #818cf8;">R$ 0,00</div>
+      <div class="kpi-footer">
+        <span id="kpi-ops-yougo">0 ciclos</span>
+      </div>
+    </div>
+
+    <!-- Repasse PUQ Perdizes -->
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Repasse PUQ Perdizes</span>
+        <div class="kpi-icon-box" style="color: #38bdf8; background: rgba(14, 165, 233, 0.15);"><i class="fas fa-building-user"></i></div>
+      </div>
+      <div class="kpi-value" id="kpi-repasse-puq" style="color: #38bdf8;">R$ 0,00</div>
+      <div class="kpi-footer">
+        <span id="kpi-ops-puq">0 ciclos</span>
+      </div>
+    </div>
+
+    <!-- Faturamento Bruto -->
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Faturamento Bruto Total</span>
+        <div class="kpi-icon-box"><i class="fas fa-wallet"></i></div>
+      </div>
+      <div class="kpi-value" id="kpi-faturamento-total">R$ 0,00</div>
+      <div class="kpi-footer">
+        <span id="kpi-pct-repasse">0% de repasse efetivo</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONDOMINIUM DETAILS CARDS -->
+  <section class="condo-comparison-grid">
+    <!-- Box You Go -->
+    <div class="condo-box yougo">
+      <div class="condo-header">
+        <div class="condo-title-group">
+          <div class="condo-avatar">YG</div>
+          <div>
+            <div class="condo-title">You Go Vila Mariana</div>
+            <div class="condo-loc"><i class="fas fa-location-dot"></i> 34# Gestão You Go • 3 Torres</div>
+          </div>
+        </div>
+        <button class="btn-nav" style="padding: 6px 12px; font-size: 11px;" onclick="selectCondoQuick('YOU_GO')">
+          Filtrar You Go
+        </button>
+      </div>
+
+      <div class="condo-stats-row">
+        <div class="condo-stat-item">
+          <span class="condo-stat-lbl">Repasse</span>
+          <span class="condo-stat-val condo-repasse-val" id="yg-repasse-val">R$ 0,00</span>
+        </div>
+        <div class="condo-stat-item">
+          <span class="condo-stat-lbl">Operações</span>
+          <span class="condo-stat-val" id="yg-ops-val">0</span>
+        </div>
+        <div class="condo-stat-item">
+          <span class="condo-stat-lbl">Faturamento</span>
+          <span class="condo-stat-val" id="yg-fat-val">R$ 0,00</span>
+        </div>
+      </div>
+
+      <div class="condo-cycles-bar">
+        <div class="progress-labels">
+          <span><i class="fas fa-soap" style="color: var(--wash-color);"></i> Lavagens: <strong id="yg-wash-count">0</strong></span>
+          <span><i class="fas fa-wind" style="color: var(--dry-color);"></i> Secagens: <strong id="yg-dry-count">0</strong></span>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-fill-wash" id="yg-wash-bar" style="width: 50%;"></div>
+          <div class="progress-fill-dry" id="yg-dry-bar" style="width: 50%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Box PUQ Perdizes -->
+    <div class="condo-box puq">
+      <div class="condo-header">
+        <div class="condo-title-group">
+          <div class="condo-avatar">PUQ</div>
+          <div>
+            <div class="condo-title">PUQ Perdizes</div>
+            <div class="condo-loc"><i class="fas fa-location-dot"></i> 31# Gestão PUQ - Perdizes • 3 Stacks</div>
+          </div>
+        </div>
+        <button class="btn-nav" style="padding: 6px 12px; font-size: 11px;" onclick="selectCondoQuick('PUQ_PERDIZES')">
+          Filtrar PUQ
+        </button>
+      </div>
+
+      <div class="condo-stats-row">
+        <div class="condo-stat-item">
+          <span class="condo-stat-lbl">Repasse</span>
+          <span class="condo-stat-val condo-repasse-val" id="puq-repasse-val">R$ 0,00</span>
+        </div>
+        <div class="condo-stat-item">
+          <span class="condo-stat-lbl">Operações</span>
+          <span class="condo-stat-val" id="puq-ops-val">0</span>
+        </div>
+        <div class="condo-stat-item">
+          <span class="condo-stat-lbl">Faturamento</span>
+          <span class="condo-stat-val" id="puq-fat-val">R$ 0,00</span>
+        </div>
+      </div>
+
+      <div class="condo-cycles-bar">
+        <div class="progress-labels">
+          <span><i class="fas fa-soap" style="color: var(--wash-color);"></i> Lavagens: <strong id="puq-wash-count">0</strong></span>
+          <span><i class="fas fa-wind" style="color: var(--dry-color);"></i> Secagens: <strong id="puq-dry-count">0</strong></span>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-fill-wash" id="puq-wash-bar" style="width: 50%;"></div>
+          <div class="progress-fill-dry" id="puq-dry-bar" style="width: 50%;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHARTS SECTION -->
+  <section class="charts-grid">
+    <!-- Evolução Histórica de Repasses -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">
+          <i class="fas fa-chart-area" style="color: var(--accent-repasse);"></i>
+          Evolução Temporal do Repasse (R$) e Volume de Operações
+        </div>
+      </div>
+      <div id="chart-timeline" style="min-height: 320px;"></div>
+    </div>
+
+    <!-- Comparativo You Go vs PUQ -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">
+          <i class="fas fa-chart-pie" style="color: var(--primary);"></i>
+          Distribuição dos Repasses
+        </div>
+      </div>
+      <div id="chart-pie-condo" style="min-height: 320px;"></div>
+    </div>
+  </section>
+
+  <!-- CONSOLIDATED SUMMARY TABLE -->
+  <section class="table-card">
+    <div class="table-top-bar">
+      <div class="table-title-wrap">
+        <i class="fas fa-table-list" style="color: var(--primary);"></i>
+        <div class="table-title">Consolidado por Condomínio</div>
+      </div>
+      <button class="btn-nav" onclick="exportConsolidadoExcel()">
+        <i class="fas fa-download"></i> Exportar Resumo
+      </button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="custom-table" id="consolidated-table">
+        <thead>
+          <tr>
+            <th>Condomínio / PDV</th>
+            <th>Lavagens</th>
+            <th>Secagens</th>
+            <th>Total Operações</th>
+            <th>Taxa Unitária</th>
+            <th>Total Repasse (R$)</th>
+            <th>Faturamento Bruto (R$)</th>
+            <th>% Repasse / Fat.</th>
+          </tr>
+        </thead>
+        <tbody id="consolidated-tbody">
+          <!-- Dinâmico -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ANALYTIC TRANSACTIONS TABLE -->
+  <section class="table-card">
+    <div class="table-top-bar">
+      <div class="table-title-wrap">
+        <i class="fas fa-receipt" style="color: var(--accent-repasse);"></i>
+        <div class="table-title">Extrato Analítico de Transações</div>
+        <span class="table-count-badge" id="table-total-count">0 registros</span>
+      </div>
+
+      <div class="table-actions">
+        <div class="search-input-wrap">
+          <i class="fas fa-magnifying-glass"></i>
+          <input type="text" id="search-resident" class="search-input" placeholder="Buscar morador, apto ou data..." oninput="onSearchChange()">
+        </div>
+        <button class="btn-export-excel" onclick="exportAnaliticoExcel()">
+          <i class="fas fa-file-excel"></i> Exportar Excel
+        </button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="custom-table" id="analytic-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Hora</th>
+            <th>Condomínio</th>
+            <th>Máquina</th>
+            <th>Tipo</th>
+            <th>Nome do Morador</th>
+            <th>Apartamento</th>
+            <th>Valor Operação</th>
+            <th>Repasse</th>
+            <th>Pagamento</th>
+          </tr>
+        </thead>
+        <tbody id="analytic-tbody">
+          <!-- Dinâmico -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="table-pagination">
+      <div class="pagination-info" id="pagination-info">
+        Mostrando 0 a 0 de 0 operações
+      </div>
+      <div class="pagination-controls" id="pagination-controls">
+        <!-- Dinâmico -->
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// CONSTANTES E CONFIGURAÇÕES DE REPASSE
+// ══════════════════════════════════════════════════════
+const REPASSE_VALOR_UNITARIO = 2.00; // R$ 2,00 por operação
+
+const YOU_GO_PDV = '34# Gestão You Go Vila Mariana';
+const PUQ_PDV = '31# Gestão PUQ - Perdizes';
+
+const MATRICULAS_YOU_GO = {
+  '359476934': { torre: 'You Go 1', maquina: 'Lavadora' },
+  '707316858': { torre: 'You Go 1', maquina: 'Secadora' },
+  '359479550': { torre: 'You Go 2', maquina: 'Lavadora' },
+  '707317086': { torre: 'You Go 2', maquina: 'Secadora' },
+  '707317126': { torre: 'You Go 3', maquina: 'Lavadora' },
+  '707317098': { torre: 'You Go 3', maquina: 'Secadora' }
+};
+
+const MOLA_TIPO_MAP = {
+  '1': 'wash',
+  '5931': 'wash',
+  '6673': 'dry',
+  '7008': 'wash',
+  '7009': 'dry',
+  '7038': 'wash',
+  '8872': 'dry',
+  '11538': 'wash',
+  '11539': 'dry',
+  '11546': 'wash',
+  '11547': 'dry',
+  '11551': 'wash',
+  '11552': 'dry',
+  '11553': 'wash',
+  '11554': 'dry',
+  '19973': 'wash',
+  '25004': 'wash',
+  '25005': 'dry',
+  '25006': 'wash',
+  '25007': 'dry',
+  '25084': 'wash',
+  '25085': 'dry',
+  '25343': 'wash',
+  '25344': 'dry',
+  '25472': 'dry',
+  '25474': 'wash',
+  '26489': 'wash',
+  '26490': 'dry'
+};
+
+// ══════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ══════════════════════════════════════════════════════
+let rawTransactions = [];
+let filteredTransactions = [];
+let currentPage = 1;
+const pageSize = 20;
+
+let fpStart = null, fpEnd = null;
+let chartTimeline = null, chartPie = null;
+
+// ══════════════════════════════════════════════════════
+// CARREGAMENTO E PROCESSAMENTO DE DADOS
+// ══════════════════════════════════════════════════════
+async function initDashboard() {
+  showLoader(true);
+  try {
+    await loadDataSources();
+    initFlatpickr();
+    applyFilters();
+  } catch (err) {
+    console.error('Erro ao inicializar dashboard:', err);
+    alert('Ocorreu um erro ao carregar os dados locais: ' + err.message);
+  } finally {
+    showLoader(false);
+  }
+}
+
+function showLoader(show) {
+  const el = document.getElementById('loader');
+  if (el) {
+    if (show) el.classList.remove('hidden');
+    else el.classList.add('hidden');
+  }
+}
+
+async function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    const isLocal = window.location.protocol === 'file:';
+    s.src = isLocal ? src : (src + '?v=' + Date.now());
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function tryLoad(varName, src) {
+  if (!window[varName]) {
+    try { await loadScript(src); } catch(e) {}
+  }
+}
+
+function parseCSV(csvText) {
+  if (!csvText) return [];
+  const lines = csvText.split('\n');
+  const result = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    
+    // Tratamento de aspas e ponto-e-vírgula
+    const row = [];
+    let cur = '', inQuotes = false;
+    for (let c = 0; c < line.length; c++) {
+      const ch = line[c];
+      if (ch === '"') {
+        inQuotes = !inQuotes;
+      } else if (ch === ';' && !inQuotes) {
+        row.push(cur.trim());
+        cur = '';
+      } else {
+        cur += ch;
+      }
+    }
+    row.push(cur.trim());
+    result.push(row);
+  }
+  return result;
+}
+
+// Mapa dinâmico de morador -> apartamento (acumulado de todas as transações)
+const KNOWN_MORADOR_APT_MAP = {};
+
+// Extrai nome limpo do morador e apartamento
+// Regra: tudo antes de ap, apt ou apto é MORADOR, e o restante é APARTAMENTO
+function extractResidentAndApt(userRaw, nsuRaw, condoKey) {
+  let user = (userRaw || '').trim();
+  let nsu = (nsuRaw || '').trim();
+  let apt = 'Não Informado';
+  let name = user || 'Não Identificado';
+
+  if (!user && !nsu) {
+    return { name: 'Não Identificado', apt: 'Não Informado' };
+  }
+
+  let morador = '';
+  let aptoVal = '';
+
+  // 1. Regra estrita: tudo antes de ap, apt ou apto é morador, e o restante é apartamento
+  const regex = /^(.*?)(?:[\s\-–,]+(?:apto|apt|ap|apartamento|unidade|bloco)[\s\-–.:]*)(.*)$/i;
+  const match = user.match(regex);
+
+  if (match) {
+    morador = match[1].replace(/[\s\-–,.:]+$/, '').trim();
+    aptoVal = match[2].replace(/^[\s\-–,.:]+/, '').trim();
+  } else {
+    // 2. Tenta no NSU (comum no PayBlu Private Label)
+    const nsuMatch = nsu.match(/(?:apto|apt|ap|apartamento)[\s\-–.:]*([a-zA-Z0-9]+)/i);
+    if (nsuMatch) {
+      morador = user;
+      aptoVal = nsuMatch[1].trim();
+    } else {
+      morador = user;
+    }
+  }
+
+  // Ajustes de integridade
+  if (!morador && user) morador = user;
+  if (!morador && aptoVal) morador = 'Morador';
+
+  // Se morador e apt identificados, salva no mapa de histórico
+  const normKey = morador.toLowerCase();
+  if (morador && aptoVal && morador.length > 2 && aptoVal !== 'Não Informado') {
+    KNOWN_MORADOR_APT_MAP[normKey] = aptoVal;
+  } else if (morador && (!aptoVal || aptoVal === 'Não Informado') && KNOWN_MORADOR_APT_MAP[normKey]) {
+    // Se o morador já foi identificado com apt em outra transação, recupera
+    aptoVal = KNOWN_MORADOR_APT_MAP[normKey];
+  }
+
+  // Formata o apartamento como "apto XXX"
+  let aptFormatted = 'Não Informado';
+  if (aptoVal && aptoVal !== 'Não Informado') {
+    const numOnly = aptoVal.replace(/^(?:apto|apt|ap|apartamento)[\s\-–.:]*/i, '').trim();
+    aptFormatted = numOnly ? `apto ${numOnly}` : aptoVal;
+  }
+
+  return {
+    name: morador || 'Não Identificado',
+    apt: aptFormatted
+  };
+}
+
+// Detecta tipo de máquina (Lavadora / Secadora)
+function detectMachineType(row) {
+  const matr = (row[21] || '').trim();
+  if (MATRICULAS_YOU_GO[matr]) {
+    return {
+      type: MATRICULAS_YOU_GO[matr].maquina,
+      torre: MATRICULAS_YOU_GO[matr].torre,
+      isWash: MATRICULAS_YOU_GO[matr].maquina === 'Lavadora'
+    };
+  }
+
+  const prod = (row[5] || '').toUpperCase();
+  if (prod.includes('LAV')) return { type: 'Lavadora', torre: '', isWash: true };
+  if (prod.includes('SEC')) return { type: 'Secadora', torre: '', isWash: false };
+
+  const mola = (row[6] || '').trim().toUpperCase();
+  const molaCode = mola.split(' ')[0].trim();
+  if (MOLA_TIPO_MAP[molaCode] === 'wash') return { type: 'Lavadora', torre: '', isWash: true };
+  if (MOLA_TIPO_MAP[molaCode] === 'dry') return { type: 'Secadora', torre: '', isWash: false };
+  if (mola.includes('LAVA')) return { type: 'Lavadora', torre: '', isWash: true };
+  if (mola.includes('SECA')) return { type: 'Secadora', torre: '', isWash: false };
+
+  return { type: 'Lavadora', torre: '', isWash: true }; // Padrão seguro
+}
+
+function parseNumber(val) {
+  if (!val) return 0;
+  if (typeof val === 'number') return val;
+  const clean = String(val).replace('R$', '').replace(/\s/g, '').replace('.', '').replace(',', '.');
+  const n = parseFloat(clean);
+  return isNaN(n) ? 0 : n;
+}
+
+function parseDateBR(dateStr, timeStr) {
+  if (!dateStr) return null;
+  const parts = dateStr.split('/');
+  if (parts.length !== 3) return null;
+  const d = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10) - 1;
+  const y = parseInt(parts[2], 10);
+
+  let hh = 0, mm = 0, ss = 0;
+  if (timeStr) {
+    const tparts = timeStr.split(':');
+    if (tparts.length >= 2) {
+      hh = parseInt(tparts[0], 10) || 0;
+      mm = parseInt(tparts[1], 10) || 0;
+      ss = parseInt(tparts[2], 10) || 0;
+    }
+  }
+  return new Date(y, m, d, hh, mm, ss);
+}
+
+async function loadDataSources() {
+  rawTransactions = [];
+
+  // 1. PayBlu (Base primária You Go)
+  await tryLoad('LAVAI_PAYBLU_DATA', 'payblu_local.js');
+  if (window.LAVAI_PAYBLU_DATA) {
+    const rows = parseCSV(window.LAVAI_PAYBLU_DATA);
+    processSourceRows(rows, 'PayBlu');
+  }
+
+  // 2. VendTEF (Base primária PUQ Perdizes)
+  await tryLoad('LAVAI_VENDTEF_DATA', 'vendtef_local.js');
+  if (window.LAVAI_VENDTEF_DATA) {
+    const rows = parseCSV(window.LAVAI_VENDTEF_DATA);
+    processSourceRows(rows, 'VendTEF');
+  }
+
+  // 3. VMPay (Caso haja operações You Go / PUQ adicionais)
+  await tryLoad('LAVAI_VMPAY_DATA', 'vmpay_local.js');
+  if (window.LAVAI_VMPAY_DATA) {
+    const rows = parseCSV(window.LAVAI_VMPAY_DATA);
+    processSourceRows(rows, 'VMPay');
+  }
+
+  // 4. SQInsights
+  await tryLoad('LAVAI_SQI_DATA', 'sqi_local.js');
+  if (window.LAVAI_SQI_DATA) {
+    const rows = parseCSV(window.LAVAI_SQI_DATA);
+    processSourceRows(rows, 'SQInsights');
+  }
+
+  // Ordena por data decrescente
+  rawTransactions.sort((a, b) => b.timestamp - a.timestamp);
+  console.log(`Carregadas ${rawTransactions.length} transações dos condomínios You Go e PUQ Perdizes.`);
+}
+
+function processSourceRows(rows, sourceName) {
+  // Ignora cabeçalho
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    if (r.length < 12) continue;
+    if (r[0] === 'Cliente' || r[1] === 'Máquina') continue;
+
+    const cliente = (r[0] || '').toLowerCase();
+    const maquina = (r[1] || '').toLowerCase();
+    const matricula = (r[21] || '').trim();
+
+    let condoKey = null;
+    let condoNome = '';
+
+    // Verifica You Go
+    if (
+      cliente.includes('you go') || 
+      maquina.includes('you go') || 
+      maquina.includes('34#') ||
+      MATRICULAS_YOU_GO[matricula]
+    ) {
+      condoKey = 'YOU_GO';
+      condoNome = 'You Go Vila Mariana';
+    }
+    // Verifica PUQ Perdizes
+    else if (
+      cliente.includes('perdizes') || 
+      cliente.includes('puq') || 
+      maquina.includes('perdizes') || 
+      maquina.includes('puq') ||
+      maquina.includes('31#')
+    ) {
+      condoKey = 'PUQ_PERDIZES';
+      condoNome = 'PUQ Perdizes';
+    }
+
+    if (!condoKey) continue; // Filtra estritamente apenas estes dois condomínios
+
+    const dataStr = r[11] || '';
+    const horaStr = r[12] || '';
+    const dt = parseDateBR(dataStr, horaStr);
+    if (!dt) continue;
+
+    const maqInfo = detectMachineType(r);
+    const residentInfo = extractResidentAndApt(r[19], r[14], condoKey);
+    const valor = parseNumber(r[9] || r[7] || 0);
+    const pagamento = r[4] || r[16] || 'TEF';
+
+    rawTransactions.push({
+      id: `${sourceName}-${i}`,
+      source: sourceName,
+      condoKey,
+      condoNome,
+      dataStr,
+      horaStr,
+      dateObj: dt,
+      timestamp: dt.getTime(),
+      year: dt.getFullYear(),
+      month: dt.getMonth() + 1,
+      tipoMaquina: maqInfo.type,
+      isWash: maqInfo.isWash,
+      torre: maqInfo.torre || (condoKey === 'PUQ_PERDIZES' ? 'Torre PUQ' : 'You Go'),
+      morador: residentInfo.name,
+      apartamento: residentInfo.apt,
+      valor,
+      repasse: REPASSE_VALOR_UNITARIO,
+      pagamento,
+      rawRow: r
+    });
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// FILTROS
+// ══════════════════════════════════════════════════════
+function initFlatpickr() {
+  const commonCfg = {
+    dateFormat: "d/m/Y",
+    locale: "pt",
+    allowInput: true,
+    onChange: function() {
+      clearActivePills();
+      applyFilters();
+    }
+  };
+  fpStart = flatpickr("#date-start", commonCfg);
+  fpEnd = flatpickr("#date-end", commonCfg);
+}
+
+function clearActivePills() {
+  document.querySelectorAll('.btn-pill').forEach(b => b.classList.remove('active'));
+}
+
+function setQuickPeriod(period) {
+  clearActivePills();
+  const btn = document.querySelector(`.btn-pill[data-period="${period}"]`);
+  if (btn) btn.classList.add('active');
+
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const fmt = d => `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+
+  if (period === 'all') {
+    fpStart.clear();
+    fpEnd.clear();
+  } else if (period === 'today') {
+    fpStart.setDate(now);
+    fpEnd.setDate(now);
+  } else if (period === 'yesterday') {
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    fpStart.setDate(y);
+    fpEnd.setDate(y);
+  } else if (period === '7days') {
+    const s = new Date();
+    s.setDate(s.getDate() - 6);
+    fpStart.setDate(s);
+    fpEnd.setDate(now);
+  } else if (period === 'this_month') {
+    const s = new Date(now.getFullYear(), now.getMonth(), 1);
+    const e = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    fpStart.setDate(s);
+    fpEnd.setDate(e);
+  } else if (period === 'last_month') {
+    const s = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const e = new Date(now.getFullYear(), now.getMonth(), 0);
+    fpStart.setDate(s);
+    fpEnd.setDate(e);
+  } else if (period === 'year_2026') {
+    fpStart.setDate(new Date(2026, 0, 1));
+    fpEnd.setDate(new Date(2026, 11, 31));
+  } else if (period === 'year_2025') {
+    fpStart.setDate(new Date(2025, 0, 1));
+    fpEnd.setDate(new Date(2025, 11, 31));
+  }
+
+  applyFilters();
+}
+
+function selectCondoQuick(condoKey) {
+  const sel = document.getElementById('filter-condo');
+  if (sel) {
+    sel.value = condoKey;
+    applyFilters();
+  }
+}
+
+function resetFilters() {
+  document.getElementById('filter-condo').value = 'all';
+  document.getElementById('filter-maq-type').value = 'all';
+  document.getElementById('search-resident').value = '';
+  setQuickPeriod('all');
+}
+
+function applyFilters() {
+  const condoVal = document.getElementById('filter-condo').value;
+  const maqVal = document.getElementById('filter-maq-type').value;
+  const searchVal = (document.getElementById('search-resident').value || '').toLowerCase().trim();
+
+  const startDate = fpStart && fpStart.selectedDates.length ? fpStart.selectedDates[0] : null;
+  const endDate = fpEnd && fpEnd.selectedDates.length ? fpEnd.selectedDates[0] : null;
+
+  if (startDate) startDate.setHours(0, 0, 0, 0);
+  if (endDate) endDate.setHours(23, 59, 59, 999);
+
+  filteredTransactions = rawTransactions.filter(item => {
+    // Filtro Condomínio
+    if (condoVal !== 'all' && item.condoKey !== condoVal) return false;
+
+    // Filtro Tipo de Máquina
+    if (maqVal === 'wash' && !item.isWash) return false;
+    if (maqVal === 'dry' && item.isWash) return false;
+
+    // Filtro Data
+    if (startDate && item.dateObj < startDate) return false;
+    if (endDate && item.dateObj > endDate) return false;
+
+    // Filtro Busca textual
+    if (searchVal) {
+      const matchName = item.morador.toLowerCase().includes(searchVal);
+      const matchApt = item.apartamento.toLowerCase().includes(searchVal);
+      const matchDate = item.dataStr.includes(searchVal);
+      const matchCondo = item.condoNome.toLowerCase().includes(searchVal);
+      if (!matchName && !matchApt && !matchDate && !matchCondo) return false;
+    }
+
+    return true;
+  });
+
+  currentPage = 1;
+  updateDashboardUI();
+}
+
+function onSearchChange() {
+  applyFilters();
+}
+
+// ══════════════════════════════════════════════════════
+// ATUALIZAÇÃO DA INTERFACE E CARDS
+// ══════════════════════════════════════════════════════
+function fmtBRL(num) {
+  return (num || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function updateDashboardUI() {
+  const totalOps = filteredTransactions.length;
+  const repasseTotal = totalOps * REPASSE_VALOR_UNITARIO;
+  const faturamentoTotal = filteredTransactions.reduce((acc, cur) => acc + cur.valor, 0);
+
+  // Totais por Condomínio
+  const ygItems = filteredTransactions.filter(r => r.condoKey === 'YOU_GO');
+  const puqItems = filteredTransactions.filter(r => r.condoKey === 'PUQ_PERDIZES');
+
+  const ygOps = ygItems.length;
+  const ygRepasse = ygOps * REPASSE_VALOR_UNITARIO;
+  const ygFat = ygItems.reduce((acc, cur) => acc + cur.valor, 0);
+  const ygWash = ygItems.filter(r => r.isWash).length;
+  const ygDry = ygOps - ygWash;
+
+  const puqOps = puqItems.length;
+  const puqRepasse = puqOps * REPASSE_VALOR_UNITARIO;
+  const puqFat = puqItems.reduce((acc, cur) => acc + cur.valor, 0);
+  const puqWash = puqItems.filter(r => r.isWash).length;
+  const puqDry = puqOps - puqWash;
+
+  // KPI Cards
+  document.getElementById('kpi-repasse-total').textContent = fmtBRL(repasseTotal);
+  document.getElementById('kpi-total-operacoes').textContent = totalOps.toLocaleString('pt-BR');
+  document.getElementById('kpi-repasse-yougo').textContent = fmtBRL(ygRepasse);
+  document.getElementById('kpi-ops-yougo').textContent = `${ygOps.toLocaleString('pt-BR')} ciclos realizados`;
+  document.getElementById('kpi-repasse-puq').textContent = fmtBRL(puqRepasse);
+  document.getElementById('kpi-ops-puq').textContent = `${puqOps.toLocaleString('pt-BR')} ciclos realizados`;
+  document.getElementById('kpi-faturamento-total').textContent = fmtBRL(faturamentoTotal);
+
+  const pctRepasse = faturamentoTotal > 0 ? ((repasseTotal / faturamentoTotal) * 100).toFixed(1) : '0';
+  document.getElementById('kpi-pct-repasse').textContent = `${pctRepasse}% de repasse sobre a receita bruta`;
+
+  // Box You Go
+  document.getElementById('yg-repasse-val').textContent = fmtBRL(ygRepasse);
+  document.getElementById('yg-ops-val').textContent = ygOps.toLocaleString('pt-BR');
+  document.getElementById('yg-fat-val').textContent = fmtBRL(ygFat);
+  document.getElementById('yg-wash-count').textContent = ygWash.toLocaleString('pt-BR');
+  document.getElementById('yg-dry-count').textContent = ygDry.toLocaleString('pt-BR');
+  const ygWashPct = ygOps > 0 ? (ygWash / ygOps) * 100 : 50;
+  document.getElementById('yg-wash-bar').style.width = `${ygWashPct}%`;
+  document.getElementById('yg-dry-bar').style.width = `${100 - ygWashPct}%`;
+
+  // Box PUQ Perdizes
+  document.getElementById('puq-repasse-val').textContent = fmtBRL(puqRepasse);
+  document.getElementById('puq-ops-val').textContent = puqOps.toLocaleString('pt-BR');
+  document.getElementById('puq-fat-val').textContent = fmtBRL(puqFat);
+  document.getElementById('puq-wash-count').textContent = puqWash.toLocaleString('pt-BR');
+  document.getElementById('puq-dry-count').textContent = puqDry.toLocaleString('pt-BR');
+  const puqWashPct = puqOps > 0 ? (puqWash / puqOps) * 100 : 50;
+  document.getElementById('puq-wash-bar').style.width = `${puqWashPct}%`;
+  document.getElementById('puq-dry-bar').style.width = `${100 - puqWashPct}%`;
+
+  renderConsolidatedTable({
+    ygOps, ygRepasse, ygFat, ygWash, ygDry,
+    puqOps, puqRepasse, puqFat, puqWash, puqDry,
+    totalOps, repasseTotal, faturamentoTotal
+  });
+
+  renderAnalyticTable();
+  renderCharts();
+}
+
+// ══════════════════════════════════════════════════════
+// TABELA CONSOLIDADA
+// ══════════════════════════════════════════════════════
+function renderConsolidatedTable(d) {
+  const tbody = document.getElementById('consolidated-tbody');
+  if (!tbody) return;
+
+  const ygPct = d.ygFat > 0 ? ((d.ygRepasse / d.ygFat) * 100).toFixed(1) + '%' : '–';
+  const puqPct = d.puqFat > 0 ? ((d.puqRepasse / d.puqFat) * 100).toFixed(1) + '%' : '–';
+  const totPct = d.faturamentoTotal > 0 ? ((d.repasseTotal / d.faturamentoTotal) * 100).toFixed(1) + '%' : '–';
+
+  tbody.innerHTML = `
+    <tr>
+      <td><span class="badge-condo yougo"><i class="fas fa-building"></i> You Go Vila Mariana (34#)</span></td>
+      <td><strong>${d.ygWash.toLocaleString('pt-BR')}</strong></td>
+      <td><strong>${d.ygDry.toLocaleString('pt-BR')}</strong></td>
+      <td><strong>${d.ygOps.toLocaleString('pt-BR')}</strong></td>
+      <td>R$ 2,00</td>
+      <td><span class="badge-repasse-val">${fmtBRL(d.ygRepasse)}</span></td>
+      <td>${fmtBRL(d.ygFat)}</td>
+      <td><strong style="color:#a5b4fc">${ygPct}</strong></td>
+    </tr>
+    <tr>
+      <td><span class="badge-condo puq"><i class="fas fa-building-user"></i> PUQ Perdizes (31#)</span></td>
+      <td><strong>${d.puqWash.toLocaleString('pt-BR')}</strong></td>
+      <td><strong>${d.puqDry.toLocaleString('pt-BR')}</strong></td>
+      <td><strong>${d.puqOps.toLocaleString('pt-BR')}</strong></td>
+      <td>R$ 2,00</td>
+      <td><span class="badge-repasse-val">${fmtBRL(d.puqRepasse)}</span></td>
+      <td>${fmtBRL(d.puqFat)}</td>
+      <td><strong style="color:#38bdf8">${puqPct}</strong></td>
+    </tr>
+    <tr style="background: rgba(99, 102, 241, 0.08); font-weight: 700; border-top: 2px solid var(--border);">
+      <td>TOTAL GERAL</td>
+      <td>${(d.ygWash + d.puqWash).toLocaleString('pt-BR')}</td>
+      <td>${(d.ygDry + d.puqDry).toLocaleString('pt-BR')}</td>
+      <td>${d.totalOps.toLocaleString('pt-BR')}</td>
+      <td>R$ 2,00</td>
+      <td><span class="badge-repasse-val" style="font-size: 14px;">${fmtBRL(d.repasseTotal)}</span></td>
+      <td>${fmtBRL(d.faturamentoTotal)}</td>
+      <td><strong style="color:#34d399">${totPct}</strong></td>
+    </tr>
+  `;
+}
+
+// ══════════════════════════════════════════════════════
+// TABELA ANALÍTICA E PAGINAÇÃO
+// ══════════════════════════════════════════════════════
+function renderAnalyticTable() {
+  const tbody = document.getElementById('analytic-tbody');
+  const countBadge = document.getElementById('table-total-count');
+  if (!tbody) return;
+
+  const total = filteredTransactions.length;
+  countBadge.textContent = `${total.toLocaleString('pt-BR')} registros`;
+
+  if (total === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10" style="text-align: center; padding: 40px 20px; color: var(--text-dim);">
+          <i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 10px; display: block;"></i>
+          Nenhuma transação encontrada para os filtros selecionados.
+        </td>
+      </tr>
+    `;
+    renderPagination(0);
+    return;
+  }
+
+  const totalPages = Math.ceil(total / pageSize);
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, total);
+  const pageItems = filteredTransactions.slice(startIndex, endIndex);
+
+  let html = '';
+  pageItems.forEach(item => {
+    const isWash = item.isWash;
+    const badgeMaq = isWash
+      ? `<span class="badge-machine badge-wash"><i class="fas fa-soap"></i> Lavadora</span>`
+      : `<span class="badge-machine badge-dry"><i class="fas fa-wind"></i> Secadora</span>`;
+
+    const badgeCondo = item.condoKey === 'YOU_GO'
+      ? `<span class="badge-condo yougo"><i class="fas fa-building"></i> You Go</span>`
+      : `<span class="badge-condo puq"><i class="fas fa-building-user"></i> PUQ Perdizes</span>`;
+
+    const aptoDisplay = item.apartamento && item.apartamento !== 'Não Informado'
+      ? `<span class="cell-apto">${item.apartamento}</span>`
+      : `<span style="color: var(--text-dim); font-size: 11px;">–</span>`;
+
+    html += `
+      <tr>
+        <td><strong>${item.dataStr}</strong></td>
+        <td style="color: var(--text-muted);">${item.horaStr}</td>
+        <td>${badgeCondo}</td>
+        <td><span style="font-size: 12px; color: var(--text-muted);">${item.torre}</span></td>
+        <td>${badgeMaq}</td>
+        <td><span class="cell-morador">${item.morador}</span></td>
+        <td>${aptoDisplay}</td>
+        <td style="font-family: 'JetBrains Mono', monospace;">${fmtBRL(item.valor)}</td>
+        <td><span class="badge-repasse-val">R$ 2,00</span></td>
+        <td><span style="font-size: 11px; color: var(--text-muted);">${item.pagamento}</span></td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  renderPagination(total);
+}
+
+function renderPagination(total) {
+  const info = document.getElementById('pagination-info');
+  const controls = document.getElementById('pagination-controls');
+  if (!info || !controls) return;
+
+  if (total === 0) {
+    info.textContent = 'Nenhum registro para exibir';
+    controls.innerHTML = '';
+    return;
+  }
+
+  const totalPages = Math.ceil(total / pageSize);
+  const start = (currentPage - 1) * pageSize + 1;
+  const end = Math.min(currentPage * pageSize, total);
+
+  info.textContent = `Mostrando ${start.toLocaleString('pt-BR')} a ${end.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')} operações`;
+
+  let btns = `
+    <button class="btn-page" onclick="goToPage(1)" ${currentPage === 1 ? 'disabled' : ''} title="Primeira página">
+      <i class="fas fa-angles-left"></i>
+    </button>
+    <button class="btn-page" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} title="Anterior">
+      <i class="fas fa-angle-left"></i>
+    </button>
+  `;
+
+  // Janela de páginas
+  let pStart = Math.max(1, currentPage - 2);
+  let pEnd = Math.min(totalPages, currentPage + 2);
+
+  for (let p = pStart; p <= pEnd; p++) {
+    btns += `
+      <button class="btn-page ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">
+        ${p}
+      </button>
+    `;
+  }
+
+  btns += `
+    <button class="btn-page" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} title="Próxima">
+      <i class="fas fa-angle-right"></i>
+    </button>
+    <button class="btn-page" onclick="goToPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''} title="Última página">
+      <i class="fas fa-angles-right"></i>
+    </button>
+  `;
+
+  controls.innerHTML = btns;
+}
+
+function goToPage(page) {
+  currentPage = page;
+  renderAnalyticTable();
+  const tableSection = document.getElementById('analytic-table');
+  if (tableSection) {
+    tableSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// GRÁFICOS APEXCHARTS
+// ══════════════════════════════════════════════════════
+function renderCharts() {
+  renderTimelineChart();
+  renderPieChart();
+}
+
+function renderTimelineChart() {
+  const el = document.getElementById('chart-timeline');
+  if (!el) return;
+
+  // Agrupa por Mês/Ano ou Dia dependendo do volume
+  const groupMap = {};
+  filteredTransactions.forEach(item => {
+    const key = `${item.year}-${String(item.month).padStart(2, '0')}`;
+    if (!groupMap[key]) {
+      groupMap[key] = {
+        label: `${String(item.month).padStart(2, '0')}/${item.year}`,
+        timestamp: new Date(item.year, item.month - 1, 1).getTime(),
+        yougoRepasse: 0,
+        puqRepasse: 0,
+        totalRepasse: 0,
+        totalOps: 0
+      };
+    }
+    const val = REPASSE_VALOR_UNITARIO;
+    if (item.condoKey === 'YOU_GO') {
+      groupMap[key].yougoRepasse += val;
+    } else {
+      groupMap[key].puqRepasse += val;
+    }
+    groupMap[key].totalRepasse += val;
+    groupMap[key].totalOps += 1;
+  });
+
+  const sortedKeys = Object.keys(groupMap).sort((a, b) => groupMap[a].timestamp - groupMap[b].timestamp);
+  const categories = sortedKeys.map(k => groupMap[k].label);
+  const dataYG = sortedKeys.map(k => groupMap[k].yougoRepasse);
+  const dataPUQ = sortedKeys.map(k => groupMap[k].puqRepasse);
+
+  const options = {
+    series: [
+      { name: 'You Go (R$)', data: dataYG, color: '#6366f1' },
+      { name: 'PUQ Perdizes (R$)', data: dataPUQ, color: '#0ea5e9' }
+    ],
+    chart: {
+      type: 'bar',
+      height: 320,
+      stacked: true,
+      toolbar: { show: false },
+      background: 'transparent'
+    },
+    theme: { mode: 'dark' },
+    plotOptions: {
+      bar: {
+        horizontal: false,
+        borderRadius: 4,
+        columnWidth: '45%'
+      }
+    },
+    dataLabels: { enabled: false },
+    stroke: { width: 1, colors: ['transparent'] },
+    xaxis: {
+      categories,
+      labels: { style: { colors: '#94a3b8', fontSize: '11px' } },
+      axisBorder: { color: 'rgba(255,255,255,0.1)' }
+    },
+    yaxis: {
+      labels: {
+        style: { colors: '#94a3b8' },
+        formatter: val => fmtBRL(val)
+      }
+    },
+    legend: {
+      position: 'top',
+      horizontalAlign: 'right',
+      labels: { colors: '#cbd5e1' }
+    },
+    tooltip: {
+      theme: 'dark',
+      y: { formatter: val => fmtBRL(val) }
+    },
+    grid: {
+      borderColor: 'rgba(255,255,255,0.06)',
+      strokeDashArray: 4
+    }
+  };
+
+  if (chartTimeline) chartTimeline.destroy();
+  chartTimeline = new ApexCharts(el, options);
+  chartTimeline.render();
+}
+
+function renderPieChart() {
+  const el = document.getElementById('chart-pie-condo');
+  if (!el) return;
+
+  const ygOps = filteredTransactions.filter(r => r.condoKey === 'YOU_GO').length;
+  const puqOps = filteredTransactions.filter(r => r.condoKey === 'PUQ_PERDIZES').length;
+
+  const options = {
+    series: [ygOps * REPASSE_VALOR_UNITARIO, puqOps * REPASSE_VALOR_UNITARIO],
+    labels: ['You Go Vila Mariana', 'PUQ Perdizes'],
+    colors: ['#6366f1', '#0ea5e9'],
+    chart: {
+      type: 'donut',
+      height: 320,
+      background: 'transparent'
+    },
+    theme: { mode: 'dark' },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '65%',
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: 'Total Repasse',
+              color: '#94a3b8',
+              formatter: () => fmtBRL((ygOps + puqOps) * REPASSE_VALOR_UNITARIO)
+            }
+          }
+        }
+      }
+    },
+    dataLabels: { enabled: true },
+    legend: {
+      position: 'bottom',
+      labels: { colors: '#cbd5e1' }
+    },
+    tooltip: {
+      theme: 'dark',
+      y: { formatter: val => fmtBRL(val) }
+    }
+  };
+
+  if (chartPie) chartPie.destroy();
+  chartPie = new ApexCharts(el, options);
+  chartPie.render();
+}
+
+// ══════════════════════════════════════════════════════
+// EXPORTAÇÃO EXCEL (.XLSX)
+// ══════════════════════════════════════════════════════
+function exportAnaliticoExcel() {
+  if (!filteredTransactions || filteredTransactions.length === 0) {
+    alert('Não há dados para exportar no período selecionado.');
+    return;
+  }
+
+  showLoader(true);
+
+  setTimeout(() => {
+    try {
+      // Cabeçalhos exatos conforme solicitado pelo usuário:
+      // Data, Hora, Condomínio, Tipo de Máquina, Nome do Morador, Apartamento, Valor da Operação, Repasse, Forma de Pagamento
+      const headers = [
+        'Data',
+        'Hora',
+        'Condomínio / PDV',
+        'Torre / Máquina',
+        'Tipo de Máquina',
+        'Nome do Morador',
+        'Apartamento',
+        'Valor da Operação (R$)',
+        'Valor Repasse (R$)',
+        'Forma de Pagamento'
+      ];
+
+      const dataRows = filteredTransactions.map(item => [
+        item.dataStr,
+        item.horaStr,
+        item.condoNome,
+        item.torre,
+        item.tipoMaquina,
+        item.morador,
+        item.apartamento,
+        item.valor,
+        item.repasse,
+        item.pagamento
+      ]);
+
+      const aoa = [headers, ...dataRows];
+
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+      // Largura de colunas personalizadas
+      ws['!cols'] = [
+        { wch: 12 }, // Data
+        { wch: 10 }, // Hora
+        { wch: 28 }, // Condomínio
+        { wch: 16 }, // Torre
+        { wch: 16 }, // Tipo
+        { wch: 34 }, // Nome Morador
+        { wch: 16 }, // Apartamento
+        { wch: 22 }, // Valor Operação
+        { wch: 18 }, // Valor Repasse
+        { wch: 20 }  // Pagamento
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Extrato Analítico");
+
+      // Adiciona aba de Resumo Consolidado
+      const ygOps = filteredTransactions.filter(r => r.condoKey === 'YOU_GO').length;
+      const puqOps = filteredTransactions.filter(r => r.condoKey === 'PUQ_PERDIZES').length;
+      const ygFat = filteredTransactions.filter(r => r.condoKey === 'YOU_GO').reduce((s, r) => s + r.valor, 0);
+      const puqFat = filteredTransactions.filter(r => r.condoKey === 'PUQ_PERDIZES').reduce((s, r) => s + r.valor, 0);
+
+      const resumoAoa = [
+        ['RESUMO DE REPASSE AOS CONDOMÍNIOS (R$ 2,00 POR OPERAÇÃO)'],
+        ['Gerado em:', new Date().toLocaleString('pt-BR')],
+        [],
+        ['Condomínio', 'Total Operações', 'Taxa Unitária (R$)', 'Total Repasse (R$)', 'Faturamento Bruto (R$)', '% Repasse / Fat'],
+        ['You Go Vila Mariana (34#)', ygOps, 2.00, ygOps * 2.00, ygFat, ygFat > 0 ? (ygOps*2 / ygFat) : 0],
+        ['PUQ Perdizes (31#)', puqOps, 2.00, puqOps * 2.00, puqFat, puqFat > 0 ? (puqOps*2 / puqFat) : 0],
+        ['TOTAL GERAL', ygOps + puqOps, 2.00, (ygOps + puqOps) * 2.00, ygFat + puqFat, (ygFat+puqFat) > 0 ? ((ygOps+puqOps)*2 / (ygFat+puqFat)) : 0]
+      ];
+
+      const wsResumo = XLSX.utils.aoa_to_sheet(resumoAoa);
+      wsResumo['!cols'] = [
+        { wch: 28 },
+        { wch: 16 },
+        { wch: 18 },
+        { wch: 18 },
+        { wch: 22 },
+        { wch: 16 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo Consolidado");
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `repasse_analitico_yougo_perdizes_${todayStr}.xlsx`);
+    } catch(err) {
+      console.error('Erro ao gerar Excel:', err);
+      alert('Erro ao exportar Excel: ' + err.message);
+    } finally {
+      showLoader(false);
+    }
+  }, 100);
+}
+
+function exportConsolidadoExcel() {
+  const table = document.getElementById('consolidated-table');
+  if (!table) return;
+  const wb = XLSX.utils.table_to_book(table, { sheet: "Consolidado Repasse" });
+  const todayStr = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `resumo_repasse_condominios_${todayStr}.xlsx`);
+}
+
+// Inicia aplicação
+document.addEventListener('DOMContentLoaded', initDashboard);
+</script>
+</body>
+</html>

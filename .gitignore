@@ -7,12 +7,14 @@
 
 # Log do robô (não precisa publicar)
 robo_lavai.log
+__pycache__/
+*.pyc
 
-# Planilha de custos
-Custo operação.xlsx
-
-# Arquivo RTF de notas
+# Caches e planilhas de leitura local
+.cache_*.json
+*.xlsx
 *.rtf
 
 # JSON de controle interno do robô
 dados_relatorios.json
+scratch/

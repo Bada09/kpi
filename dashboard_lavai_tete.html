@@ -2773,6 +2773,9 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
       <button class="page-tab fin" id="tab-resultados" onclick="switchPage('resultados')">
         <i class="fas fa-chart-pie"></i> Resultados Financeiros
       </button>
+      <a href="repasse_condominios.html" class="page-tab" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,0.12);color:#059669;border:1px solid rgba(16,185,129,0.3);font-weight:700">
+        <i class="fas fa-hand-holding-dollar"></i> Repasse Condomínios (You Go & PUQ)
+      </a>
     </div>
     <button class="btn-op-type" id="btn-op-type-filter" onclick="openOpModal()">
       <i class="fas fa-building"></i> Tipo de Operação <i class="fas fa-chevron-down" style="font-size:10px"></i>
@@ -3036,10 +3039,12 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
             <th onclick="sortTable(0)">Data e Hora <i class="fas fa-sort"></i></th>
             <th onclick="sortTable(1)">PDV <i class="fas fa-sort"></i></th>
             <th onclick="sortTable(2)">Máquina <i class="fas fa-sort"></i></th>
-            <th onclick="sortTable(3)">Pagamento <i class="fas fa-sort"></i></th>
-            <th onclick="sortTable(4)">Bandeira <i class="fas fa-sort"></i></th>
-            <th onclick="sortTable(5)">Valor <i class="fas fa-sort"></i></th>
-            <th onclick="sortTable(6)">Torre <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(3)">Morador <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(4)">Apartamento <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(5)">Pagamento <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(6)">Bandeira <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(7)">Valor <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(8)">Torre <i class="fas fa-sort"></i></th>
           </tr>
         </thead>
         <tbody id="tbody-transactions"></tbody>
@@ -3343,7 +3348,64 @@ function fmtDate(s){
 }
 
 // col indices
-const C = {maquina:1,pagamento:4,produto:5,total:9,data:11,hora:12,tipo:16,rede:17,bandeira:18,auth:15,nlogico:13,matricula:21,nsu:14,torre:22};
+const C = {maquina:1,pagamento:4,produto:5,total:9,data:11,hora:12,tipo:16,rede:17,bandeira:18,auth:15,nlogico:13,matricula:21,nsu:14,torre:22,usuario:19};
+
+// Mapa dinâmico de morador -> apartamento (acumulado de todas as transações)
+const KNOWN_MORADOR_APT_MAP = {};
+
+// Extrai nome do morador e apartamento a partir do campo usuário/nsu (PayBlu e VendTEF)
+// Regra: tudo antes de ap, apt ou apto é MORADOR, e o restante é APARTAMENTO (ex: apto 132)
+function parseUserAndApt(userRaw, nsuRaw) {
+  let user = (userRaw || '').trim();
+  let nsu = (nsuRaw || '').trim();
+  if (!user && !nsu) return { name: '–', apt: '–' };
+
+  let morador = '';
+  let apt = '';
+
+  // 1. Regra estrita: tudo antes de ap, apt ou apto é morador, e o restante é apartamento
+  const regex = /^(.*?)(?:[\s\-–,]+(?:apto|apt|ap|apartamento|unidade|bloco)[\s\-–.:]*)(.*)$/i;
+  const match = user.match(regex);
+
+  if (match) {
+    morador = match[1].replace(/[\s\-–,.:]+$/, '').trim();
+    apt = match[2].replace(/^[\s\-–,.:]+/, '').trim();
+  } else {
+    // 2. Se não encontrou ap/apt no texto do usuário, tenta verificar no NSU
+    const nsuMatch = nsu.match(/(?:apto|apt|ap|apartamento)[\s\-–.:]*([a-zA-Z0-9]+)/i);
+    if (nsuMatch) {
+      morador = user;
+      apt = nsuMatch[1].trim();
+    } else {
+      morador = user;
+    }
+  }
+
+  // Ajustes de integridade
+  if (!morador && user) morador = user;
+  if (!morador && apt) morador = 'Morador';
+
+  // Se morador e apt identificados, salva no mapa de histórico
+  const normKey = morador.toLowerCase();
+  if (morador && apt && morador.length > 2 && apt !== '–') {
+    KNOWN_MORADOR_APT_MAP[normKey] = apt;
+  } else if (morador && (!apt || apt === '–') && KNOWN_MORADOR_APT_MAP[normKey]) {
+    // Se o morador já foi identificado com apt em outra transação, recupera
+    apt = KNOWN_MORADOR_APT_MAP[normKey];
+  }
+
+  // Formata o apartamento como "apto XXX"
+  let aptFormatted = '–';
+  if (apt && apt !== '–') {
+    const numOnly = apt.replace(/^(?:apto|apt|ap|apartamento)[\s\-–.:]*/i, '').trim();
+    aptFormatted = numOnly ? `apto ${numOnly}` : apt;
+  }
+
+  return {
+    name: morador || '–',
+    apt: aptFormatted
+  };
+}
 
 // ══════════════════════════════════════════════════════
 // MAPEAMENTO DE MATRÍCULAS (todas as fontes) → PDV / TORRE / TIPO
@@ -3604,17 +3666,20 @@ function desduplicarRows(rows) {
     const dt = (r[C.data] || '').trim();
     const hr = (r[C.hora] || '').trim();
     const val = (r[C.total] || '').trim();
+    const matr = (r[C.matricula] || '').trim();
     // Fonte: derivada do tipo de pagamento para distinguir sistemas
     const fonte = (r[C.pagamento] || '').trim().substring(0, 8);
     
     let key;
-    if (nsu && nsu !== 'Não Informado' && nsu !== '–') {
+    // Se o NSU parece ser apenas indicação de apt (ex: começa com '-' ou 'apt'), não usa como chave única de NSU
+    const isFakeNsu = nsu.startsWith('-') || /^apt/i.test(nsu);
+    if (nsu && nsu !== 'Não Informado' && nsu !== '–' && !isFakeNsu) {
       // Inclui a fonte para evitar colisão de NSU entre VendTEF, VendPago e VMPay
       key = 'nsu:' + fonte + ':' + nsu;
     } else if (auth && auth !== '–') {
       key = 'auth:' + auth;
     } else {
-      key = 'dt:' + maq + '|' + dt + '|' + hr + '|' + val;
+      key = 'dt:' + maq + '|' + dt + '|' + hr + '|' + matr + '|' + val;
     }
     
     if (!seen.has(key)) {
@@ -4671,13 +4736,15 @@ function renderTable(){
   if(tableSearch){
     const q=tableSearch.toLowerCase();
     tableRows=tableRows.filter(r=>{
-      // busca também no nome canônico do PDV
+      // busca também no nome canônico do PDV e no morador/apto
       if (getCanonicalPdvName(r).toLowerCase().includes(q)) return true;
+      const { name, apt } = parseUserAndApt(r[C.usuario]||'', r[C.nsu]||'');
+      if (name.toLowerCase().includes(q) || apt.toLowerCase().includes(q)) return true;
       return r.some(c=>(c||'').toLowerCase().includes(q));
     });
   }
   if(tableSortCol>=0){
-    const idxMap=[C.data,C.maquina,C.produto,C.tipo,C.bandeira,C.total,C.auth];
+    const idxMap=[C.data,C.maquina,C.produto,C.usuario,C.usuario,C.tipo,C.bandeira,C.total,C.torre];
     const ci=idxMap[tableSortCol];
     tableRows.sort((a,b)=>{
       // Coluna PDV (col 1): ordenar pelo nome canônico
@@ -4686,7 +4753,7 @@ function renderTable(){
         return tableSortDir*va.localeCompare(vb,'pt-BR');
       }
       const va=a[ci]||'',vb=b[ci]||'';
-      if(tableSortCol===5) return tableSortDir*(toNum(va)-toNum(vb));
+      if(tableSortCol===7) return tableSortDir*(toNum(va)-toNum(vb));
       if(tableSortCol===0){
         const da=parseDate(va),db=parseDate(vb);
         const diff=((da||0)-(db||0));
@@ -4721,12 +4788,24 @@ function paintTable(){
       ? `<span style="font-size:11px;font-weight:700;color:#8b5cf6;background:rgba(139,92,246,.1);padding:2px 8px;border-radius:8px;display:inline-block;">${torre}</span>`
       : '<span style="color:var(--text-muted);font-size:11px;">–</span>';
     const pdvNome = getCanonicalPdvName(r);
+
+    const { name, apt } = parseUserAndApt(r[C.usuario]||'', r[C.nsu]||'');
+    const moradorTd = (name && name !== '–')
+      ? `<span style="font-weight:600;color:var(--text);font-size:12px;">${name}</span>`
+      : '<span style="color:var(--text-muted);font-size:11px;">–</span>';
+
+    const aptTd = (apt && apt !== '–')
+      ? `<span style="background:rgba(245,158,11,0.15);color:#d97706;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;display:inline-block;">${apt}</span>`
+      : '<span style="color:var(--text-muted);font-size:11px;">–</span>';
+
     return `<tr>
     <td>${fmtDate(r[C.data])} ${r[C.hora]||''}</td>
     <td style="font-weight: 700; color: var(--text);">${pdvNome}</td>
     <td>
       ${isMaqWash(r)?'<span class="badge badge-wash">🫧 Lavagem</span>':'<span class="badge badge-dry">💨 Secagem</span>'}
     </td>
+    <td>${moradorTd}</td>
+    <td>${aptTd}</td>
     <td>${tipoBadge(r[C.tipo])}</td>
     <td>${r[C.bandeira]||(r[C.tipo]==='Pix'?'PIX':'–')}</td>
     <td class="td-mono">${r[C.total]?fmtBRL(toNum(r[C.total])):'–'}</td>
@@ -5094,20 +5173,26 @@ function loadScript(src) {
 // EXPORT EXCEL
 // ══════════════════════════════════════════════════════
 function exportExcel(){
-  const headers = ['Data', 'Hora', 'PDV', 'Máquina', 'Pagamento', 'Total', 'Tipo', 'Bandeira', 'Autorização'];
+  const headers = ['Data', 'Hora', 'PDV', 'Máquina', 'Morador / Usuário', 'Apartamento', 'Pagamento', 'Total', 'Tipo', 'Bandeira', 'Autorização', 'Torre'];
   
   // Mapeia transações filtradas em arrays de valores simples
-  const data = filtered.map(r => [
-    fmtDate(r[C.data]),
-    r[C.hora],
-    r[C.maquina],
-    isMaqWash(r) ? 'Lavagem' : 'Secagem',
-    r[C.pagamento],
-    r[C.total],
-    r[C.tipo],
-    r[C.bandeira],
-    r[C.auth]
-  ]);
+  const data = filtered.map(r => {
+    const { name, apt } = parseUserAndApt(r[C.usuario] || '', r[C.nsu] || '');
+    return [
+      fmtDate(r[C.data]),
+      r[C.hora],
+      getCanonicalPdvName(r),
+      isMaqWash(r) ? 'Lavagem' : 'Secagem',
+      name,
+      apt,
+      r[C.pagamento],
+      r[C.total],
+      r[C.tipo],
+      r[C.bandeira],
+      r[C.auth],
+      r[C.torre] || ''
+    ];
+  });
   
   // Adiciona cabeçalhos
   data.unshift(headers);
