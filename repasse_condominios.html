@@ -1442,6 +1442,7 @@ function processSourceRows(rows, sourceName) {
     const maqInfo = detectMachineType(r);
     const residentInfo = extractResidentAndApt(r[19], r[14], condoKey);
     const valor = parseNumber(r[9] || r[7] || 0);
+    const repasse = valor > 0 ? REPASSE_VALOR_UNITARIO : 0;
     const pagamento = r[4] || r[16] || 'TEF';
 
     rawTransactions.push({
@@ -1461,7 +1462,7 @@ function processSourceRows(rows, sourceName) {
       morador: residentInfo.name,
       apartamento: residentInfo.apt,
       valor,
-      repasse: REPASSE_VALOR_UNITARIO,
+      repasse,
       pagamento,
       rawRow: r
     });
@@ -1602,7 +1603,7 @@ function fmtBRL(num) {
 
 function updateDashboardUI() {
   const totalOps = filteredTransactions.length;
-  const repasseTotal = totalOps * REPASSE_VALOR_UNITARIO;
+  const repasseTotal = filteredTransactions.reduce((acc, cur) => acc + (cur.valor > 0 ? REPASSE_VALOR_UNITARIO : 0), 0);
   const faturamentoTotal = filteredTransactions.reduce((acc, cur) => acc + cur.valor, 0);
 
   // Totais por Condomínio
@@ -1610,13 +1611,13 @@ function updateDashboardUI() {
   const puqItems = filteredTransactions.filter(r => r.condoKey === 'PUQ_PERDIZES');
 
   const ygOps = ygItems.length;
-  const ygRepasse = ygOps * REPASSE_VALOR_UNITARIO;
+  const ygRepasse = ygItems.reduce((acc, cur) => acc + (cur.valor > 0 ? REPASSE_VALOR_UNITARIO : 0), 0);
   const ygFat = ygItems.reduce((acc, cur) => acc + cur.valor, 0);
   const ygWash = ygItems.filter(r => r.isWash).length;
   const ygDry = ygOps - ygWash;
 
   const puqOps = puqItems.length;
-  const puqRepasse = puqOps * REPASSE_VALOR_UNITARIO;
+  const puqRepasse = puqItems.reduce((acc, cur) => acc + (cur.valor > 0 ? REPASSE_VALOR_UNITARIO : 0), 0);
   const puqFat = puqItems.reduce((acc, cur) => acc + cur.valor, 0);
   const puqWash = puqItems.filter(r => r.isWash).length;
   const puqDry = puqOps - puqWash;
@@ -1765,7 +1766,7 @@ function renderAnalyticTable() {
         <td><span class="cell-morador">${item.morador}</span></td>
         <td>${aptoDisplay}</td>
         <td style="font-family: 'JetBrains Mono', monospace;">${fmtBRL(item.valor)}</td>
-        <td><span class="badge-repasse-val">R$ 2,00</span></td>
+        <td><span class="badge-repasse-val">${fmtBRL(item.repasse)}</span></td>
         <td><span style="font-size: 11px; color: var(--text-muted);">${item.pagamento}</span></td>
       </tr>
     `;
@@ -1860,7 +1861,7 @@ function renderTimelineChart() {
         totalOps: 0
       };
     }
-    const val = REPASSE_VALOR_UNITARIO;
+    const val = item.repasse;
     if (item.condoKey === 'YOU_GO') {
       groupMap[key].yougoRepasse += val;
     } else {
@@ -1932,11 +1933,12 @@ function renderPieChart() {
   const el = document.getElementById('chart-pie-condo');
   if (!el) return;
 
-  const ygOps = filteredTransactions.filter(r => r.condoKey === 'YOU_GO').length;
-  const puqOps = filteredTransactions.filter(r => r.condoKey === 'PUQ_PERDIZES').length;
+  const ygRepasse = filteredTransactions.filter(r => r.condoKey === 'YOU_GO').reduce((s, r) => s + r.repasse, 0);
+  const puqRepasse = filteredTransactions.filter(r => r.condoKey === 'PUQ_PERDIZES').reduce((s, r) => s + r.repasse, 0);
+  const totalRepasse = ygRepasse + puqRepasse;
 
   const options = {
-    series: [ygOps * REPASSE_VALOR_UNITARIO, puqOps * REPASSE_VALOR_UNITARIO],
+    series: [ygRepasse, puqRepasse],
     labels: ['You Go Vila Mariana', 'PUQ Perdizes'],
     colors: ['#6366f1', '#0ea5e9'],
     chart: {
@@ -1955,7 +1957,7 @@ function renderPieChart() {
               show: true,
               label: 'Total Repasse',
               color: '#94a3b8',
-              formatter: () => fmtBRL((ygOps + puqOps) * REPASSE_VALOR_UNITARIO)
+              formatter: () => fmtBRL(totalRepasse)
             }
           }
         }
@@ -2042,17 +2044,21 @@ function exportAnaliticoExcel() {
       // Adiciona aba de Resumo Consolidado
       const ygOps = filteredTransactions.filter(r => r.condoKey === 'YOU_GO').length;
       const puqOps = filteredTransactions.filter(r => r.condoKey === 'PUQ_PERDIZES').length;
+      const ygRepasse = filteredTransactions.filter(r => r.condoKey === 'YOU_GO').reduce((s, r) => s + r.repasse, 0);
+      const puqRepasse = filteredTransactions.filter(r => r.condoKey === 'PUQ_PERDIZES').reduce((s, r) => s + r.repasse, 0);
       const ygFat = filteredTransactions.filter(r => r.condoKey === 'YOU_GO').reduce((s, r) => s + r.valor, 0);
       const puqFat = filteredTransactions.filter(r => r.condoKey === 'PUQ_PERDIZES').reduce((s, r) => s + r.valor, 0);
+      const totalRepasse = ygRepasse + puqRepasse;
+      const totalFat = ygFat + puqFat;
 
       const resumoAoa = [
-        ['RESUMO DE REPASSE AOS CONDOMÍNIOS (R$ 2,00 POR OPERAÇÃO)'],
+        ['RESUMO DE REPASSE AOS CONDOMÍNIOS (R$ 2,00 POR OPERAÇÃO PAGA)'],
         ['Gerado em:', new Date().toLocaleString('pt-BR')],
         [],
         ['Condomínio', 'Total Operações', 'Taxa Unitária (R$)', 'Total Repasse (R$)', 'Faturamento Bruto (R$)', '% Repasse / Fat'],
-        ['You Go Vila Mariana (34#)', ygOps, 2.00, ygOps * 2.00, ygFat, ygFat > 0 ? (ygOps*2 / ygFat) : 0],
-        ['PUQ Perdizes (31#)', puqOps, 2.00, puqOps * 2.00, puqFat, puqFat > 0 ? (puqOps*2 / puqFat) : 0],
-        ['TOTAL GERAL', ygOps + puqOps, 2.00, (ygOps + puqOps) * 2.00, ygFat + puqFat, (ygFat+puqFat) > 0 ? ((ygOps+puqOps)*2 / (ygFat+puqFat)) : 0]
+        ['You Go Vila Mariana (34#)', ygOps, 2.00, ygRepasse, ygFat, ygFat > 0 ? (ygRepasse / ygFat) : 0],
+        ['PUQ Perdizes (31#)', puqOps, 2.00, puqRepasse, puqFat, puqFat > 0 ? (puqRepasse / puqFat) : 0],
+        ['TOTAL GERAL', ygOps + puqOps, 2.00, totalRepasse, totalFat, totalFat > 0 ? (totalRepasse / totalFat) : 0]
       ];
 
       const wsResumo = XLSX.utils.aoa_to_sheet(resumoAoa);
