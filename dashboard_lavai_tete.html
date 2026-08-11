@@ -3351,60 +3351,179 @@ function fmtDate(s){
 // col indices
 const C = {maquina:1,pagamento:4,produto:5,total:9,data:11,hora:12,tipo:16,rede:17,bandeira:18,auth:15,nlogico:13,matricula:21,nsu:14,torre:22,usuario:19};
 
-// Mapa dinâmico de morador -> apartamento (acumulado de todas as transações)
-const KNOWN_MORADOR_APT_MAP = {};
+// ══════════════════════════════════════════════════════
+// MOTOR DE IDENTIFICAÇÃO DE MORADORES E APARTAMENTOS (YOU GO & CONDOMÍNIOS)
+// ══════════════════════════════════════════════════════
+function cleanStrResident(s) {
+  if (!s) return '';
+  return String(s)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
 
-// Extrai nome do morador e apartamento a partir do campo usuário/nsu (PayBlu e VendTEF)
-// Regra: tudo antes de ap, apt ou apto é MORADOR, e o restante é APARTAMENTO (ex: apto 132)
+function tokenizeResident(name) {
+  const clean = cleanStrResident(name).toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+  const stopWords = new Set(['de', 'da', 'do', 'dos', 'das', 'e', 'em', 'para', 'com']);
+  return clean.split(/\s+/).filter(t => t.length > 1 && !stopWords.has(t));
+}
+
+// Extração direta de morador e apartamento via regex estrito com word boundary
+function extractDirectUserAndApt(userRaw, nsuRaw) {
+  let user = (userRaw || '').trim();
+  let nsu = (nsuRaw || '').trim();
+  if (!user && !nsu) return { name: '–', apt: '' };
+
+  let morador = user;
+  let apt = '';
+
+  // 1. Verifica no campo usuário (ex: "GLAUCIO PINHEIRO DE ARAUJO apto - 17", "Silvia - Apt 87", "RODRIGO apto 163")
+  const aptRegex = /[\s\-–,.:]+(?:\b(?:apto|apt|ap|apartamento|unidade|bloco|apot)\b)[\s\-–.:#]*([a-zA-Z0-9]+(?:\s*[a-zA-Z])?)/i;
+  const match = user.match(aptRegex);
+  if (match) {
+    apt = match[1].trim();
+    morador = user.substring(0, match.index).trim();
+  } else {
+    // 2. Verifica se o usuário termina com hífen + número (ex: "Nome - 122")
+    const mHyphen = user.match(/[\s\-–,.:]+\-\s*([0-9]{1,4}[a-zA-Z]?)$/);
+    if (mHyphen) {
+      apt = mHyphen[1].trim();
+      morador = user.substring(0, mHyphen.index).trim();
+    } else {
+      // 3. Verifica no NSU (muito comum no PayBlu)
+      const nsuMatch = nsu.match(/(?:\b(?:apto|apt|ap|apartamento|unidade|bloco|apot)\b)[\s\-–.:#]*([a-zA-Z0-9]+)/i);
+      if (nsuMatch) {
+        apt = nsuMatch[1].trim();
+        morador = user;
+      }
+    }
+  }
+
+  // Limpa pontuações residuais no nome do morador
+  morador = morador.replace(/[\s\-–,.:]+$/, '').trim();
+  if (apt) {
+    apt = apt.replace(/^(?:apto|apt|ap|apartamento|unidade|bloco|apot)[\s\-–.:#]*/i, '').trim();
+  }
+
+  return {
+    name: morador || user || '–',
+    apt: apt || ''
+  };
+}
+
+// Dicionário e índice mestre de apartamentos (acumulado de todas as transações)
+const MASTER_RESIDENT_APT_MAP = {};      // normName -> apt (ex: "glaucio pinheiro de araujo" -> "17")
+const MASTER_RESIDENT_TOKENS = [];       // [{ tokenSet, tokens, normName, apt }]
+const KNOWN_FIXED_RESIDENTS = {
+  'tabajara tenorio dias': '94',
+  'tabajara tenorio': '94',
+  'tabajara': '94',
+  'paulino britto': '87',
+  'paulino s l bitto neto': '87',
+  'paulino s l bitto': '87',
+  'kristjan rappu': '82',
+  'kristjan': '82',
+  'thamara batista': '14',
+  'bete': '51',
+  'lpg cultura': '34',
+  'quadro phigor': '168'
+};
+
+function formatAptNumber(apt) {
+  if (!apt || apt === '–' || apt === 'Não Informado') return '–';
+  const numOnly = String(apt).replace(/^(?:apto|apt|ap|apartamento|unidade|bloco|apot)[\s\-–.:#]*/i, '').trim();
+  return numOnly ? `apto ${numOnly}` : apt;
+}
+
+// Constrói índice global com 100% das transações de todas as fontes antes de filtrar por período
+function buildMasterResidentAptIndex(rows) {
+  if (!Array.isArray(rows)) return;
+  rows.forEach(r => {
+    const userRaw = r[C.usuario] || '';
+    const nsuRaw = r[C.nsu] || '';
+    const { name, apt } = extractDirectUserAndApt(userRaw, nsuRaw);
+    if (name && apt && name.length > 2 && name !== '–' && name.toLowerCase() !== 'unknown') {
+      const norm = cleanStrResident(name).toLowerCase().replace(/\s+/g, ' ').trim();
+      if (!MASTER_RESIDENT_APT_MAP[norm]) {
+        MASTER_RESIDENT_APT_MAP[norm] = apt;
+        const tokens = tokenizeResident(norm);
+        if (tokens.length > 0) {
+          MASTER_RESIDENT_TOKENS.push({
+            tokenSet: new Set(tokens),
+            tokens,
+            normName: norm,
+            apt
+          });
+        }
+      }
+    }
+  });
+  console.log(`Índice mestre de moradores You Go construído: ${Object.keys(MASTER_RESIDENT_APT_MAP).length} moradores indexados.`);
+}
+
 function parseUserAndApt(userRaw, nsuRaw) {
   let user = (userRaw || '').trim();
   let nsu = (nsuRaw || '').trim();
   if (!user && !nsu) return { name: '–', apt: '–' };
 
-  let morador = '';
-  let apt = '';
+  // 1. Extração direta da linha atual
+  const direct = extractDirectUserAndApt(user, nsu);
+  if (direct.apt) {
+    return {
+      name: direct.name,
+      apt: formatAptNumber(direct.apt)
+    };
+  }
 
-  // 1. Regra estrita: tudo antes de ap, apt ou apto é morador, e o restante é apartamento
-  const regex = /^(.*?)(?:[\s\-–,]+(?:apto|apt|ap|apartamento|unidade|bloco)[\s\-–.:]*)(.*)$/i;
-  const match = user.match(regex);
+  const morador = direct.name;
+  if (!morador || morador === '–' || morador.toLowerCase() === 'unknown' || morador.toLowerCase() === 'morador') {
+    return { name: morador || '–', apt: '–' };
+  }
 
-  if (match) {
-    morador = match[1].replace(/[\s\-–,.:]+$/, '').trim();
-    apt = match[2].replace(/^[\s\-–,.:]+/, '').trim();
-  } else {
-    // 2. Se não encontrou ap/apt no texto do usuário, tenta verificar no NSU
-    const nsuMatch = nsu.match(/(?:apto|apt|ap|apartamento)[\s\-–.:]*([a-zA-Z0-9]+)/i);
-    if (nsuMatch) {
-      morador = user;
-      apt = nsuMatch[1].trim();
-    } else {
-      morador = user;
+  const norm = cleanStrResident(morador).toLowerCase().replace(/\s+/g, ' ').trim();
+
+  // 2. Consulta tabela fixa de apelidos/casos especiais
+  if (KNOWN_FIXED_RESIDENTS[norm]) {
+    return { name: morador, apt: formatAptNumber(KNOWN_FIXED_RESIDENTS[norm]) };
+  }
+
+  // 3. Match exato no índice histórico
+  if (MASTER_RESIDENT_APT_MAP[norm]) {
+    return { name: morador, apt: formatAptNumber(MASTER_RESIDENT_APT_MAP[norm]) };
+  }
+
+  // 4. Match parcial / subset de tokens (ex: "Aline Amaral" subset de "Aline Amaral Ferreira apto 114")
+  const uTokens = tokenizeResident(norm);
+  if (uTokens.length > 0) {
+    let bestApt = null;
+    let bestOverlap = 0;
+
+    for (const item of MASTER_RESIDENT_TOKENS) {
+      // É subset completo? (ex: "Michel Braga" contido em "michel sanches braga")
+      const isSubset = uTokens.every(t => item.tokenSet.has(t));
+      if (isSubset) {
+        return { name: morador, apt: formatAptNumber(item.apt) };
+      }
+
+      // Maior sobreposição de tokens (mínimo 2)
+      let overlap = 0;
+      for (const t of uTokens) {
+        if (item.tokenSet.has(t)) overlap++;
+      }
+      if (overlap >= 2 && overlap > bestOverlap) {
+        bestOverlap = overlap;
+        bestApt = item.apt;
+      }
     }
-  }
 
-  // Ajustes de integridade
-  if (!morador && user) morador = user;
-  if (!morador && apt) morador = 'Morador';
-
-  // Se morador e apt identificados, salva no mapa de histórico
-  const normKey = morador.toLowerCase();
-  if (morador && apt && morador.length > 2 && apt !== '–') {
-    KNOWN_MORADOR_APT_MAP[normKey] = apt;
-  } else if (morador && (!apt || apt === '–') && KNOWN_MORADOR_APT_MAP[normKey]) {
-    // Se o morador já foi identificado com apt em outra transação, recupera
-    apt = KNOWN_MORADOR_APT_MAP[normKey];
-  }
-
-  // Formata o apartamento como "apto XXX"
-  let aptFormatted = '–';
-  if (apt && apt !== '–') {
-    const numOnly = apt.replace(/^(?:apto|apt|ap|apartamento)[\s\-–.:]*/i, '').trim();
-    aptFormatted = numOnly ? `apto ${numOnly}` : apt;
+    if (bestApt) {
+      return { name: morador, apt: formatAptNumber(bestApt) };
+    }
   }
 
   return {
     name: morador || '–',
-    apt: aptFormatted
+    apt: '–'
   };
 }
 
@@ -3707,8 +3826,8 @@ const DOW = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const BAND_COLORS = ['#2563eb','#0ea5e9','#8b5cf6','#f59e0b','#10b981','#ef4444','#f97316'];
 
 // Detecta a fonte de uma linha de dado
-// VendPago: NSU numérico e Pagamento contém VEND/PAGO/PIX/op ou campo Fabricante é 'VendPago'
-// VMPay: Fabricante 'VMPay' ou Rede contém 'VMPay' ou Pagamento 'CASHLESS'
+// VendTEF: ERP Vending (portalvendtef / máquinas VendPago e TEF)
+// VMPay: API VMPay / Vertipay / Cashless
 // SQInsights: NSU começa com 'SQ-' ou Pagamento/Produto contém 'FICHA'/'APP'/'SQI'
 // PayBlu: Fabricante 'PayBlu', Rede 'PayBlu', NSU começa com 'PB-', ou Pagamento 'PRIVATE LABEL'
 function getRowSource(r) {
@@ -3720,25 +3839,21 @@ function getRowSource(r) {
   const cliente  = (r[0]          || '').trim().toUpperCase(); // col 0 = Cliente
   const nlogico  = (r[C.nlogico]  || '').trim().toUpperCase();
 
-  // SQInsights: NSU prefixo SQ-, ou pagamento ficha/moeda/aplicativo, ou nlogico SQ
+  // 1. SQInsights: NSU prefixo SQ-, ou pagamento ficha/moeda/aplicativo, ou nlogico SQ
   if (nsu.startsWith('SQ-') || pag.includes('FICHA') || pag.includes('MOEDA') ||
       pag.includes('APLICATIVO') || pag === 'APP' || prod.includes('FICHA') || prod.includes('MOEDA') ||
       prod.includes('APP') || nlogico.startsWith('SQ')) return 'sqi';
 
-  // VendPago: verificar ANTES de VMPay (VendPago usa Pagamento=CASHLESS, mas tem Fabricante=VendPago)
-  if (fab.includes('VENDPAGO') || pag.includes('VENDPAGO') || pag.includes('VEND PAGO') ||
-      cliente.includes('VENDPAGO') || nlogico.includes('POS')) return 'vendpago';
-
-  // VMPay: pagamento cashless, rede vmpay/vertipay, fabricante vmPay, ou modelo speed queen (do excel antigo)
-  if (pag.includes('CASHLESS') || pag.includes('VMPAY') ||
-      rede.includes('VMPAY') || rede.includes('VERTIPAY') || fab.includes('VMPAY') ||
-      fab.includes('SPEED QUEEN') || cliente.includes('VMPAY')) return 'vmpay';
-
-  // PayBlu: Fabricante/Rede 'PayBlu', NSU prefixo 'PB-', ou Pagamento 'PRIVATE LABEL'
+  // 2. PayBlu: Fabricante/Rede 'PayBlu', NSU prefixo 'PB-', ou Pagamento 'PRIVATE LABEL'
   if (fab.includes('PAYBLU') || rede.includes('PAYBLU') ||
       nsu.startsWith('PB-') || pag.includes('PRIVATE LABEL')) return 'payblu';
 
-  // Default: VendTEF (portal)
+  // 3. VMPay: pagamento cashless via API VMPay, rede vmpay/vertipay, fabricante vmPay, modelo VMPay (API)
+  if (fab.includes('VMPAY') || rede.includes('VMPAY') || rede.includes('VERTIPAY') ||
+      fab.includes('SPEED QUEEN') || cliente.includes('VMPAY') ||
+      (pag.includes('CASHLESS') && !fab.includes('VENDPAGO') && !rede.includes('PAGSEGURO'))) return 'vmpay';
+
+  // 4. Default: VendTEF (Portal ERP Vending, incluindo máquinas VendPago e TEF)
   return 'vendtef';
 }
 
@@ -3915,6 +4030,7 @@ async function loadData(){
   allRows = desduplicarRows(allRows);
   // Remove linhas de clientes/PDVs fantasma (como Elaine)
   allRows = allRows.filter(r => !isRowIgnorada(r));
+  buildMasterResidentAptIndex(allRows);
   detectDateFormat(allRows);
   buildFilters();
   applyFilter();

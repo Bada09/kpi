@@ -1087,18 +1087,24 @@ def merge_and_deduplicate(portal_rows, api_rows):
             continue
             
         # Filtra transações de outros operadores (ex: Luciano Tiago Maciel / aeroporto)
-        cliente = r[0].strip()
+        cliente = str(r[0]).strip()
         if cliente == "Estoque - Luciano Tiago Maciel":
             continue
             
-        nsu = normalizar_nsu(r[14].strip())
+        # Limpa strings literais None/null/–
+        for idx in range(len(r)):
+            if str(r[idx]).strip().lower() in ("none", "null", "undefined", "–", "-"):
+                r[idx] = ""
+                
+        nsu = normalizar_nsu(str(r[14]).strip())
         r[14] = nsu  # normaliza in-place antes de enviar
-        r[1]  = normalizar_pdv(r[1])  # normaliza nome do PDV in-place
-        auth = r[15].strip()
-        maq = r[1].strip()
-        dt = r[11].strip()
-        hr = r[12].strip()
-        val_raw = r[9].strip()
+        r[1]  = normalizar_pdv(str(r[1]).strip())  # normaliza nome do PDV in-place
+        auth = str(r[15]).strip()
+        nlog = str(r[13]).strip()
+        maq = str(r[1]).strip()
+        dt = str(r[11]).strip()
+        hr = str(r[12]).strip()
+        val_raw = str(r[9]).strip()
         
         # Normaliza valor para a chave de deduplicação (evita discrepâncias como '7,0' vs '7,00')
         try:
@@ -1110,15 +1116,18 @@ def merge_and_deduplicate(portal_rows, api_rows):
         # Determina a chave de deduplicação
         is_payblu = "payblu" in str(r[2]).lower() or "payblu" in str(r[3]).lower()
         if is_payblu:
-            matr = r[21].strip()
+            matr = str(r[21]).strip()
             if hr and hr not in ("0", ""):
                 key = f"payblu_dt:{matr}|{dt}|{hr}|{val_norm}"
             else:
                 key = f"nsu:{nsu}"
         else:
-            if nsu and nsu not in ("Não Informado", "–", ""):
+            # Se for VMPay (tem ID único numérico no Nº Lógico ou NSU)
+            if nlog and nlog.isdigit() and len(nlog) >= 6:
+                key = f"vmpay_id:{nlog}"
+            elif nsu and nsu not in ("Não Informado", "–", "", "None", "null"):
                 key = f"nsu:{nsu}"
-            elif auth and auth not in ("–", ""):
+            elif auth and auth not in ("–", "", "None", "null", "Stone", "PagSeguro", "Rede", "Cielo"):
                 key = f"auth:{auth}"
             else:
                 key = f"dt:{maq}|{dt}|{hr}|{val_norm}"
@@ -2431,22 +2440,12 @@ async def coletar_tudo():
             return False
 
     # 1. Mesclagem VendTEF / Portal
-    # Filtra as transações de portal (não-VendPago) do histórico para mesclar
-    vendtef_antigos_portal = [r for r in vendtef_antigos if len(r) >= 22 and r[3] != "VendPago"]
-    # <= 31/05/2026: usar estritamente temp_read_only_vendpago 2026.xlsx
-    portal_lte_may = [r for r in temp_vendpago_rows if is_on_or_before_may_2026(r)]
-    # >= 01/06/2026: usar scraped rows (de julho/agosto), vendtef_antigos_portal e gateway_vendpago_rows
-    portal_gte_june = [r for r in (rows + vendtef_antigos_portal + gateway_vendpago_rows) if not is_on_or_before_may_2026(r)]
-    portal_rows_dedup = merge_and_deduplicate(portal_lte_may + portal_gte_june, [])
+    # Preserva o histórico completo de 2023-2026 e adiciona novas transações do portal
+    portal_rows_dedup = merge_and_deduplicate(vendtef_antigos + rows + gateway_vendpago_rows, [])
 
     # 2. Mesclagem VMPay
-    # <= 31/05/2026: usar temp_vmpay_rows (para <= 2025) e vmpay_antigos (para Jan-May 2026)
-    vmpay_lte_may_temp = [r for r in temp_vmpay_rows if is_on_or_before_may_2026(r)]
-    vmpay_lte_may_antigos = [r for r in vmpay_antigos if is_on_or_before_may_2026(r)]
-    vmpay_lte_may = merge_and_deduplicate(vmpay_lte_may_temp + vmpay_lte_may_antigos, [])
-    # >= 01/06/2026: usar api_rows_to_merge, vmpay_antigos e gateway_vmpay_rows
-    vmpay_gte_june = [r for r in (vmpay_antigos + api_rows_to_merge + gateway_vmpay_rows) if not is_on_or_before_may_2026(r)]
-    vmpay_rows_dedup = merge_and_deduplicate(vmpay_lte_may + vmpay_gte_june, [])
+    # Preserva o histórico completo de 2020-2026 e adiciona novas transações da API VMPay
+    vmpay_rows_dedup = merge_and_deduplicate(vmpay_antigos + api_rows_to_merge + gateway_vmpay_rows, [])
 
     # 3. Mesclagem SQInsights
     # <= 31/05/2026: usar temp_sq_rows

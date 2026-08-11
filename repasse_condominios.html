@@ -1245,65 +1245,186 @@ function parseCSV(csvText) {
   return result;
 }
 
-// Mapa dinâmico de morador -> apartamento (acumulado de todas as transações)
-const KNOWN_MORADOR_APT_MAP = {};
+// ══════════════════════════════════════════════════════
+// MOTOR DE IDENTIFICAÇÃO DE MORADORES E APARTAMENTOS (YOU GO & CONDOMÍNIOS)
+// ══════════════════════════════════════════════════════
+function cleanStrResident(s) {
+  if (!s) return '';
+  return String(s)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
 
-// Extrai nome limpo do morador e apartamento
-// Regra: tudo antes de ap, apt ou apto é MORADOR, e o restante é APARTAMENTO
+function tokenizeResident(name) {
+  const clean = cleanStrResident(name).toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+  const stopWords = new Set(['de', 'da', 'do', 'dos', 'das', 'e', 'em', 'para', 'com']);
+  return clean.split(/\s+/).filter(t => t.length > 1 && !stopWords.has(t));
+}
+
+// Extração direta de morador e apartamento via regex estrito com word boundary
+function extractDirectUserAndApt(userRaw, nsuRaw) {
+  let user = (userRaw || '').trim();
+  let nsu = (nsuRaw || '').trim();
+  if (!user && !nsu) return { name: 'Não Identificado', apt: '' };
+
+  let morador = user;
+  let apt = '';
+
+  // 1. Verifica no campo usuário (ex: "GLAUCIO PINHEIRO DE ARAUJO apto - 17", "Silvia - Apt 87", "RODRIGO apto 163")
+  const aptRegex = /[\s\-–,.:]+(?:\b(?:apto|apt|ap|apartamento|unidade|bloco|apot)\b)[\s\-–.:#]*([a-zA-Z0-9]+(?:\s*[a-zA-Z])?)/i;
+  const match = user.match(aptRegex);
+  if (match) {
+    apt = match[1].trim();
+    morador = user.substring(0, match.index).trim();
+  } else {
+    // 2. Verifica se o usuário termina com hífen + número (ex: "Nome - 122")
+    const mHyphen = user.match(/[\s\-–,.:]+\-\s*([0-9]{1,4}[a-zA-Z]?)$/);
+    if (mHyphen) {
+      apt = mHyphen[1].trim();
+      morador = user.substring(0, mHyphen.index).trim();
+    } else {
+      // 3. Verifica no NSU (muito comum no PayBlu)
+      const nsuMatch = nsu.match(/(?:\b(?:apto|apt|ap|apartamento|unidade|bloco|apot)\b)[\s\-–.:#]*([a-zA-Z0-9]+)/i);
+      if (nsuMatch) {
+        apt = nsuMatch[1].trim();
+        morador = user;
+      }
+    }
+  }
+
+  // Limpa pontuações residuais no nome do morador
+  morador = morador.replace(/[\s\-–,.:]+$/, '').trim();
+  if (apt) {
+    apt = apt.replace(/^(?:apto|apt|ap|apartamento|unidade|bloco|apot)[\s\-–.:#]*/i, '').trim();
+  }
+
+  return {
+    name: morador || user || 'Não Identificado',
+    apt: apt || ''
+  };
+}
+
+// Dicionário e índice mestre de apartamentos (acumulado de todas as transações)
+const MASTER_RESIDENT_APT_MAP = {};      // normName -> apt (ex: "glaucio pinheiro de araujo" -> "17")
+const MASTER_RESIDENT_TOKENS = [];       // [{ tokenSet, tokens, normName, apt }]
+const KNOWN_FIXED_RESIDENTS = {
+  'tabajara tenorio dias': '94',
+  'tabajara tenorio': '94',
+  'tabajara': '94',
+  'paulino britto': '87',
+  'paulino s l bitto neto': '87',
+  'paulino s l bitto': '87',
+  'kristjan rappu': '82',
+  'kristjan': '82',
+  'thamara batista': '14',
+  'bete': '51',
+  'lpg cultura': '34',
+  'quadro phigor': '168'
+};
+
+function formatAptNumber(apt) {
+  if (!apt || apt === '–' || apt === 'Não Informado') return 'Não Informado';
+  const numOnly = String(apt).replace(/^(?:apto|apt|ap|apartamento|unidade|bloco|apot)[\s\-–.:#]*/i, '').trim();
+  return numOnly ? `apto ${numOnly}` : apt;
+}
+
+// Constrói índice global com 100% das transações de todas as fontes
+function buildMasterResidentAptIndex(allSourceRowsList) {
+  if (!Array.isArray(allSourceRowsList)) return;
+  allSourceRowsList.forEach(rows => {
+    if (!Array.isArray(rows)) return;
+    rows.forEach(r => {
+      if (r.length < 15) return;
+      const userRaw = r[19] || '';
+      const nsuRaw = r[14] || '';
+      const { name, apt } = extractDirectUserAndApt(userRaw, nsuRaw);
+      if (name && apt && name.length > 2 && name !== 'Não Identificado' && name.toLowerCase() !== 'unknown') {
+        const norm = cleanStrResident(name).toLowerCase().replace(/\s+/g, ' ').trim();
+        if (!MASTER_RESIDENT_APT_MAP[norm]) {
+          MASTER_RESIDENT_APT_MAP[norm] = apt;
+          const tokens = tokenizeResident(norm);
+          if (tokens.length > 0) {
+            MASTER_RESIDENT_TOKENS.push({
+              tokenSet: new Set(tokens),
+              tokens,
+              normName: norm,
+              apt
+            });
+          }
+        }
+      }
+    });
+  });
+  console.log(`Índice mestre de moradores You Go construído: ${Object.keys(MASTER_RESIDENT_APT_MAP).length} moradores indexados.`);
+}
+
+// Extrai nome limpo do morador e apartamento com resolução global inteligente
 function extractResidentAndApt(userRaw, nsuRaw, condoKey) {
   let user = (userRaw || '').trim();
   let nsu = (nsuRaw || '').trim();
-  let apt = 'Não Informado';
-  let name = user || 'Não Identificado';
-
   if (!user && !nsu) {
     return { name: 'Não Identificado', apt: 'Não Informado' };
   }
 
-  let morador = '';
-  let aptoVal = '';
+  // 1. Extração direta da linha atual
+  const direct = extractDirectUserAndApt(user, nsu);
+  if (direct.apt) {
+    return {
+      name: direct.name,
+      apt: formatAptNumber(direct.apt)
+    };
+  }
 
-  // 1. Regra estrita: tudo antes de ap, apt ou apto é morador, e o restante é apartamento
-  const regex = /^(.*?)(?:[\s\-–,]+(?:apto|apt|ap|apartamento|unidade|bloco)[\s\-–.:]*)(.*)$/i;
-  const match = user.match(regex);
+  const morador = direct.name;
+  if (!morador || morador === 'Não Identificado' || morador.toLowerCase() === 'unknown' || morador.toLowerCase() === 'morador') {
+    return { name: morador || 'Não Identificado', apt: 'Não Informado' };
+  }
 
-  if (match) {
-    morador = match[1].replace(/[\s\-–,.:]+$/, '').trim();
-    aptoVal = match[2].replace(/^[\s\-–,.:]+/, '').trim();
-  } else {
-    // 2. Tenta no NSU (comum no PayBlu Private Label)
-    const nsuMatch = nsu.match(/(?:apto|apt|ap|apartamento)[\s\-–.:]*([a-zA-Z0-9]+)/i);
-    if (nsuMatch) {
-      morador = user;
-      aptoVal = nsuMatch[1].trim();
-    } else {
-      morador = user;
+  const norm = cleanStrResident(morador).toLowerCase().replace(/\s+/g, ' ').trim();
+
+  // 2. Consulta tabela fixa de apelidos/casos especiais
+  if (KNOWN_FIXED_RESIDENTS[norm]) {
+    return { name: morador, apt: formatAptNumber(KNOWN_FIXED_RESIDENTS[norm]) };
+  }
+
+  // 3. Match exato no índice histórico
+  if (MASTER_RESIDENT_APT_MAP[norm]) {
+    return { name: morador, apt: formatAptNumber(MASTER_RESIDENT_APT_MAP[norm]) };
+  }
+
+  // 4. Match parcial / subset de tokens (ex: "Aline Amaral" subset de "Aline Amaral Ferreira apto 114")
+  const uTokens = tokenizeResident(norm);
+  if (uTokens.length > 0) {
+    let bestApt = null;
+    let bestOverlap = 0;
+
+    for (const item of MASTER_RESIDENT_TOKENS) {
+      // É subset completo? (ex: "Michel Braga" contido em "michel sanches braga")
+      const isSubset = uTokens.every(t => item.tokenSet.has(t));
+      if (isSubset) {
+        return { name: morador, apt: formatAptNumber(item.apt) };
+      }
+
+      // Maior sobreposição de tokens (mínimo 2)
+      let overlap = 0;
+      for (const t of uTokens) {
+        if (item.tokenSet.has(t)) overlap++;
+      }
+      if (overlap >= 2 && overlap > bestOverlap) {
+        bestOverlap = overlap;
+        bestApt = item.apt;
+      }
     }
-  }
 
-  // Ajustes de integridade
-  if (!morador && user) morador = user;
-  if (!morador && aptoVal) morador = 'Morador';
-
-  // Se morador e apt identificados, salva no mapa de histórico
-  const normKey = morador.toLowerCase();
-  if (morador && aptoVal && morador.length > 2 && aptoVal !== 'Não Informado') {
-    KNOWN_MORADOR_APT_MAP[normKey] = aptoVal;
-  } else if (morador && (!aptoVal || aptoVal === 'Não Informado') && KNOWN_MORADOR_APT_MAP[normKey]) {
-    // Se o morador já foi identificado com apt em outra transação, recupera
-    aptoVal = KNOWN_MORADOR_APT_MAP[normKey];
-  }
-
-  // Formata o apartamento como "apto XXX"
-  let aptFormatted = 'Não Informado';
-  if (aptoVal && aptoVal !== 'Não Informado') {
-    const numOnly = aptoVal.replace(/^(?:apto|apt|ap|apartamento)[\s\-–.:]*/i, '').trim();
-    aptFormatted = numOnly ? `apto ${numOnly}` : aptoVal;
+    if (bestApt) {
+      return { name: morador, apt: formatAptNumber(bestApt) };
+    }
   }
 
   return {
     name: morador || 'Não Identificado',
-    apt: aptFormatted
+    apt: 'Não Informado'
   };
 }
 
@@ -1362,34 +1483,48 @@ function parseDateBR(dateStr, timeStr) {
 
 async function loadDataSources() {
   rawTransactions = [];
+  const allSourceSets = [];
 
   // 1. PayBlu (Base primária You Go)
   await tryLoad('LAVAI_PAYBLU_DATA', 'payblu_local.js');
+  let paybluRows = [];
   if (window.LAVAI_PAYBLU_DATA) {
-    const rows = parseCSV(window.LAVAI_PAYBLU_DATA);
-    processSourceRows(rows, 'PayBlu');
+    paybluRows = parseCSV(window.LAVAI_PAYBLU_DATA);
+    allSourceSets.push(paybluRows);
   }
 
   // 2. VendTEF (Base primária PUQ Perdizes)
   await tryLoad('LAVAI_VENDTEF_DATA', 'vendtef_local.js');
+  let vendtefRows = [];
   if (window.LAVAI_VENDTEF_DATA) {
-    const rows = parseCSV(window.LAVAI_VENDTEF_DATA);
-    processSourceRows(rows, 'VendTEF');
+    vendtefRows = parseCSV(window.LAVAI_VENDTEF_DATA);
+    allSourceSets.push(vendtefRows);
   }
 
   // 3. VMPay (Caso haja operações You Go / PUQ adicionais)
   await tryLoad('LAVAI_VMPAY_DATA', 'vmpay_local.js');
+  let vmpayRows = [];
   if (window.LAVAI_VMPAY_DATA) {
-    const rows = parseCSV(window.LAVAI_VMPAY_DATA);
-    processSourceRows(rows, 'VMPay');
+    vmpayRows = parseCSV(window.LAVAI_VMPAY_DATA);
+    allSourceSets.push(vmpayRows);
   }
 
   // 4. SQInsights
   await tryLoad('LAVAI_SQI_DATA', 'sqi_local.js');
+  let sqiRows = [];
   if (window.LAVAI_SQI_DATA) {
-    const rows = parseCSV(window.LAVAI_SQI_DATA);
-    processSourceRows(rows, 'SQInsights');
+    sqiRows = parseCSV(window.LAVAI_SQI_DATA);
+    allSourceSets.push(sqiRows);
   }
+
+  // Constrói índice mestre global de apartamentos ANTES de processar as transações
+  buildMasterResidentAptIndex(allSourceSets);
+
+  // Processa as linhas de cada fonte
+  if (paybluRows.length) processSourceRows(paybluRows, 'PayBlu');
+  if (vendtefRows.length) processSourceRows(vendtefRows, 'VendTEF');
+  if (vmpayRows.length) processSourceRows(vmpayRows, 'VMPay');
+  if (sqiRows.length) processSourceRows(sqiRows, 'SQInsights');
 
   // Ordena por data decrescente
   rawTransactions.sort((a, b) => b.timestamp - a.timestamp);

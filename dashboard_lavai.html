@@ -723,21 +723,21 @@ function getRowSource(r) {
   const cliente  = (r[0]          || '').trim().toUpperCase(); // col 0 = Cliente
   const nlogico  = (r[C.nlogico]  || '').trim().toUpperCase();
 
-  // SQInsights: NSU prefixo SQ-, ou pagamento ficha/moeda/aplicativo, ou nlogico SQ
+// 1. SQInsights: NSU prefixo SQ-, ou pagamento ficha/moeda/aplicativo, ou nlogico SQ
   if (nsu.startsWith('SQ-') || pag.includes('FICHA') || pag.includes('MOEDA') ||
       pag.includes('APLICATIVO') || pag === 'APP' || prod.includes('FICHA') || prod.includes('MOEDA') ||
       prod.includes('APP') || nlogico.startsWith('SQ')) return 'sqi';
 
-  // VendPago: verificar ANTES de VMPay (VendPago usa Pagamento=CASHLESS, mas tem Fabricante=VendPago)
-  if (fab.includes('VENDPAGO') || pag.includes('VENDPAGO') || pag.includes('VEND PAGO') ||
-      cliente.includes('VENDPAGO') || nlogico.includes('POS')) return 'vendpago';
+  // 2. PayBlu: Fabricante/Rede 'PayBlu', NSU prefixo 'PB-', ou Pagamento 'PRIVATE LABEL'
+  if (fab.includes('PAYBLU') || rede.includes('PAYBLU') ||
+      nsu.startsWith('PB-') || pag.includes('PRIVATE LABEL')) return 'payblu';
 
-  // VMPay: pagamento cashless, rede vmpay/vertipay, fabricante vmPay, ou modelo speed queen (do excel antigo)
-  if (pag.includes('CASHLESS') || pag.includes('VMPAY') ||
-      rede.includes('VMPAY') || rede.includes('VERTIPAY') || fab.includes('VMPAY') ||
-      fab.includes('SPEED QUEEN') || cliente.includes('VMPAY')) return 'vmpay';
+  // 3. VMPay: pagamento cashless via API VMPay, rede vmpay/vertipay, fabricante vmPay
+  if (fab.includes('VMPAY') || rede.includes('VMPAY') || rede.includes('VERTIPAY') ||
+      fab.includes('SPEED QUEEN') || cliente.includes('VMPAY') ||
+      (pag.includes('CASHLESS') && !fab.includes('VENDPAGO') && !rede.includes('PAGSEGURO'))) return 'vmpay';
 
-  // Default: VendTEF (portal)
+  // 4. Default: VendTEF (portal)
   return 'vendtef';
 }
 
