@@ -2551,6 +2551,7 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
 .page-tab:hover{color:var(--text)}
 .page-tab.active{background:var(--cyan);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.3)}
 .page-tab.active.fin{background:linear-gradient(135deg,#0f172a,#1e3a8a)}
+.page-tab.active.trend{background:linear-gradient(135deg,#7c3aed,#a855f7)}
 
 /* ══════════════════════════════════════════════════
    PÁGINA RESULTADOS FINANCEIROS
@@ -2558,6 +2559,50 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
 #page-resultados{display:none}
 #page-resultados.active{display:block}
 #page-dashboard.hidden{display:none}
+#page-tendencias{display:none}
+#page-tendencias.active{display:block}
+
+/* ══════════════════════════════════════════════════
+   PÁGINA TENDÊNCIAS
+══════════════════════════════════════════════════ */
+.trend-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px;margin-bottom:24px}
+.trend-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:20px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.trend-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.trend-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px}
+.trend-card.up::before{background:linear-gradient(90deg,#10b981,#34d399)}
+.trend-card.stable::before{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.trend-card.down::before{background:linear-gradient(90deg,#ef4444,#f87171)}
+.trend-card.new::before{background:linear-gradient(90deg,#8b5cf6,#a78bfa)}
+.trend-card.closed::before{background:linear-gradient(90deg,#6b7280,#9ca3af)}
+.trend-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.trend-pdv-name{font-size:15px;font-weight:800;color:var(--text);line-height:1.2}
+.trend-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;text-transform:uppercase;letter-spacing:.5px}
+.trend-badge.up{background:rgba(16,185,129,.12);color:#059669}
+.trend-badge.stable{background:rgba(245,158,11,.12);color:#d97706}
+.trend-badge.down{background:rgba(239,68,68,.12);color:#dc2626}
+.trend-badge.new{background:rgba(139,92,246,.12);color:#7c3aed}
+.trend-badge.closed{background:rgba(107,114,128,.12);color:#6b7280}
+.trend-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.trend-metric{text-align:center;padding:8px 4px;background:var(--bg);border-radius:8px}
+.trend-metric-label{font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:2px;font-weight:600}
+.trend-metric-value{font-size:14px;font-weight:800;color:var(--text);font-family:'JetBrains Mono',monospace}
+.trend-sparkline{height:40px;margin:10px 0;display:flex;align-items:flex-end;gap:2px}
+.trend-spark-bar{flex:1;border-radius:3px 3px 0 0;min-width:4px;transition:height .3s;position:relative}
+.trend-spark-bar:hover{opacity:.8}
+.trend-spark-bar:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;font-size:9px;padding:2px 6px;border-radius:4px;white-space:nowrap;z-index:10;pointer-events:none}
+.trend-action{background:var(--bg);border-radius:10px;padding:12px 14px;border-left:3px solid var(--cyan)}
+.trend-action-title{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted);font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.trend-action-text{font-size:12px;color:var(--text);line-height:1.5;font-weight:500}
+.trend-action.up{border-left-color:#10b981}
+.trend-action.stable{border-left-color:#f59e0b}
+.trend-action.down{border-left-color:#ef4444}
+.trend-action.new{border-left-color:#8b5cf6}
+.trend-action.closed{border-left-color:#6b7280}
+.trend-summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px}
+.trend-summary-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center}
+.trend-summary-card .val{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.trend-summary-card .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-top:4px;font-weight:600}
+.trend-yoy{font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace}
 
 .fin-section-title{
   font-size:11px;text-transform:uppercase;letter-spacing:.9px;
@@ -3158,6 +3203,17 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
     </div>
 
   </div><!-- /page-resultados -->
+
+  <!-- ══════════════════════════════════════════════
+       PÁGINA: ANÁLISE DE TENDÊNCIAS POR PDV
+  ══════════════════════════════════════════════ -->
+  <div id="page-tendencias">
+    <div class="fin-section-title" style="margin-bottom:16px">
+      <i class="fas fa-chart-line" style="color:#8b5cf6"></i> Análise de Tendências por PDV
+    </div>
+    <div class="trend-summary-grid" id="trend-summary-grid"></div>
+    <div class="trend-grid" id="trend-grid"></div>
+  </div><!-- /page-tendencias -->
 
   <!-- ══════════════════════════════════════════════
        MODAL: RELATÓRIO FINANCEIRO POR PDV
@@ -5660,19 +5716,261 @@ function selectPdvFromModal(pdvName) {
 // PÁGINA SWITCHING
 // ══════════════════════════════════════════════════════
 let currentPage = 'dashboard';
+// ══════════════════════════════════════════════════════
+// ANÁLISE DE TENDÊNCIAS POR PDV
+// ══════════════════════════════════════════════════════
+function renderTrends() {
+  // Agrega dados por PDV e mês (ano-mês)
+  const pdvMonthly = {};
+  const now = new Date();
+  const curYM = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
+  allRows.forEach(r => {
+    const dateStr = r[C.data];
+    if (!dateStr) return;
+    const parts = dateStr.split('/');
+    if (parts.length !== 3) return;
+    const yr = parts[2], mo = parts[1];
+    if (!yr || !mo) return;
+    const ym = `${yr}-${mo.padStart(2,'0')}`;
+    const pdvName = getCanonicalPdvName(r);
+    if (!pdvName || pdvName === 'Desconhecido') return;
+
+    if (!pdvMonthly[pdvName]) pdvMonthly[pdvName] = {};
+    if (!pdvMonthly[pdvName][ym]) pdvMonthly[pdvName][ym] = {val:0, count:0, lav:0, sec:0};
+    const val = toNum(r[C.total]);
+    pdvMonthly[pdvName][ym].val += val;
+    pdvMonthly[pdvName][ym].count += 1;
+    if (isMaqWash(r)) pdvMonthly[pdvName][ym].lav += 1;
+    else pdvMonthly[pdvName][ym].sec += 1;
+  });
+
+  // Build trend data for each PDV
+  const trends = [];
+  const allMonths = new Set();
+  Object.values(pdvMonthly).forEach(m => Object.keys(m).forEach(ym => allMonths.add(ym)));
+  const sortedMonths = [...allMonths].sort();
+
+  // Determine the last fully closed month (not current partial month)
+  const closedMonths = sortedMonths.filter(ym => ym < curYM);
+  const lastClosed = closedMonths.length > 0 ? closedMonths[closedMonths.length - 1] : null;
+  const prevClosed = closedMonths.length > 1 ? closedMonths[closedMonths.length - 2] : null;
+
+  for (const [pdv, months] of Object.entries(pdvMonthly)) {
+    const sortedPdvMonths = Object.keys(months).sort();
+    if (sortedPdvMonths.length === 0) continue;
+
+    // Total revenue and counts
+    let totalVal = 0, totalCount = 0, totalLav = 0, totalSec = 0;
+    Object.values(months).forEach(d => { totalVal += d.val; totalCount += d.count; totalLav += d.lav; totalSec += d.sec; });
+    if (totalVal < 500) continue; // Skip marginal PDVs
+
+    // Split 2025 vs 2026
+    const m2025 = Object.entries(months).filter(([ym]) => ym.startsWith('2025'));
+    const m2026Closed = Object.entries(months).filter(([ym]) => ym.startsWith('2026') && ym < curYM);
+
+    const val2025 = m2025.reduce((s,[,d]) => s + d.val, 0);
+    const val2026 = m2026Closed.reduce((s,[,d]) => s + d.val, 0);
+    const avg2025 = m2025.length > 0 ? val2025 / m2025.length : 0;
+    const avg2026 = m2026Closed.length > 0 ? val2026 / m2026Closed.length : 0;
+    const yoy = avg2025 > 0 ? ((avg2026 - avg2025) / avg2025 * 100) : (avg2026 > 0 ? 100 : 0);
+
+    // MoM (last closed vs previous closed month)
+    const valLast = lastClosed && months[lastClosed] ? months[lastClosed].val : 0;
+    const valPrev = prevClosed && months[prevClosed] ? months[prevClosed].val : 0;
+    const mom = valPrev > 0 ? ((valLast - valPrev) / valPrev * 100) : 0;
+
+    // Ticket médio
+    const ticket = totalCount > 0 ? totalVal / totalCount : 0;
+
+    // Sparkline data (últimos 12 meses fechados)
+    const spark = closedMonths.slice(-12).map(ym => ({
+      ym,
+      val: months[ym] ? months[ym].val : 0,
+      count: months[ym] ? months[ym].count : 0
+    }));
+
+    // Classification
+    const firstMonth = sortedPdvMonths[0];
+    const lastActiveMonth = sortedPdvMonths[sortedPdvMonths.length - 1];
+    const isNew = firstMonth >= '2026-05';
+    const isClosed = lastActiveMonth < closedMonths[closedMonths.length - 2] && val2026 === 0;
+    
+    let status, statusLabel, statusIcon;
+    if (isClosed) {
+      status = 'closed'; statusLabel = 'Encerrado'; statusIcon = '⛔';
+    } else if (isNew) {
+      status = 'new'; statusLabel = 'Novo PDV'; statusIcon = '⭐';
+    } else if (yoy > 10 || (mom > 10 && avg2026 > 1000)) {
+      status = 'up'; statusLabel = 'Em Alta'; statusIcon = '🚀';
+    } else if (yoy < -20 || (mom < -25 && avg2026 < avg2025 * 0.7)) {
+      status = 'down'; statusLabel = 'Em Queda'; statusIcon = '🔻';
+    } else {
+      status = 'stable'; statusLabel = 'Estável'; statusIcon = '⚖️';
+    }
+
+    // Actionable recommendation
+    let action = '';
+    if (status === 'up') {
+      action = `PDV em crescimento consistente. Avaliar expansão de stack ou inclusão de máquinas adicionais. Média mensal atual: ${fmtBRL(avg2026)}.`;
+    } else if (status === 'down') {
+      if (valLast === 0 && valPrev === 0) {
+        action = `Sem faturamento nos últimos 2 meses. Verificar status operacional, conectividade e estoque de produtos. Avaliar renegociação de aluguel ou desativação.`;
+      } else if (mom < -30) {
+        action = `Queda acentuada de ${fmtN(Math.abs(mom),1)}% no último mês. Checar disponibilidade de máquinas, manutenção preventiva e tráfego local.`;
+      } else {
+        action = `Tendência de queda (${fmtN(yoy,1)}% YoY). Investigar causas: concorrência, manutenção, sazonalidade. Considerar ação comercial (desconto, divulgação).`;
+      }
+    } else if (status === 'stable') {
+      action = `Operação consolidada com receita estável. Manter rotina de manutenção preventiva e monitorar ticket médio (${fmtBRL(ticket)}).`;
+    } else if (status === 'new') {
+      action = `PDV recém-inaugurado. Acompanhar ramp-up de volume e validar aderência do público local. Avaliar ações de lançamento.`;
+    } else {
+      action = `PDV encerrado. Avaliar possibilidade de reativação ou realocação de máquinas para pontos com maior demanda.`;
+    }
+
+    trends.push({
+      pdv, totalVal, totalCount, totalLav, totalSec,
+      val2025, val2026, avg2025, avg2026, yoy, mom,
+      valLast, valPrev, ticket, spark, status, statusLabel, statusIcon, action,
+      lastActiveMonth
+    });
+  }
+
+  // Sort: up first, then stable, then down, then new, then closed; within each group by avg2026 desc
+  const statusOrder = {up:0, new:1, stable:2, down:3, closed:4};
+  trends.sort((a,b) => {
+    const d = statusOrder[a.status] - statusOrder[b.status];
+    if (d !== 0) return d;
+    return b.avg2026 - a.avg2026;
+  });
+
+  // Summary cards
+  const nUp = trends.filter(t => t.status === 'up').length;
+  const nStable = trends.filter(t => t.status === 'stable').length;
+  const nDown = trends.filter(t => t.status === 'down').length;
+  const nNew = trends.filter(t => t.status === 'new').length;
+  const nClosed = trends.filter(t => t.status === 'closed').length;
+  const totalRev2026 = trends.reduce((s,t) => s + t.val2026, 0);
+  const avgTicket = trends.filter(t=>t.totalCount>0).reduce((s,t)=>s+t.ticket,0) / (trends.filter(t=>t.totalCount>0).length||1);
+
+  document.getElementById('trend-summary-grid').innerHTML = `
+    <div class="trend-summary-card">
+      <div class="val" style="color:#10b981">${nUp}</div>
+      <div class="lbl">🚀 Em Alta</div>
+    </div>
+    <div class="trend-summary-card">
+      <div class="val" style="color:#f59e0b">${nStable}</div>
+      <div class="lbl">⚖️ Estável</div>
+    </div>
+    <div class="trend-summary-card">
+      <div class="val" style="color:#ef4444">${nDown}</div>
+      <div class="lbl">🔻 Em Queda</div>
+    </div>
+    <div class="trend-summary-card">
+      <div class="val" style="color:#8b5cf6">${nNew}</div>
+      <div class="lbl">⭐ Novos</div>
+    </div>
+    <div class="trend-summary-card">
+      <div class="val" style="color:#6b7280">${nClosed}</div>
+      <div class="lbl">⛔ Encerrados</div>
+    </div>
+    <div class="trend-summary-card">
+      <div class="val">${fmtBRL(totalRev2026)}</div>
+      <div class="lbl">Receita 2026 (meses fechados)</div>
+    </div>
+    <div class="trend-summary-card">
+      <div class="val">${trends.length}</div>
+      <div class="lbl">Total de PDVs</div>
+    </div>
+    <div class="trend-summary-card">
+      <div class="val">${fmtBRL(avgTicket)}</div>
+      <div class="lbl">Ticket Médio Geral</div>
+    </div>
+  `;
+
+  // Render PDV cards
+  document.getElementById('trend-grid').innerHTML = trends.map(t => {
+    const maxSparkVal = Math.max(...t.spark.map(s=>s.val), 1);
+    const sparkBars = t.spark.map(s => {
+      const pct = (s.val / maxSparkVal * 100);
+      const color = s.val === 0 ? '#e5e7eb' : (t.status === 'up' ? '#10b981' : t.status === 'down' ? '#ef4444' : t.status === 'new' ? '#8b5cf6' : '#f59e0b');
+      const label = s.ym.substring(2).replace('-','/');
+      return `<div class="trend-spark-bar" style="height:${Math.max(pct,3)}%;background:${color}" data-tip="${label}: ${fmtBRL(s.val)}"></div>`;
+    }).join('');
+
+    const yoyStr = t.avg2025 > 0
+      ? `<span class="trend-yoy" style="color:${t.yoy>=0?'#10b981':'#ef4444'}">${t.yoy>=0?'+':''}${fmtN(t.yoy,1)}%</span>`
+      : '<span class="trend-yoy" style="color:#8b5cf6">Novo</span>';
+
+    const momStr = t.valPrev > 0
+      ? `<span class="trend-yoy" style="color:${t.mom>=0?'#10b981':'#ef4444'}">${t.mom>=0?'+':''}${fmtN(t.mom,1)}%</span>`
+      : '<span class="trend-yoy" style="color:var(--text-muted)">–</span>';
+
+    const lavPct = t.totalCount > 0 ? ((t.totalLav / t.totalCount) * 100) : 0;
+
+    return `<div class="trend-card ${t.status}">
+      <div class="trend-header">
+        <div class="trend-pdv-name">${t.statusIcon} ${t.pdv}</div>
+        <span class="trend-badge ${t.status}">${t.statusLabel}</span>
+      </div>
+      <div class="trend-metrics">
+        <div class="trend-metric">
+          <div class="trend-metric-label">Média/Mês 2026</div>
+          <div class="trend-metric-value">${fmtBRL(t.avg2026)}</div>
+        </div>
+        <div class="trend-metric">
+          <div class="trend-metric-label">Var. YoY</div>
+          <div class="trend-metric-value">${yoyStr}</div>
+        </div>
+        <div class="trend-metric">
+          <div class="trend-metric-label">Var. MoM</div>
+          <div class="trend-metric-value">${momStr}</div>
+        </div>
+      </div>
+      <div class="trend-metrics" style="margin-bottom:6px">
+        <div class="trend-metric">
+          <div class="trend-metric-label">Ticket Médio</div>
+          <div class="trend-metric-value">${fmtBRL(t.ticket)}</div>
+        </div>
+        <div class="trend-metric">
+          <div class="trend-metric-label">Lavagem</div>
+          <div class="trend-metric-value">${fmtN(lavPct,0)}%</div>
+        </div>
+        <div class="trend-metric">
+          <div class="trend-metric-label">Total Ciclos</div>
+          <div class="trend-metric-value">${t.totalCount.toLocaleString('pt-BR')}</div>
+        </div>
+      </div>
+      <div class="trend-sparkline">${sparkBars}</div>
+      <div class="trend-action ${t.status}">
+        <div class="trend-action-title"><i class="fas fa-bullseye"></i> Ação Recomendada</div>
+        <div class="trend-action-text">${t.action}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function switchPage(page) {
   currentPage = page;
   document.getElementById('page-dashboard').classList.toggle('hidden', page !== 'dashboard');
   const rPage = document.getElementById('page-resultados');
   rPage.classList.toggle('active', page === 'resultados');
   rPage.style.display = page === 'resultados' ? 'block' : 'none';
+  const tPage = document.getElementById('page-tendencias');
+  tPage.classList.toggle('active', page === 'tendencias');
+  tPage.style.display = page === 'tendencias' ? 'block' : 'none';
 
   document.getElementById('tab-dashboard').classList.toggle('active', page === 'dashboard');
   document.getElementById('tab-resultados').classList.toggle('active', page === 'resultados');
+  document.getElementById('tab-tendencias').classList.toggle('active', page === 'tendencias');
 
   if (page === 'resultados') {
     buildFinPdvFilter();
     renderFinanceiro();
+  }
+  if (page === 'tendencias') {
+    renderTrends();
   }
 }
 
