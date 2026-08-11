@@ -3040,12 +3040,12 @@ tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
             <th onclick="sortTable(0)">Data e Hora <i class="fas fa-sort"></i></th>
             <th onclick="sortTable(1)">PDV <i class="fas fa-sort"></i></th>
             <th onclick="sortTable(2)">Máquina <i class="fas fa-sort"></i></th>
-            <th onclick="sortTable(3)">Morador <i class="fas fa-sort"></i></th>
-            <th onclick="sortTable(4)">Apartamento <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(3)" id="th-morador" style="display:none">Morador <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(4)" id="th-apartamento" style="display:none">Apartamento <i class="fas fa-sort"></i></th>
             <th onclick="sortTable(5)">Pagamento <i class="fas fa-sort"></i></th>
             <th onclick="sortTable(6)">Bandeira <i class="fas fa-sort"></i></th>
             <th onclick="sortTable(7)">Valor <i class="fas fa-sort"></i></th>
-            <th onclick="sortTable(8)">Torre <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(8)" id="th-torre" style="display:none">Torre <i class="fas fa-sort"></i></th>
           </tr>
         </thead>
         <tbody id="tbody-transactions"></tbody>
@@ -4890,6 +4890,16 @@ function paintTable(){
   if(tablePage>=pages) tablePage=pages-1;
   const pageRows=tableRows.slice(tablePage*TABLE_PS,(tablePage+1)*TABLE_PS);
 
+  // Detecta se há transações do You Go nos dados filtrados
+  const hasYouGo = filtered.some(r => {
+    const pdv = getCanonicalPdvName(r);
+    return pdv.toLowerCase().includes('you go');
+  });
+  const colDisplay = hasYouGo ? '' : 'none';
+  document.getElementById('th-morador').style.display = colDisplay;
+  document.getElementById('th-apartamento').style.display = colDisplay;
+  document.getElementById('th-torre').style.display = colDisplay;
+
   const isWash=r=>isMaqWash(r);
   const tipoBadge=t=>{
     if(!t) return '';
@@ -4906,14 +4916,19 @@ function paintTable(){
       : '<span style="color:var(--text-muted);font-size:11px;">–</span>';
     const pdvNome = getCanonicalPdvName(r);
 
-    const { name, apt } = parseUserAndApt(r[C.usuario]||'', r[C.nsu]||'');
-    const moradorTd = (name && name !== '–')
-      ? `<span style="font-weight:600;color:var(--text);font-size:12px;">${name}</span>`
-      : '<span style="color:var(--text-muted);font-size:11px;">–</span>';
-
-    const aptTd = (apt && apt !== '–')
-      ? `<span style="background:rgba(245,158,11,0.15);color:#d97706;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;display:inline-block;">${apt}</span>`
-      : '<span style="color:var(--text-muted);font-size:11px;">–</span>';
+    let moradorHtml = '', aptHtml = '', torreHtml = '';
+    if (hasYouGo) {
+      const { name, apt } = parseUserAndApt(r[C.usuario]||'', r[C.nsu]||'');
+      const moradorTd = (name && name !== '–')
+        ? `<span style="font-weight:600;color:var(--text);font-size:12px;">${name}</span>`
+        : '<span style="color:var(--text-muted);font-size:11px;">–</span>';
+      const aptTd = (apt && apt !== '–')
+        ? `<span style="background:rgba(245,158,11,0.15);color:#d97706;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;display:inline-block;">${apt}</span>`
+        : '<span style="color:var(--text-muted);font-size:11px;">–</span>';
+      moradorHtml = `<td>${moradorTd}</td>`;
+      aptHtml = `<td>${aptTd}</td>`;
+      torreHtml = `<td>${torreTd}</td>`;
+    }
 
     return `<tr>
     <td>${fmtDate(r[C.data])} ${r[C.hora]||''}</td>
@@ -4921,12 +4936,12 @@ function paintTable(){
     <td>
       ${isMaqWash(r)?'<span class="badge badge-wash">🫧 Lavagem</span>':'<span class="badge badge-dry">💨 Secagem</span>'}
     </td>
-    <td>${moradorTd}</td>
-    <td>${aptTd}</td>
+    ${moradorHtml}
+    ${aptHtml}
     <td>${tipoBadge(r[C.tipo])}</td>
     <td>${r[C.bandeira]||(r[C.tipo]==='Pix'?'PIX':'–')}</td>
     <td class="td-mono">${r[C.total]?fmtBRL(toNum(r[C.total])):'–'}</td>
-    <td>${torreTd}</td>
+    ${torreHtml}
   </tr>`;
   }).join('');
 
