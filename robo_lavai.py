@@ -17,6 +17,7 @@ import re
 import sys
 import logging
 import csv
+import io
 import urllib.request
 import zipfile
 import openpyxl
@@ -56,12 +57,16 @@ TIMEOUT_MS = 30_000   # 30 segundos
 # ──────────────────────────────────────────────────────────────────────────────
 FUSO_SP = timezone(timedelta(hours=-3))
 
+# Garante UTF-8 no terminal Windows (evita erro cp1252 com acentos)
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.FileHandler(LOG_FILE, encoding="utf-8"),
-        logging.StreamHandler(sys.stdout),
+        logging.StreamHandler(io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace') if hasattr(sys.stdout, 'buffer') else sys.stdout),
     ],
 )
 logging.Formatter.converter = lambda *args: datetime.now(FUSO_SP).timetuple()
