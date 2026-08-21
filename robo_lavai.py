@@ -2325,7 +2325,12 @@ async def coletar_tudo():
 
             # Clicar em Continuar para gerar o relatorio
             log.info("Clicando em 'Continuar'...")
-            await page.locator("input[value='Continuar']").click(timeout=10000)
+            # Tentamos clicar em button:has-text('Continuar') ou input[value='Continuar'] como fallback
+            try:
+                await page.locator("button:has-text('Continuar'), input[value='Continuar']").click(timeout=10000)
+            except Exception as e:
+                log.warning(f"Erro ao clicar com seletor padrão: {e}. Tentando seletor classe primary...")
+                await page.locator("button.vendpago-btn-primary").click(timeout=10000)
             await page.wait_for_load_state("networkidle", timeout=TIMEOUT_MS)
             await asyncio.sleep(4)
             
