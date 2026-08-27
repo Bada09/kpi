@@ -11038,10 +11038,11 @@ Estoque - LAVAÍ;5# Extra Glicério;;VMPay;VMPay;Lavadora;1;14,99;Não Informado
 Estoque - LAVAÍ;5# Extra Glicério;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;27/08/2026;11:32:24;;989465265;;Débito;Vertipay;Elo;;;
 Estoque - LAVAÍ;5# Extra Glicério;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;27/08/2026;11:29:51;;989466651;;Débito;Vertipay;Elo;;;
 Estoque - LAVAÍ;4# Extra Palmeiras;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;27/08/2026;11:49:33;;989474568;;Débito;Vertipay;Visa;;;
-Estoque - LAVAÍ;5# Extra Glicério;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;27/08/2026;12:12:10;;989491308;;Débito;Vertipay;Elo;;;
-Estoque - LAVAÍ;5# Extra Glicério;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;27/08/2026;12:43:14;;989519537;;Débito;Vertipay;Elo;;;
+Estoque - LAVAÍ;26# Condominio Grevilia;;VMPay;VMPay;Lavadora;1;16,99;Não Informado;16,99;Não utilizado;27/08/2026;14:17:24;;989594046;;Débito;Vertipay;Visa;;;
+Estoque - LAVAÍ;8# Lopes - Jacu Pessego;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;27/08/2026;13:47:27;;989573934;;Crédito;Vertipay;Visa;;;
+Estoque - LAVAÍ;2# Extra Rego Freitas;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;27/08/2026;13:35:18;;989565062;;Débito;Vertipay;Visa;;;
 Estoque - LAVAÍ;8# Lopes - Jacu Pessego;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;27/08/2026;13:07:33;;989540138;;Crédito;Vertipay;Visa;;;
 Estoque - LAVAÍ;2# Extra Rego Freitas;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;27/08/2026;13:05:36;;989538835;;Débito;Vertipay;Visa;;;
-Estoque - LAVAÍ;2# Extra Rego Freitas;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;27/08/2026;13:35:18;;989565062;;Débito;Vertipay;Visa;;;
-Estoque - LAVAÍ;8# Lopes - Jacu Pessego;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;27/08/2026;13:47:27;;989573934;;Crédito;Vertipay;Visa;;;
-Estoque - LAVAÍ;26# Condominio Grevilia;;VMPay;VMPay;Lavadora;1;16,99;Não Informado;16,99;Não utilizado;27/08/2026;14:17:24;;989594046;;Débito;Vertipay;Visa;;;`;
+Estoque - LAVAÍ;5# Extra Glicério;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;27/08/2026;12:43:14;;989519537;;Débito;Vertipay;Elo;;;
+Estoque - LAVAÍ;5# Extra Glicério;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;27/08/2026;12:12:10;;989491308;;Débito;Vertipay;Elo;;;
+Estoque - LAVAÍ;4# Extra Palmeiras;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;27/08/2026;15:04:44;;989632934;;Débito;Vertipay;Mastercard;;;`;
