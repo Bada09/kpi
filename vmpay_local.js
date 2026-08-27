@@ -11047,4 +11047,5 @@ Estoque - LAVAÍ;5# Extra Glicério;;VMPay;VMPay;Lavadora;1;14,99;Não Informado
 Estoque - LAVAÍ;5# Extra Glicério;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;27/08/2026;12:12:10;;989491308;;Débito;Vertipay;Elo;;;
 Estoque - LAVAÍ;4# Extra Palmeiras;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;27/08/2026;15:04:44;;989632934;;Débito;Vertipay;Mastercard;;;
 Estoque - LAVAÍ;26# Condominio Grevilia;;VMPay;VMPay;Lavadora;1;16,99;Não Informado;16,99;Não utilizado;27/08/2026;15:42:39;;989666249;;Débito;Vertipay;Visa;;;
-Estoque - LAVAÍ;26# Condominio Grevilia;;VMPay;VMPay;Secadora;2;16,99;Não Informado;16,99;Não utilizado;27/08/2026;15:42:16;;989664964;;Débito;Vertipay;Visa;;;`;
+Estoque - LAVAÍ;26# Condominio Grevilia;;VMPay;VMPay;Secadora;2;16,99;Não Informado;16,99;Não utilizado;27/08/2026;15:42:16;;989664964;;Débito;Vertipay;Visa;;;
+Estoque - LAVAÍ;37# Mini Extra Rio Branco;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;27/08/2026;16:09:41;;989688847;;Crédito;Vertipay;Mastercard;;;`;
