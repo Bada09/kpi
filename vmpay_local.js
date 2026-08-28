@@ -11078,4 +11078,5 @@ Estoque - LAVAÍ;41# Imigrantes 2;;VMPay;VMPay;Lavadora;1;16,99;Não Informado;1
 Estoque - LAVAÍ;38# Condomínio Imigrantes;;VMPay;VMPay;Lavadora;1;16,0;Não Informado;16,0;Não utilizado;27/08/2026;21:18:38;;989958191;;Crédito;Vertipay;Visa;;;
 Estoque - LAVAÍ;26# Condominio Grevilia;;VMPay;VMPay;Secadora;2;16,99;Não Informado;16,99;Não utilizado;27/08/2026;21:18:09;;989958196;;Débito;Vertipay;Visa;;;
 Estoque - LAVAÍ;26# Condominio Grevilia;;VMPay;VMPay;Lavadora;1;16,99;Não Informado;16,99;Não utilizado;28/08/2026;08:08:15;;990187348;;Crédito;Vertipay;Mastercard;;;
-Estoque - LAVAÍ;5# Extra Glicério;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;28/08/2026;09:03:03;;990215142;;Débito;Vertipay;Elo;;;`;
+Estoque - LAVAÍ;5# Extra Glicério;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;28/08/2026;09:03:03;;990215142;;Débito;Vertipay;Elo;;;
+Estoque - LAVAÍ;5# Extra Glicério;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;28/08/2026;09:17:32;;990223513;;Débito;Vertipay;Visa;;;`;
