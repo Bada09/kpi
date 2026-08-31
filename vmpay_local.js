@@ -11258,4 +11258,5 @@ Estoque - LAVAÍ;8# Lopes - Jacu Pessego;;VMPay;VMPay;Lavadora;1;14,99;Não Info
 Estoque - LAVAÍ;8# Lopes - Jacu Pessego;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;31/08/2026;13:16:26;;992893573;;Crédito;Vertipay;Visa;;;
 Estoque - LAVAÍ;26# Condominio Grevilia;;VMPay;VMPay;Lavadora;1;16,99;Não Informado;16,99;Não utilizado;31/08/2026;13:40:40;;992912658;;Crédito;Vertipay;Mastercard;;;
 Estoque - LAVAÍ;26# Condominio Grevilia;;VMPay;VMPay;Secadora;2;16,99;Não Informado;16,99;Não utilizado;31/08/2026;14:16:29;;992945239;;Crédito;Vertipay;Mastercard;;;
-Estoque - LAVAÍ;2# Extra Rego Freitas;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;31/08/2026;14:13:15;;992943262;;Crédito;Vertipay;Visa;;;`;
+Estoque - LAVAÍ;2# Extra Rego Freitas;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;31/08/2026;14:13:15;;992943262;;Crédito;Vertipay;Visa;;;
+Estoque - LAVAÍ;2# Extra Rego Freitas;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;31/08/2026;14:49:05;;992970381;;Crédito;Vertipay;Visa;;;`;
