@@ -11262,4 +11262,5 @@ Estoque - LAVAÍ;2# Extra Rego Freitas;;VMPay;VMPay;Lavadora;1;14,99;Não Inform
 Estoque - LAVAÍ;2# Extra Rego Freitas;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;31/08/2026;14:49:05;;992970381;;Crédito;Vertipay;Visa;;;
 Estoque - LAVAÍ;2# Extra Rego Freitas;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;31/08/2026;15:13:20;;992986838;;Crédito;Vertipay;Visa;;;
 Estoque - LAVAÍ;13# Extra São Caetano;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;31/08/2026;16:13:24;;993036920;;Crédito;Vertipay;Visa;;;
-Estoque - LAVAÍ;14# Extra São Bernardo;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;31/08/2026;17:16:17;;993094159;;Débito;Vertipay;Mastercard;;;`;
+Estoque - LAVAÍ;14# Extra São Bernardo;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;31/08/2026;17:16:17;;993094159;;Débito;Vertipay;Mastercard;;;
+Estoque - LAVAÍ;14# Extra São Bernardo;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;31/08/2026;17:51:21;;993125503;;Débito;Vertipay;Mastercard;;;`;
