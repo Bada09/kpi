@@ -11385,4 +11385,5 @@ Estoque - LAVAÍ;37# Mini Extra Rio Branco;;VMPay;VMPay;Secadora;2;14,99;Não In
 Estoque - LAVAÍ;11# Extra Barra Funda;;VMPay;VMPay;Lavadora;1;16,0;Não Informado;16,0;Não utilizado;03/09/2026;17:26:34;;995632416;;Crédito;Vertipay;Visa;;;
 Estoque - LAVAÍ;2# Extra Rego Freitas;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;03/09/2026;17:46:09;;995651564;;Crédito;Vertipay;Mastercard;;;
 Estoque - LAVAÍ;2# Extra Rego Freitas;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;03/09/2026;17:45:59;;995651552;;Crédito;Vertipay;Mastercard;;;
-Estoque - LAVAÍ;11# Extra Barra Funda;;VMPay;VMPay;Secadora;2;16,0;Não Informado;16,0;Não utilizado;03/09/2026;18:08:11;;995673037;;Débito;Vertipay;Visa;;;`;
+Estoque - LAVAÍ;11# Extra Barra Funda;;VMPay;VMPay;Secadora;2;16,0;Não Informado;16,0;Não utilizado;03/09/2026;18:08:11;;995673037;;Débito;Vertipay;Visa;;;
+Estoque - LAVAÍ;2# Extra Rego Freitas;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;03/09/2026;18:23:51;;995687594;;Débito;Vertipay;Visa;;;`;
