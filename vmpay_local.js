@@ -11633,4 +11633,6 @@ Estoque - LAVAÍ;5# Extra Glicério;;VMPay;VMPay;Lavadora;1;14,99;Não Informado
 Estoque - LAVAÍ;26# Condominio Grevilia;;VMPay;VMPay;Secadora;2;16,99;Não Informado;16,99;Não utilizado;07/09/2026;18:03:34;;999106205;;Débito;Vertipay;Visa;;;
 Estoque - LAVAÍ;5# Extra Glicério;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;07/09/2026;17:59:22;;999101863;;Débito;Vertipay;Mastercard;;;
 Estoque - LAVAÍ;7# Dia - Maria Luiza;;VMPay;VMPay;Secadora;2;16,0;Não Informado;16,0;Não utilizado;07/09/2026;18:13:57;;999114947;;Débito;Vertipay;Visa;;;
-Estoque - LAVAÍ;7# Dia - Maria Luiza;;VMPay;VMPay;Lavadora;1;16,0;Não Informado;16,0;Não utilizado;07/09/2026;18:15:46;;999117999;;Débito;Vertipay;Mastercard;;;`;
+Estoque - LAVAÍ;7# Dia - Maria Luiza;;VMPay;VMPay;Lavadora;1;16,0;Não Informado;16,0;Não utilizado;07/09/2026;18:15:46;;999117999;;Débito;Vertipay;Mastercard;;;
+Estoque - LAVAÍ;14# Extra São Bernardo;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;07/09/2026;18:35:33;;999136778;;Débito;Vertipay;Mastercard;;;
+Estoque - LAVAÍ;4# Extra Palmeiras;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;07/09/2026;18:34:55;;999135334;;Débito;Vertipay;Visa;;;`;
