@@ -11891,4 +11891,11 @@ Estoque - LAVAÍ;37# Mini Extra Rio Branco;;VMPay;VMPay;Lavadora;1;14,99;Não In
 Estoque - LAVAÍ;2# Extra Rego Freitas;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;09/09/2026;19:25:11;;1000803672;;Débito;Vertipay;Mastercard;;;
 Estoque - LAVAÍ;13# Extra São Caetano;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;09/09/2026;19:01:19;;1000774596;;Débito;Vertipay;Mastercard;;;
 Estoque - LAVAÍ;4# Extra Palmeiras;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;09/09/2026;18:56:37;;1000770459;;Débito;Vertipay;Mastercard;;;
-Estoque - LAVAÍ;37# Mini Extra Rio Branco;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;09/09/2026;18:47:24;;1000762791;;Débito;Vertipay;Mastercard;;;`;
+Estoque - LAVAÍ;37# Mini Extra Rio Branco;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;09/09/2026;18:47:24;;1000762791;;Débito;Vertipay;Mastercard;;;
+Estoque - LAVAÍ;5# Extra Glicério;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;11/09/2026;14:59:08;;1002257066;;Débito;Vertipay;Mastercard;;;
+Estoque - LAVAÍ;2# Extra Rego Freitas;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;11/09/2026;14:42:45;;1002243587;;Débito;Vertipay;Elo;;;
+Estoque - LAVAÍ;14# Extra São Bernardo;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;11/09/2026;14:40:56;;1002241800;;Débito;Vertipay;Elo;;;
+Estoque - LAVAÍ;13# Extra São Caetano;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;11/09/2026;14:39:15;;1002240719;;Crédito;Vertipay;Mastercard;;;
+Estoque - LAVAÍ;26# Condominio Grevilia;;VMPay;VMPay;Secadora;2;16,99;Não Informado;16,99;Não utilizado;11/09/2026;14:32:57;;1002235688;;Crédito;Vertipay;Visa;;;
+Estoque - LAVAÍ;7# Dia - Maria Luiza;;VMPay;VMPay;Lavadora;1;16,0;Não Informado;16,0;Não utilizado;11/09/2026;14:30:00;;1002233523;;Débito;Vertipay;Elo;;;
+Estoque - LAVAÍ;8# Lopes - Jacu Pessego;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;11/09/2026;14:29:06;;1002232586;;Débito;Vertipay;Mastercard;;;`;
