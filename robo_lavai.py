@@ -2325,25 +2325,63 @@ async def coletar_tudo():
 
             # Clicar em Continuar para gerar o relatorio
             log.info("Clicando em 'Continuar'...")
+            # Aguarda a página carregar totalmente antes de clicar
+            await asyncio.sleep(3)
             # Tentamos clicar em button:has-text('Continuar') ou input[value='Continuar'] como fallback
+            clicou_continuar = False
             try:
-                await page.locator("button:has-text('Continuar'), input[value='Continuar']").click(timeout=10000)
+                await page.locator("button:has-text('Continuar'), input[value='Continuar']").click(timeout=30000)
+                clicou_continuar = True
             except Exception as e:
-                log.warning(f"Erro ao clicar com seletor padrão: {e}. Tentando seletor classe primary...")
-                await page.locator("button.vendpago-btn-primary").click(timeout=10000)
+                log.warning(f"Erro ao clicar com seletor padrão (timeout 30s): {e}. Tentando seletor classe primary...")
+            if not clicou_continuar:
+                try:
+                    await page.locator("button.vendpago-btn-primary").click(timeout=20000)
+                    clicou_continuar = True
+                except Exception as e2:
+                    log.warning(f"Erro ao clicar com seletor primary: {e2}. Tentando via JavaScript...")
+            if not clicou_continuar:
+                try:
+                    await page.evaluate("""() => {
+                        const btns = [...document.querySelectorAll('button, input[type=submit], input[type=button]')];
+                        const btn = btns.find(b => (b.textContent || b.value || '').trim().toLowerCase().includes('continuar'));
+                        if (btn) { btn.click(); return true; }
+                        return false;
+                    }""")
+                    clicou_continuar = True
+                    log.info("Botão Continuar clicado via JavaScript.")
+                except Exception as e3:
+                    log.error(f"Todas as tentativas de clicar em Continuar falharam: {e3}")
+                    raise e3
             await page.wait_for_load_state("networkidle", timeout=TIMEOUT_MS)
-            await asyncio.sleep(4)
+            # Aguarda mais tempo para o portal gerar o relatorio antes do botao Download aparecer
+            await asyncio.sleep(10)
             
             # Clicar em Download
             log.info("Clicando no botao 'Download'...")
             temp_zip = Path(__file__).parent / "temp_vendas.zip"
-            btn_locator = page.locator("a:has-text('Download'), button:has-text('Download'), input[value='Download']").first
-            async with page.expect_download(timeout=20000) as download_info:
-                await btn_locator.click()
+            btn_download_locator = page.locator("a:has-text('Download'), button:has-text('Download'), input[value='Download']")
+            # Aguarda o botão de download aparecer na página
+            try:
+                await btn_download_locator.first.wait_for(state='visible', timeout=30000)
+            except Exception as ew:
+                log.warning(f"Botão Download não ficou visível: {ew}. Tentando mesmo assim...")
+            try:
+                async with page.expect_download(timeout=60000) as download_info:
+                    await btn_download_locator.first.click(timeout=30000)
+            except Exception as ed:
+                log.warning(f"Falha ao clicar em Download com seletor: {ed}. Tentando via JavaScript...")
+                async with page.expect_download(timeout=60000) as download_info:
+                    await page.evaluate("""() => {
+                        const links = [...document.querySelectorAll('a, button, input')];
+                        const btn = links.find(el => (el.textContent || el.value || el.href || '').toLowerCase().includes('download'));
+                        if (btn) btn.click();
+                    }""")
                 
             download = await download_info.value
             await download.save_as(str(temp_zip))
             log.info(f"Relatorio ZIP baixado com sucesso.")
+
 
             # Extrair e processar CSV
             with zipfile.ZipFile(temp_zip, 'r') as zip_ref:
@@ -2662,6 +2700,15 @@ async def coletar_tudo():
         salvar_fonte_local(payblu_rows_dedup,   kpi_dir / "payblu_local.js",   "LAVAI_PAYBLU_DATA")
         salvar_fonte_local(sq_rows_dedup,       kpi_dir / "sqi_local.js",      "LAVAI_SQI_DATA")
         log.info("Arquivos locais da pasta 'kpi' também foram atualizados automaticamente.")
+
+    # Atualizar Cunha Gago v2 automaticamente
+    cunha_dir = root_dir / "cunha gago v2"
+    if cunha_dir.is_dir():
+        cunha_rows = [r for r in portal_rows_dedup if any("40# AHI - Cunha Gago" in str(col) for col in r)]
+        salvar_fonte_local(cunha_rows, cunha_dir / "relatorio_vendas_geral.js", "LAVAI_CSV_DATA")
+        csv_text = CSV_HEADER + "\n" + "\n".join(";".join(str(c) for c in (list(r) + [""]*(22-len(r)))[:22]) for r in cunha_rows)
+        (cunha_dir / "relatorio_vendas_geral.csv").write_text(csv_text, encoding="utf-8")
+        log.info(f"Cunha Gago v2 atualizado com {len(cunha_rows)} transações.")
 
     log.info("Todos os arquivos JS locais atualizados. Nenhum envio para o Google Sheets.")
     

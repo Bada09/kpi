@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard LAVAÍ & AHI — Cunha Gago</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+<script src="relatorio_vendas_geral.js"></script>
+<script src="../vendtef_local.js"></script>
+<style>
+/* ── Reset & Tokens ─────────────────────────────── */
+:root{
+  --bg:#f8f9fc; --bg2:#ffffff; --bg3:#f1f4f9; --bg4:#e8edf5;
+  --cyan:#2563eb; --teal:#0ea5e9; --green:#10b981; --amber:#f59e0b;
+  --red:#ef4444; --purple:#8b5cf6;
+  --color-wash:#2563eb; --color-dry:#0ea5e9; --color-revenue:#10b981;
+  --text:#1e293b; --text-muted:#64748b; --border:#e2e8f0;
+  --font-heading:'Inter',system-ui,sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono','Fira Code',monospace;
+  --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{min-height:100%;background:#f8f9fc}
+body{
+  min-height:100%;
+  background:transparent;
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:14px;
+  /* Gradiente azul nas 4 bordas via box-shadow no body */
+  box-shadow:none;
+}
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  background:
+    /* borda esquerda */
+    linear-gradient(to right,  #1d4ed8, transparent 40px) left/40px 100% no-repeat,
+    /* borda direita */
+    linear-gradient(to left,   #1d4ed8, transparent 40px) right/40px 100% no-repeat,
+    /* borda topo */
+    linear-gradient(to bottom, #1d4ed8, transparent 60px) top/100% 60px no-repeat,
+    /* borda fundo */
+    linear-gradient(to top,    #1d4ed8, transparent 40px) bottom/100% 40px no-repeat;
+  opacity:.18;
+}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:var(--font-body)}
+select,input{font-family:var(--font-body)}
+
+/* ── Loader ─────────────────────────────────────── */
+.loader-overlay{position:fixed;inset:0;background:#f8f9fc;z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  transition:opacity .4s}
+.loader-overlay.hidden{opacity:0;pointer-events:none}
+.loader-spinner{width:44px;height:44px;border:3px solid #e2e8f0;border-top-color:var(--cyan);
+  border-radius:50%;animation:spin .7s linear infinite}
+.loader-text{font-size:13px;color:#64748b}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── App Container ──────────────────────────────── */
+.app-container{max-width:1400px;margin:0 auto;padding:20px 24px 40px;position:relative;z-index:1}
+
+/* ── Header ─────────────────────────────────────── */
+header{background:#fff;border:1px solid var(--border);border-radius:var(--r);
+  padding:20px 24px;margin-bottom:20px;display:flex;align-items:flex-start;
+  justify-content:space-between;gap:20px;flex-wrap:wrap;
+  box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.brand-section{display:flex;align-items:center;gap:14px}
+.brand-logo{width:44px;height:44px;background:linear-gradient(135deg,var(--cyan),var(--teal));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:#fff;flex-shrink:0}
+.brand-info h1{font-size:20px;font-weight:700;color:#1e293b;letter-spacing:-.3px}
+.brand-info p{font-size:12px;color:var(--text-muted);margin-top:3px}
+.brand-links{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.brand-link{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;
+  display:inline-flex;align-items:center;gap:5px;transition:opacity .15s;border:1px solid}
+.brand-link:hover{opacity:.8}
+.brand-link-gray{color:var(--text-muted);border-color:var(--border);background:var(--bg3)}
+.brand-link-blue{color:var(--teal);border-color:rgba(14,165,233,.3);background:rgba(14,165,233,.08)}
+
+/* ── Filter Bar ─────────────────────────────────── */
+.filter-bar{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.filter-group{display:flex;flex-direction:column;gap:4px}
+.filter-group label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:600}
+.filter-group select,.filter-group input[type=date]{
+  background:#fff;border:1px solid var(--border);border-radius:7px;
+  padding:7px 10px;color:var(--text);font-size:12px;outline:none;min-width:130px}
+.filter-group select:focus,.filter-group input[type=date]:focus{border-color:var(--cyan)}
+.quick-ranges{display:flex;gap:6px;align-items:flex-end}
+.btn-range{background:#fff;border:1px solid var(--border);color:var(--text-muted);
+  padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;transition:all .15s}
+.btn-range:hover{color:var(--text);border-color:var(--text-muted)}
+.btn-range.active{color:#fff;background:var(--cyan);border-color:var(--cyan)}
+
+/* ── Section labels ─────────────────────────────── */
+.section-label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);
+  font-weight:700;margin-bottom:10px;padding-left:2px}
+/* ── KPI Grid ───────────────────────────────────── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+.kpi-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);
+  padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi-revenue::before{background:linear-gradient(90deg,var(--green),#34d399)}
+.kpi-projection::before{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+.kpi-wash::before{background:linear-gradient(90deg,var(--cyan),var(--teal))}
+.kpi-dry::before{background:linear-gradient(90deg,var(--teal),var(--purple))}
+.kpi-content h3{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:600;margin-bottom:6px}
+.kpi-value{font-size:24px;font-weight:700;font-family:var(--font-mono);color:#1e293b;letter-spacing:-.5px;line-height:1}
+.kpi-subtext{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);margin-top:6px}
+.kpi-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0}
+.kpi-revenue .kpi-icon{background:rgba(16,185,129,.12);color:var(--green)}
+.kpi-projection .kpi-icon{background:rgba(245,158,11,.12);color:var(--amber)}
+.kpi-wash .kpi-icon{background:rgba(37,99,235,.12);color:var(--cyan)}
+.kpi-dry .kpi-icon{background:rgba(14,165,233,.12);color:var(--teal)}
+
+/* Insight cards (gradient) */
+.kpi-insight{border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;
+  justify-content:space-between;gap:10px;border:1px solid rgba(255,255,255,.06)}
+.kpi-insight .kpi-content h3{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);font-weight:600;margin-bottom:4px}
+.kpi-insight .kpi-value{font-size:19px;font-weight:700;font-family:var(--font-mono);color:#fff}
+.kpi-insight .kpi-subtext{color:rgba(255,255,255,.6);font-size:11px;margin-top:5px}
+.kpi-insight .kpi-icon{background:rgba(255,255,255,.12);color:#fff;width:38px;height:38px;border-radius:9px;font-size:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.ins-busiest-day{background:linear-gradient(135deg,#1e3a8a,#1d4ed8)}
+.ins-quiet-day{background:linear-gradient(135deg,#334155,#475569)}
+.ins-busiest-hr{background:linear-gradient(135deg,#1e3a8a,#0ea5e9)}
+.ins-quiet-hr{background:linear-gradient(135deg,#334155,#475569)}
+.ins-best-dow{background:linear-gradient(135deg,#1e3a8a,#0ea5e9)}
+.ins-worst-dow{background:linear-gradient(135deg,#334155,#475569)}
+
+/* ── Dashboard Grid ─────────────────────────────── */
+.dashboard-grid{display:grid;grid-template-columns:1fr 360px;gap:16px;margin-bottom:16px}
+@media(max-width:1000px){.dashboard-grid{grid-template-columns:1fr}}
+.charts-grid-row{display:grid;grid-template-columns:1fr 400px;gap:16px;margin-bottom:16px}
+@media(max-width:1000px){.charts-grid-row{grid-template-columns:1fr}}
+
+/* ── Card Panel ─────────────────────────────────── */
+.card-panel{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.card-header h2{font-size:14px;font-weight:700;color:#1e293b;display:flex;align-items:center;gap:8px}
+.card-header h2 i{color:var(--text-muted);font-size:13px}
+
+/* ── Reservoir ──────────────────────────────────── */
+.reservoir-container{display:flex;justify-content:space-around;align-items:flex-end;gap:20px;flex:1}
+.reservoir-tank-wrapper{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+.reservoir-title{font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px}
+.tank-cylinder{width:80px;height:200px;border:2px solid var(--border);border-radius:10px;
+  overflow:hidden;background:#f1f4f9;position:relative}
+.tank-liquid{position:absolute;bottom:0;left:0;right:0;transition:height .8s ease;border-radius:0 0 8px 8px}
+.tank-detergente{background:linear-gradient(180deg,rgba(37,99,235,.5),rgba(37,99,235,.9))}
+.tank-amaciante{background:linear-gradient(180deg,rgba(139,92,246,.5),rgba(139,92,246,.9))}
+.tank-wave{position:absolute;top:-6px;left:-50%;width:200%;height:12px;
+  background:rgba(255,255,255,.15);border-radius:50%;animation:wave 2s ease-in-out infinite}
+@keyframes wave{0%,100%{transform:translateX(0) scaleY(1)}50%{transform:translateX(5%) scaleY(1.2)}}
+.tank-volume{font-size:15px;font-weight:700;font-family:var(--font-mono);color:#fff}
+.tank-percent{font-size:11px;color:var(--text-muted)}
+.tank-low-warning{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);
+  color:var(--red);font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;
+  text-align:center;width:100%}
+
+/* ── Perf bars ──────────────────────────────────── */
+.perf-grid{display:flex;flex-direction:column;gap:12px}
+.perf-item{display:flex;flex-direction:column;gap:5px}
+.perf-info{display:flex;justify-content:space-between;align-items:center}
+.perf-title{font-size:11px;color:var(--text-muted)}
+.perf-percent{font-size:13px;font-weight:700;font-family:var(--font-mono);color:#fff}
+.perf-bar-bg{height:6px;background:#e8edf5;border-radius:3px;overflow:hidden}
+.perf-bar-fill{height:100%;border-radius:3px;transition:width .6s ease;width:var(--perf-fill)}
+.perf-item-wash .perf-bar-fill{background:var(--cyan)}
+.perf-item-dry .perf-bar-fill{background:var(--teal)}
+
+/* ── Bandeiras list ─────────────────────────────── */
+.bandeiras-list{display:flex;flex-direction:column;gap:7px;min-width:0}
+.band-item{display:flex;align-items:center;gap:8px;font-size:12px;min-width:0}
+.band-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.band-name{color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.band-val{color:var(--text-muted);font-family:var(--font-mono);font-size:11px;flex-shrink:0}
+
+/* ── Table ──────────────────────────────────────── */
+.table-panel{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.table-header-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.search-wrapper{position:relative;display:flex;align-items:center}
+.search-wrapper i{position:absolute;left:10px;color:var(--text-muted);font-size:12px}
+.search-input{background:#f1f4f9;border:1px solid var(--border);border-radius:7px;
+  padding:8px 10px 8px 30px;color:var(--text);font-size:12px;outline:none;width:220px}
+.search-input:focus{border-color:var(--cyan)}
+.table-responsive{overflow-x:auto;max-height:420px;border-radius:8px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse}
+thead th{position:sticky;top:0;background:#f1f4f9;padding:9px 12px;text-align:left;
+  font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;
+  white-space:nowrap;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+thead th:hover{color:var(--text)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:hover{background:#f8faff}
+tbody tr:last-child{border-bottom:none}
+tbody td{padding:9px 12px;font-size:12px;white-space:nowrap;color:var(--text)}
+.td-mono{font-family:var(--font-mono);color:var(--teal)}
+.badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600}
+.badge-debit{background:rgba(37,99,235,.12);color:var(--cyan)}
+.badge-credit{background:rgba(139,92,246,.12);color:var(--purple)}
+.badge-pix{background:rgba(245,158,11,.12);color:var(--amber)}
+.badge-wash{background:rgba(37,99,235,.1);color:var(--cyan)}
+.badge-dry{background:rgba(14,165,233,.1);color:var(--teal)}
+
+/* ── Pagination ─────────────────────────────────── */
+.pagination-container{display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:8px}
+.pagination-info{font-size:11px;color:var(--text-muted)}
+.pagination-buttons{display:flex;gap:4px}
+.pg-btn{background:#fff;border:1px solid var(--border);border-radius:5px;color:var(--text-muted);
+  min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:12px}
+.pg-btn:hover{color:var(--text)}
+.pg-btn.active{color:#fff;background:var(--cyan);border-color:var(--cyan)}
+.pg-btn:disabled{opacity:.3;cursor:default}
+
+/* ── Export btn ─────────────────────────────────── */
+.btn-export{background:var(--green);color:#fff;border:none;padding:8px 16px;border-radius:7px;
+  font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px}
+.btn-export:hover{opacity:.85}
+
+/* ── ApexCharts overrides ───────────────────────── */
+.apexcharts-tooltip{background:#fff!important;border-color:var(--border)!important;color:var(--text)!important}
+.apexcharts-tooltip-title{background:#f1f4f9!important;border-color:var(--border)!important;color:var(--text)!important}
+.apexcharts-text{fill:#475569!important}
+
+/* ── Scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+
+/* ── Auth Overlay (removido) ────────────────────── */
+</style>
+</head>
+<body>
+
+<div id="loader" class="loader-overlay">
+  <div class="loader-spinner"></div>
+  <div class="loader-text">Carregando painel de controle LAVAí...</div>
+</div>
+
+<div class="app-container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand-section">
+      <div class="brand-logo"><i class="fas fa-soap"></i></div>
+      <div class="brand-info">
+        <h1>Dashboard LAVAí</h1>
+        <p>Unidade Cunha Gago • Dashboard de Operações</p>
+        <div class="brand-links">
+          <span class="brand-link brand-link-blue" id="last-update-badge"><i class="fas fa-clock"></i> Carregando data...</span>
+        </div>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label>Período</label>
+        <select id="filter-month">
+          <option value="all">Tudo</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>De</label>
+        <input type="text" id="date-start" placeholder="dd/mm/aaaa">
+      </div>
+      <div class="filter-group">
+        <label>Até</label>
+        <input type="text" id="date-end" placeholder="dd/mm/aaaa">
+      </div>
+      <div class="quick-ranges">
+        <button class="btn-range active" id="btn-range-all" onclick="setRange('all')">Ver Tudo</button>
+        <button class="btn-range" id="btn-range-15" onclick="setRange(15)">Últimos 15d</button>
+        <button class="btn-range" id="btn-range-7" onclick="setRange(7)">Últimos 7d</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- KPI MAIN -->
+  <div class="section-label">Desempenho Financeiro</div>
+  <div class="kpi-grid" id="kpi-main">
+    <div class="kpi-card kpi-revenue">
+      <div class="kpi-content"><h3>Valor Total Faturado</h3><div class="kpi-value" id="kpi-revenue-val">R$ 0,00</div>
+        <div class="kpi-subtext"><i class="fas fa-arrow-trend-up" style="color:var(--green)"></i><span>Receita real acumulada</span></div></div>
+      <div class="kpi-icon"><i class="fas fa-wallet"></i></div>
+    </div>
+    <div class="kpi-card kpi-projection">
+      <div class="kpi-content"><h3>Projeção de Faturamento</h3><div class="kpi-value" id="kpi-projection-val">R$ 0,00</div>
+        <div class="kpi-subtext" id="kpi-projection-sub"><span>Calculando...</span></div></div>
+      <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+    </div>
+    <div class="kpi-card kpi-wash">
+      <div class="kpi-content"><h3>Ciclos de Lavagem</h3><div class="kpi-value" id="kpi-wash-val">0</div>
+        <div class="kpi-subtext"><i class="fas fa-rotate" style="color:var(--cyan)"></i><span>Produto 7000/7004</span></div></div>
+      <div class="kpi-icon"><i class="fas fa-rotate"></i></div>
+    </div>
+    <div class="kpi-card kpi-dry">
+      <div class="kpi-content"><h3>Ciclos de Secagem</h3><div class="kpi-value" id="kpi-dry-val">0</div>
+        <div class="kpi-subtext"><i class="fas fa-wind" style="color:var(--teal)"></i><span>Outros produtos</span></div></div>
+      <div class="kpi-icon"><i class="fas fa-wind"></i></div>
+    </div>
+  </div>
+
+  <!-- KPI INSIGHTS -->
+  <div class="section-label" style="margin-top:8px">Inteligência Operacional</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">
+    <div class="kpi-insight ins-busiest-day">
+      <div class="kpi-content"><h3>Dia de Maior Movimento</h3><div class="kpi-value" id="kpi-busiest-day-val">--/--</div>
+        <div class="kpi-subtext" id="kpi-busiest-day-sub">Carregando...</div></div>
+      <div class="kpi-icon"><i class="fas fa-fire"></i></div>
+    </div>
+    <div class="kpi-insight ins-quiet-day">
+      <div class="kpi-content"><h3>Dia de Menor Movimento</h3><div class="kpi-value" id="kpi-quietest-day-val">--/--</div>
+        <div class="kpi-subtext" id="kpi-quietest-day-sub">Carregando...</div></div>
+      <div class="kpi-icon"><i class="fas fa-snowflake"></i></div>
+    </div>
+    <div class="kpi-insight ins-busiest-hr">
+      <div class="kpi-content"><h3>Horário de Maior Uso</h3><div class="kpi-value" id="kpi-busiest-hour-val">--:--</div>
+        <div class="kpi-subtext" id="kpi-busiest-hour-sub">Carregando...</div></div>
+      <div class="kpi-icon"><i class="fas fa-bolt"></i></div>
+    </div>
+    <div class="kpi-insight ins-quiet-hr">
+      <div class="kpi-content"><h3>Horário de Menor Uso</h3><div class="kpi-value" id="kpi-quietest-hour-val">--:--</div>
+        <div class="kpi-subtext" id="kpi-quietest-hour-sub">Carregando...</div></div>
+      <div class="kpi-icon"><i class="fas fa-moon"></i></div>
+    </div>
+    <div class="kpi-insight ins-best-dow">
+      <div class="kpi-content"><h3>Melhor Dia da Semana</h3><div class="kpi-value" id="kpi-best-dow-val">--</div>
+        <div class="kpi-subtext" id="kpi-best-dow-sub">Carregando...</div></div>
+      <div class="kpi-icon"><i class="fas fa-crown"></i></div>
+    </div>
+    <div class="kpi-insight ins-worst-dow">
+      <div class="kpi-content"><h3>Pior Dia da Semana</h3><div class="kpi-value" id="kpi-worst-dow-val">--</div>
+        <div class="kpi-subtext" id="kpi-worst-dow-sub">Carregando...</div></div>
+      <div class="kpi-icon"><i class="fas fa-triangle-exclamation"></i></div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 1 -->
+  <div class="dashboard-grid" style="margin-top:16px">
+    <div class="card-panel">
+      <div class="card-header">
+        <h2><i class="fas fa-chart-area"></i> Ciclos por Dia (Lavagem + Secagem)</h2>
+        <span id="average-cycles-badge" style="background:rgba(37,99,235,.1);color:var(--teal);font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px">Média: 0,0 ciclos/dia</span>
+      </div>
+      <div id="chart-cycles-daily"></div>
+    </div>
+    <div class="card-panel">
+      <div class="card-header">
+        <h2><i class="fas fa-flask"></i> Reservatórios de Insumos</h2>
+        <span style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase">Cap. 20L</span>
+      </div>
+      <div class="reservoir-container">
+        <div class="reservoir-tank-wrapper">
+          <span class="reservoir-title">Detergente</span>
+          <div class="tank-cylinder"><div class="tank-liquid tank-detergente" id="det-liquid"><div class="tank-wave"></div></div></div>
+          <div class="tank-volume" id="det-vol">20,00 L</div>
+          <div class="tank-percent" id="det-pct">100%</div>
+          <div class="tank-low-warning" id="det-warning" style="display:none">⚠ Nível Baixo</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px" id="det-info">Consumido: 0 L</div>
+        </div>
+        <div class="reservoir-tank-wrapper">
+          <span class="reservoir-title">Amaciante</span>
+          <div class="tank-cylinder"><div class="tank-liquid tank-amaciante" id="ama-liquid"><div class="tank-wave"></div></div></div>
+          <div class="tank-volume" id="ama-vol">20,00 L</div>
+          <div class="tank-percent" id="ama-pct">100%</div>
+          <div class="tank-low-warning" id="ama-warning" style="display:none">⚠ Nível Baixo</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px" id="ama-info">Consumido: 0 L</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 2 -->
+  <div style="margin-bottom:16px">
+    <div class="card-panel">
+      <div class="card-header">
+        <h2><i class="fas fa-clock"></i> Horários de Pico (Peak Times)</h2>
+        <span style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase">Distribuição por Hora</span>
+      </div>
+      <div id="chart-peak-times"></div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-panel">
+    <div class="table-header-bar">
+      <div class="card-header" style="margin-bottom:0;padding:0">
+        <h2 style="color:#1e293b"><i class="fas fa-list-check"></i> Histórico de Ciclos e Transações</h2>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn-export" onclick="exportCSV()"><i class="fas fa-file-csv"></i> Exportar CSV</button>
+        <div class="search-wrapper">
+          <i class="fas fa-search"></i>
+          <input type="text" id="table-search" class="search-input" placeholder="Buscar transação..." oninput="doSearch(this.value)">
+        </div>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortTable(0)">Data e Hora <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(1)">Máquina / Op. <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(2)">Pagamento <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(3)">Bandeira <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(4)">Valor <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(5)">Autorização <i class="fas fa-sort"></i></th>
+          </tr>
+        </thead>
+        <tbody id="tbody-transactions"></tbody>
+      </table>
+    </div>
+    <div class="pagination-container">
+      <div class="pagination-info" id="pg-info">0 transações</div>
+      <div class="pagination-buttons" id="pg-btns"></div>
+    </div>
+  </div>
+
+</div><!-- /app-container -->
+
+<script>
+// ══════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════
+// CONFIG — substitua a URL abaixo após criar o Apps Script
+// ══════════════════════════════════════════════════════
+const CSV_URL_ORIGINAL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQ6-Y8FO-Zspn95dDGPARIHVexMJ5foVWU4vsIuq_OdpAr0k6JY2OwrS2VNfygSkJ6dT1aXaPx6uuq/pub?gid=40793617&single=true&output=csv';
+
+// ► Cole aqui a URL do Apps Script após publicar (instrução abaixo)
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwzGx-piTEHw8GdINEU4fFSspAWQU5kh83OrABUsGDBZrd58mOnalEOQxIQNHhs_5GL/exec';
+
+const MACHINE_NAME = '40# AHI - Cunha Gago';
+
+// Insumos: ml consumido por ciclo de lavagem
+const DET_ML_PER_WASH = 30;
+const AMA_ML_PER_WASH = 20;
+const TANK_CAPACITY_L = 20;
+
+// 7727 = Lavadora ("7727 - LAVA - 1") | 17381 = Secadora ("17381 - SECA - 1")
+// Varre todas as colunas da linha para encontrar o identificador
+const WASH_ID = '7727';
+const DRY_ID  = '17381';
+
+function isMaqWash(r){
+  return r.some(v => (v||'').includes(WASH_ID));
+}
+function isMaqDry(r){
+  return r.some(v => (v||'').includes(DRY_ID));
+}
+
+let isUSDate = false;
+let fpStart = null, fpEnd = null;
+
+function detectDateFormat(rows) {
+  isUSDate = false;
+}
+
+function parseInputDate(s, isEnd) {
+  if (!s) return null;
+  let year, month, day;
+  if (s.includes('-')) {
+    const parts = s.split('-');
+    year = parseInt(parts[0], 10);
+    month = parseInt(parts[1], 10) - 1;
+    day = parseInt(parts[2], 10);
+  } else {
+    const parts = s.split('/');
+    if (parts.length === 3) {
+      year = parseInt(parts[2], 10);
+      month = parseInt(parts[1], 10) - 1;
+      day = parseInt(parts[0], 10);
+    } else {
+      return null;
+    }
+  }
+  if (isEnd) {
+    return new Date(year, month, day, 23, 59, 59);
+  } else {
+    return new Date(year, month, day, 0, 0, 0);
+  }
+}
+
+// Formata data do formato da planilha → DD/MM/YYYY
+function fmtDate(s){
+  if(!s) return '–';
+  const p=s.split('/');
+  if(p.length===3) {
+    if (isUSDate) {
+      return `${String(p[1]).padStart(2,'0')}/${String(p[0]).padStart(2,'0')}/${p[2]}`;
+    } else {
+      return `${String(p[0]).padStart(2,'0')}/${String(p[1]).padStart(2,'0')}/${p[2]}`;
+    }
+  }
+  return s;
+}
+
+// col indices
+const C = {maquina:1,pagamento:4,produto:5,total:9,data:11,hora:12,tipo:16,rede:17,bandeira:18,auth:15,nlogico:13,matricula:21,nsu:14};
+
+function desduplicarRows(rows) {
+  const seen = new Set();
+  const merged = [];
+  rows.forEach(r => {
+    if (r.length < 22) return;
+    const nsu = (r[C.nsu] || '').trim();
+    const auth = (r[C.auth] || '').trim();
+    const maq = (r[C.maquina] || '').trim();
+    const dt = (r[C.data] || '').trim();
+    const hr = (r[C.hora] || '').trim();
+    const val = (r[C.total] || '').trim();
+    
+    let key;
+    if (nsu && nsu !== 'Não Informado' && nsu !== '–') {
+      key = 'nsu:' + nsu;
+    } else if (auth && auth !== '–') {
+      key = 'auth:' + auth;
+    } else {
+      key = 'dt:' + maq + '|' + dt + '|' + hr + '|' + val;
+    }
+    
+    if (!seen.has(key)) {
+      seen.add(key);
+      merged.push(r);
+    }
+  });
+  return merged;
+}
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let allRows=[], filtered=[], tableRows=[];
+let tableSearch='', tablePage=0; const TABLE_PS=50;
+let tableSortCol=-1, tableSortDir=1;
+let chartCycles=null, chartPeak=null, chartPayment=null;
+let dtFrom=null, dtTo=null;
+
+const DOW = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const BAND_COLORS = ['#2563eb','#0ea5e9','#8b5cf6','#f59e0b','#10b981','#ef4444','#f97316'];
+
+// ══════════════════════════════════════════════════════
+// CSV FETCH & PARSE
+// ══════════════════════════════════════════════════════
+function parseCSV(txt){
+  const lines=txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split('\n');
+  const firstLine = lines[0] || '';
+  const delimiter = firstLine.includes(';') ? ';' : ',';
+  function split(l){
+    const cells=[];let cur='',inQ=false;
+    for(let i=0;i<l.length;i++){
+      const c=l[i];
+      if(c==='"'){inQ=!inQ;continue;}
+      if(c===delimiter&&!inQ){cells.push(cur.trim());cur='';continue;}
+      cur+=c;
+    }
+    cells.push(cur.trim());return cells;
+  }
+  return lines.slice(1).filter(l=>l.trim()).map(split);
+}
+
+function toNum(s){if(!s)return 0;return parseFloat(s.replace(/[R$\s.]/g,'').replace(',','.'))||0;}
+
+function parseDate(s){
+  if(!s)return null;
+  const p=s.split('/');
+  if(p.length===3) {
+    if (isUSDate) {
+      return new Date(+p[2],+p[0]-1,+p[1]);
+    } else {
+      return new Date(+p[2],+p[1]-1,+p[0]);
+    }
+  }
+  return null;
+}
+
+function fmtBRL(n){return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+function fmtN(n,d=2){return n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});}
+
+async function fetchWithFallback(){
+  const enc = encodeURIComponent(CSV_URL_ORIGINAL);
+
+  // 1º — Apps Script próprio (mais confiável, sem CORS)
+  if(APPS_SCRIPT_URL){
+    try{
+      const r=await fetch(APPS_SCRIPT_URL+'?gid=40793617&nc='+Date.now());
+      if(r.ok){ const t=await r.text(); if(t.includes(';') || t.includes(',')) return t; }
+    }catch(e){}
+  }
+
+  // 2º — allorigins
+  try{
+    const r=await fetch(`https://api.allorigins.win/raw?url=${enc}&nc=${Date.now()}`);
+    if(r.ok){ const t=await r.text(); if(t.includes(';') || t.includes(',')) return t; }
+  }catch(e){}
+
+  // 3º — corsproxy.io
+  try{
+    const r=await fetch(`https://corsproxy.io/?${enc}`);
+    if(r.ok){ const t=await r.text(); if(t.includes(';') || t.includes(',')) return t; }
+  }catch(e){}
+
+  // 4º — direto (funciona se a planilha for pública)
+  try{
+    const r=await fetch(CSV_URL_ORIGINAL+'&nc='+Date.now());
+    if(r.ok){ const t=await r.text(); if(t.includes(';') || t.includes(',')) return t; }
+  }catch(e){}
+
+  throw new Error('Não foi possível carregar os dados. Configure o Apps Script para garantir o acesso.');
+}
+
+function ajustarFusoHorario(rows) {
+  // Desativado — dados do VendTEF já chegam no horário correto local de São Paulo (UTC-3)
+}
+
+function updateLastUpdateBadge(rows) {
+  const badge = document.getElementById('last-update-badge');
+  if (!badge || !rows || rows.length === 0) return;
+  let maxDt = null;
+  rows.forEach(r => {
+    const dStr = r[C.data];
+    const hStr = r[C.hora] || '00:00:00';
+    const d = parseDate(dStr);
+    if (d) {
+      const hp = hStr.split(':');
+      const hh = parseInt(hp[0] || '0', 10);
+      const mm = parseInt(hp[1] || '0', 10);
+      const ss = parseInt(hp[2] || '0', 10);
+      const fullDate = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hh, mm, ss);
+      if (!maxDt || fullDate > maxDt) maxDt = fullDate;
+    }
+  });
+  if (maxDt) {
+    const pad = n => String(n).padStart(2, '0');
+    badge.innerHTML = `<i class="fas fa-clock"></i> Atualizado em: ${pad(maxDt.getDate())}/${pad(maxDt.getMonth()+1)}/${maxDt.getFullYear()} às ${pad(maxDt.getHours())}:${pad(maxDt.getMinutes())}`;
+  }
+}
+
+async function loadData(){
+  let loaded = false;
+
+  // 0º — Tenta carregar do script local carregado via tag <script> (sem bloqueio de CORS na file://)
+  const localData = window.LAVAI_CSV_DATA || window.LAVAI_VENDTEF_DATA;
+  if (localData) {
+    try {
+      const rows = parseCSV(localData);
+      allRows = desduplicarRows(rows.filter(r => r.length > 10 && r[C.maquina] === MACHINE_NAME));
+      ajustarFusoHorario(allRows);
+      detectDateFormat(allRows);
+      buildMonthSelect();
+      applyFilter();
+      updateLastUpdateBadge(allRows);
+      document.getElementById('loader').classList.add('hidden');
+      loaded = true;
+      console.log("Dados carregados com sucesso do script local.");
+    } catch(err) {
+      console.error("Erro ao carregar dados do script local:", err);
+    }
+  }
+
+  // 1º — Tenta carregar do arquivo local relatorio_vendas_geral.csv (via HTTP/Servidor local)
+  if (!loaded) {
+    try {
+      const r = await fetch('relatorio_vendas_geral.csv?nc=' + Date.now());
+      if (r.ok) {
+        const txt = await r.text();
+        const rows = parseCSV(txt);
+        allRows = desduplicarRows(rows.filter(r => r.length > 10 && r[C.maquina] === MACHINE_NAME));
+        ajustarFusoHorario(allRows);
+        detectDateFormat(allRows);
+        buildMonthSelect();
+        applyFilter();
+        updateLastUpdateBadge(allRows);
+        document.getElementById('loader').classList.add('hidden');
+        loaded = true;
+      } else {
+        throw new Error("Arquivo local não encontrado ou inacessível (HTTP " + r.status + ")");
+      }
+    } catch(localErr) {
+      console.warn("CSV local não pôde ser carregado. Tentando nuvem via Apps Script...", localErr);
+    }
+  }
+
+  // 2º — Fallback se o local falhou: carrega da nuvem via Apps Script (mais lento)
+  if (!loaded) {
+    try{
+      const txt=await fetchWithFallback();
+      const rows=parseCSV(txt);
+      allRows=desduplicarRows(rows.filter(r=>r.length>10 && r[C.maquina]===MACHINE_NAME));
+      ajustarFusoHorario(allRows);
+      detectDateFormat(allRows);
+      buildMonthSelect();
+      applyFilter();
+      updateLastUpdateBadge(allRows);
+      document.getElementById('loader').classList.add('hidden');
+    }catch(e){
+      document.getElementById('loader').innerHTML=`
+        <div style="max-width:420px;text-align:center;padding:40px 20px">
+          <i class="fas fa-triangle-exclamation" style="font-size:40px;color:#ef4444;margin-bottom:16px;display:block"></i>
+          <strong style="color:#1e293b;font-size:15px">Erro ao carregar dados</strong>
+          <p style="color:#64748b;font-size:13px;margin-top:10px;line-height:1.7">${e.message}</p>
+          <div style="background:#f1f4f9;border-radius:10px;padding:16px;margin-top:16px;text-align:left;font-size:12px;color:#475569;line-height:1.8">
+            <strong>Para resolver, crie o Apps Script:</strong><br>
+            1. Acesse <a href="https://script.google.com" target="_blank" style="color:#2563eb">script.google.com</a><br>
+            2. Novo projeto → cole o código do arquivo <code>google_script.gs</code><br>
+            3. Implantar → App da Web → Qualquer pessoa<br>
+            4. Cole a URL no campo <code>APPS_SCRIPT_URL</code> do HTML
+          </div>
+        </div>`;
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// MONTH SELECT
+// ══════════════════════════════════════════════════════
+function buildMonthSelect(){
+  const months=new Set();
+  allRows.forEach(r=>{
+    const d=parseDate(r[C.data]);
+    if(d) months.add(`${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`);
+  });
+  const sel=document.getElementById('filter-month');
+  sel.innerHTML='<option value="all">Todos os meses</option>';
+  [...months].sort().reverse().forEach(m=>{
+    const [mo,yr]=m.split('-');
+    const lbl=new Date(+yr,+mo-1,1).toLocaleString('pt-BR',{month:'long',year:'numeric'});
+    const opt=document.createElement('option');
+    opt.value=m; opt.textContent=lbl.charAt(0).toUpperCase()+lbl.slice(1);
+    sel.appendChild(opt);
+  });
+  sel.onchange=()=>{ clearDateInputs(); applyFilter(); };
+}
+
+function clearDateInputs(){
+  if (fpStart) fpStart.clear(false);
+  else document.getElementById('date-start').value='';
+  
+  if (fpEnd) fpEnd.clear(false);
+  else document.getElementById('date-end').value='';
+  
+  dtFrom=null; dtTo=null;
+}
+
+// ══════════════════════════════════════════════════════
+// RANGE BUTTONS
+// ══════════════════════════════════════════════════════
+function setRange(r){
+  document.querySelectorAll('.btn-range').forEach(b=>b.classList.remove('active'));
+  document.getElementById('btn-range-'+r).classList.add('active');
+  clearDateInputs();
+  document.getElementById('filter-month').value='all';
+  if(r==='all'){ dtFrom=null; dtTo=null; }
+  else{
+    dtTo=new Date(); dtFrom=new Date();
+    dtFrom.setDate(dtFrom.getDate()-r);
+    
+    if (fpStart) fpStart.setDate(dtFrom, false);
+    else document.getElementById('date-start').value=dtFrom.toISOString().slice(0,10);
+    
+    if (fpEnd) fpEnd.setDate(dtTo, false);
+    else document.getElementById('date-end').value=dtTo.toISOString().slice(0,10);
+    
+    dtFrom = new Date(dtFrom.getFullYear(), dtFrom.getMonth(), dtFrom.getDate(), 0, 0, 0);
+    dtTo = new Date(dtTo.getFullYear(), dtTo.getMonth(), dtTo.getDate(), 23, 59, 59);
+  }
+  applyFilter();
+}
+
+// date inputs
+document.getElementById('date-start').onchange=
+document.getElementById('date-end').onchange=function(){
+  document.querySelectorAll('.btn-range').forEach(b=>b.classList.remove('active'));
+  const fv=document.getElementById('date-start').value;
+  const tv=document.getElementById('date-end').value;
+  dtFrom=parseInputDate(fv, false);
+  dtTo  =parseInputDate(tv, true);
+  document.getElementById('filter-month').value='all';
+  applyFilter();
+};
+
+// ══════════════════════════════════════════════════════
+// FILTER
+// ══════════════════════════════════════════════════════
+function applyFilter(){
+  const mo=document.getElementById('filter-month').value;
+  filtered=allRows.filter(r=>{
+    const d=parseDate(r[C.data]);
+    if(!d) return false;
+    if(mo!=='all'){
+      const [mm,yy]=mo.split('-');
+      if(d.getMonth()+1!==+mm || d.getFullYear()!==+yy) return false;
+    }
+    if(dtFrom && d<dtFrom) return false;
+    if(dtTo   && d>dtTo)   return false;
+    return true;
+  });
+  renderAll();
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER ALL
+// ══════════════════════════════════════════════════════
+function renderAll(){
+  renderKPIs();
+  renderInsights();
+  renderChartCycles();
+  renderChartPeak();
+  renderChartPayment();
+  renderReservoirs();
+  renderOccupancy();
+  renderTable();
+}
+
+// Retorna o número de dias no período filtrado atual
+function getFilteredDaysCount() {
+  const fv = document.getElementById('date-start').value;
+  const tv = document.getElementById('date-end').value;
+  const mo = document.getElementById('filter-month').value;
+
+  let d1 = null;
+  let d2 = null;
+
+  if (fv) {
+    d1 = parseInputDate(fv, false);
+  }
+  if (tv) {
+    d2 = parseInputDate(tv, true);
+  }
+
+  if (!fv && !tv && mo !== 'all') {
+    const [mm, yy] = mo.split('-');
+    const month = parseInt(mm, 10);
+    const year = parseInt(yy, 10);
+    d1 = new Date(year, month - 1, 1);
+    const now = new Date();
+    if (month === (now.getMonth() + 1) && year === now.getFullYear()) {
+      d2 = now;
+    } else {
+      d2 = new Date(year, month, 0);
+    }
+  }
+
+  // Fallback to min/max dates from filtered data if still null
+  const dates = filtered.map(r => parseDate(r[C.data])).filter(d => d !== null);
+  if (dates.length === 0) return 1;
+
+  if (!d1) {
+    d1 = new Date(Math.min(...dates));
+  }
+  if (!d2) {
+    d2 = new Date(Math.max(...dates));
+  }
+
+  // Reset hours to get exact difference in days
+  const dateStart = new Date(d1.getFullYear(), d1.getMonth(), d1.getDate());
+  const dateEnd = new Date(d2.getFullYear(), d2.getMonth(), d2.getDate());
+  const diff = dateEnd - dateStart;
+  return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1);
+}
+
+// ══════════════════════════════════════════════════════
+// KPIs
+// ══════════════════════════════════════════════════════
+function renderKPIs(){
+  const total=filtered.reduce((s,r)=>s+toNum(r[C.total]),0);
+  const washCycles=filtered.filter(r=>isMaqWash(r)).length;
+  const dryCycles =filtered.filter(r=>isMaqDry(r)).length;
+
+  document.getElementById('kpi-revenue-val').textContent=fmtBRL(total);
+  document.getElementById('kpi-wash-val').textContent=washCycles.toLocaleString('pt-BR');
+  document.getElementById('kpi-dry-val').textContent=dryCycles.toLocaleString('pt-BR');
+
+  // Projection: based on average daily revenue × days remaining in month
+  const daysCount = getFilteredDaysCount();
+  const avgDay = daysCount ? total / daysCount : 0;
+  const now = new Date();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const dayOfMonth = now.getDate();
+  const remaining = daysInMonth - dayOfMonth;
+  const projection = total + avgDay * remaining;
+  document.getElementById('kpi-projection-val').textContent=fmtBRL(projection);
+  document.getElementById('kpi-projection-sub').innerHTML=`<span>Média R$ ${fmtN(avgDay)}/dia · ${remaining} dias restantes</span>`;
+}
+
+// ══════════════════════════════════════════════════════
+// INSIGHTS
+// ══════════════════════════════════════════════════════
+function renderInsights(){
+  // by day total
+  const byDay={};
+  filtered.forEach(r=>{
+    const d=r[C.data]; if(!d) return;
+    if(!byDay[d]) byDay[d]={total:0,count:0,date:parseDate(d)};
+    byDay[d].total+=toNum(r[C.total]); byDay[d].count++;
+  });
+  const dayArr=Object.entries(byDay);
+  if(!dayArr.length) return;
+  dayArr.sort((a,b)=>b[1].total-a[1].total);
+  const busiest=dayArr[0], quietest=dayArr[dayArr.length-1];
+  const bDate=busiest[1].date, qDate=quietest[1].date;
+  document.getElementById('kpi-busiest-day-val').textContent=bDate?`${String(bDate.getDate()).padStart(2,'0')}/${String(bDate.getMonth()+1).padStart(2,'0')}`:'--';
+  document.getElementById('kpi-busiest-day-sub').textContent=`${fmtBRL(busiest[1].total)} · ${busiest[1].count} transações`;
+  document.getElementById('kpi-quietest-day-val').textContent=qDate?`${String(qDate.getDate()).padStart(2,'0')}/${String(qDate.getMonth()+1).padStart(2,'0')}`:'--';
+  document.getElementById('kpi-quietest-day-sub').textContent=`${fmtBRL(quietest[1].total)} · ${quietest[1].count} transações`;
+
+  // by hour
+  const byHour=Array(24).fill(0);
+  filtered.forEach(r=>{ const h=r[C.hora]; if(h){ const hr=parseInt(h.split(':')[0]); if(!isNaN(hr)) byHour[hr]++; }});
+  const maxHr=Math.max(...byHour), minHr=Math.min(...byHour.filter(v=>v>0));
+  const bHr=byHour.indexOf(maxHr);
+  const qHr=byHour.findIndex(v=>v===minHr);
+  document.getElementById('kpi-busiest-hour-val').textContent=`${String(bHr).padStart(2,'0')}h`;
+  document.getElementById('kpi-busiest-hour-sub').textContent=`${maxHr} transações neste horário`;
+  document.getElementById('kpi-quietest-hour-val').textContent=`${String(qHr).padStart(2,'0')}h`;
+  document.getElementById('kpi-quietest-hour-sub').textContent=`${minHr} transações neste horário`;
+
+  // by day of week (average)
+  const dowTotal=Array(7).fill(0), dowCount=Array(7).fill(0);
+  Object.values(byDay).forEach(d=>{ const dow=d.date.getDay(); dowTotal[dow]+=d.total; dowCount[dow]++; });
+  const dowAvg=dowTotal.map((t,i)=>dowCount[i]?t/dowCount[i]:0);
+  const bestDow=dowAvg.indexOf(Math.max(...dowAvg));
+  const worstDow=dowAvg.indexOf(Math.min(...dowAvg.filter(v=>v>0)));
+  document.getElementById('kpi-best-dow-val').textContent=DOW[bestDow];
+  document.getElementById('kpi-best-dow-sub').textContent=`Média ${fmtBRL(dowAvg[bestDow])}`;
+  document.getElementById('kpi-worst-dow-val').textContent=DOW[worstDow];
+  document.getElementById('kpi-worst-dow-sub').textContent=`Média ${fmtBRL(dowAvg[worstDow])}`;
+}
+
+// ══════════════════════════════════════════════════════
+// CHART: CYCLES DAILY
+// ══════════════════════════════════════════════════════
+function renderChartCycles(){
+  const byDay={};
+  filtered.forEach(r=>{
+    const d=r[C.data]; if(!d) return;
+    if(!byDay[d]) byDay[d]={wash:0,dry:0};
+    if(isMaqWash(r)) byDay[d].wash++;
+    else byDay[d].dry++;
+  });
+  const days=Object.keys(byDay).sort((a,b)=>{const da=parseDate(a),db=parseDate(b);return da-db;});
+  const washData=days.map(d=>byDay[d].wash);
+  const dryData =days.map(d=>byDay[d].dry);
+  const labels  =days.map(d=>{const p=parseDate(d);return p?`${String(p.getDate()).padStart(2,'0')}/${String(p.getMonth()+1).padStart(2,'0')}`:d;});
+  const total=washData.reduce((s,v)=>s+v,0)+dryData.reduce((s,v)=>s+v,0);
+  const daysCount=getFilteredDaysCount();
+  const avg=((total / 2)/daysCount).toFixed(1);
+  document.getElementById('average-cycles-badge').textContent=`Média: ${avg} ciclos/dia`;
+
+  const opts={
+    series:[{name:'Lavagem',data:washData},{name:'Secagem',data:dryData}],
+    theme:{mode:'light'},
+    chart:{type:'bar',stacked:true,height:260,toolbar:{show:false},background:'transparent',
+      animations:{enabled:true,speed:600}},
+    colors:['#2563eb','#0ea5e9'],
+    xaxis:{categories:labels,labels:{style:{colors:'#64748b',fontSize:'11px'},rotate:-45},
+      axisBorder:{color:'#e2e8f0'},axisTicks:{color:'#e2e8f0'}},
+    yaxis:{labels:{style:{colors:'#64748b',fontSize:'11px'}}},
+    grid:{borderColor:'#e8edf5',strokeDashArray:4},
+    legend:{labels:{colors:'#475569'},fontSize:'12px'},
+    plotOptions:{bar:{borderRadius:3,columnWidth:'65%'}},
+    tooltip:{theme:'dark'},
+    dataLabels:{enabled:false},
+    fill:{opacity:1},
+    theme:{mode:'dark'},
+  };
+
+  if(chartCycles){ chartCycles.updateOptions(opts); }
+  else{ chartCycles=new ApexCharts(document.getElementById('chart-cycles-daily'),opts); chartCycles.render(); }
+}
+
+// ══════════════════════════════════════════════════════
+// CHART: PEAK TIMES
+// ══════════════════════════════════════════════════════
+function renderChartPeak(){
+  const byHour=Array(24).fill(0);
+  filtered.forEach(r=>{ const h=r[C.hora]; if(h){ const hr=parseInt(h.split(':')[0]); if(!isNaN(hr)) byHour[hr]++; }});
+  const labels=Array.from({length:24},(_,i)=>`${String(i).padStart(2,'0')}h`);
+
+  const opts={
+    series:[{name:'Transações',data:byHour}],
+    chart:{type:'bar',height:240,toolbar:{show:false},background:'transparent'},
+    colors:['#0ea5e9'],
+    xaxis:{categories:labels,labels:{style:{colors:'#64748b',fontSize:'10px'}}},
+    yaxis:{labels:{style:{colors:'#64748b',fontSize:'11px'}}},
+    grid:{borderColor:'#e8edf5',strokeDashArray:4},
+    plotOptions:{bar:{borderRadius:3,columnWidth:'70%',
+      colors:{ranges:[{from:Math.max(...byHour),to:Math.max(...byHour),color:'#2563eb'}]}}},
+    dataLabels:{enabled:false},
+    tooltip:{theme:'light'},
+    theme:{mode:'light'},
+  };
+
+  if(chartPeak){ chartPeak.updateOptions(opts); }
+  else{ chartPeak=new ApexCharts(document.getElementById('chart-peak-times'),opts); chartPeak.render(); }
+}
+
+// ══════════════════════════════════════════════════════
+// CHART: PAYMENT METHODS
+// ══════════════════════════════════════════════════════
+function renderChartPayment(){
+  const byTipo={};
+  filtered.forEach(r=>{ const t=r[C.tipo]||'Outro'; byTipo[t]=(byTipo[t]||0)+1; });
+  const labels=Object.keys(byTipo), vals=Object.values(byTipo);
+  const COLORS_TIPO={Debit:'#2563eb',Credit:'#8b5cf6',Pix:'#f59e0b',Outro:'#64748b'};
+  const colors=labels.map(l=>COLORS_TIPO[l]||'#64748b');
+
+  const opts={
+    series:vals,labels,
+    chart:{type:'donut',height:200,background:'transparent',toolbar:{show:false}},
+    colors,
+    legend:{show:false},
+    dataLabels:{enabled:false},
+    plotOptions:{pie:{donut:{size:'65%',labels:{show:true,total:{show:true,label:'Total',color:'#1e293b',
+      formatter:()=>filtered.length.toLocaleString('pt-BR')}}}}},
+    tooltip:{theme:'light'},
+    theme:{mode:'light'},
+  };
+
+  const chartEl = document.getElementById('chart-payment-methods');
+  if (chartEl) {
+    if(chartPayment){ chartPayment.updateOptions(opts); }
+    else{ chartPayment=new ApexCharts(chartEl,opts); chartPayment.render(); }
+  }
+
+  // Bandeiras list
+  const bandEl = document.getElementById('bandeiras-list');
+  if (bandEl) {
+    const byBand={};
+    filtered.forEach(r=>{ const b=r[C.bandeira]||(r[C.tipo]==='Pix'?'PIX':'Outro'); byBand[b]=(byBand[b]||0)+1; });
+    const bandArr=Object.entries(byBand).sort((a,b)=>b[1]-a[1]);
+    const tot=bandArr.reduce((s,x)=>s+x[1],0)||1;
+    bandEl.innerHTML=bandArr.map((b,i)=>`
+      <div class="band-item">
+        <div class="band-dot" style="background:${BAND_COLORS[i]||'#334155'}"></div>
+        <span class="band-name">${b[0]}</span>
+        <span class="band-val">${b[1]} (${(b[1]/tot*100).toFixed(0)}%)</span>
+      </div>`).join('');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// RESERVOIRS
+// ══════════════════════════════════════════════════════
+function renderReservoirs(){
+  // O consumo dos reservatórios não reage a filtro de datas; é calculado pelas utilizações totais já realizadas
+  const washCycles=allRows.filter(r=>isMaqWash(r)).length;
+  const detConsumed=washCycles*DET_ML_PER_WASH/1000;
+  const amaConsumed=washCycles*AMA_ML_PER_WASH/1000;
+  const detLeft=Math.max(0,TANK_CAPACITY_L-detConsumed);
+  const amaLeft=Math.max(0,TANK_CAPACITY_L-amaConsumed);
+  const detPct=Math.max(0,(detLeft/TANK_CAPACITY_L)*100);
+  const amaPct=Math.max(0,(amaLeft/TANK_CAPACITY_L)*100);
+
+  document.getElementById('det-liquid').style.height=detPct+'%';
+  document.getElementById('det-vol').textContent=fmtN(detLeft)+' L';
+  document.getElementById('det-pct').textContent=fmtN(detPct,1)+'%';
+  document.getElementById('det-info').textContent=`Consumido: ${fmtN(detConsumed)} L`;
+  const dw=document.getElementById('det-warning');
+  dw.style.display=detPct<20?'block':'none';
+
+  document.getElementById('ama-liquid').style.height=amaPct+'%';
+  document.getElementById('ama-vol').textContent=fmtN(amaLeft)+' L';
+  document.getElementById('ama-pct').textContent=fmtN(amaPct,1)+'%';
+  document.getElementById('ama-info').textContent=`Consumido: ${fmtN(amaConsumed)} L`;
+  const aw=document.getElementById('ama-warning');
+  aw.style.display=amaPct<20?'block':'none';
+}
+
+// ══════════════════════════════════════════════════════
+// OCCUPANCY
+// ══════════════════════════════════════════════════════
+function renderOccupancy(){
+  const byDay={};
+  filtered.forEach(r=>{
+    const d=r[C.data]; if(!d) return;
+    if(!byDay[d]) byDay[d]={wash:0,dry:0};
+    if(isMaqWash(r)) byDay[d].wash++;
+    else byDay[d].dry++;
+  });
+  const days=Object.keys(byDay);
+  if(!days.length) return;
+  const daysCount=getFilteredDaysCount();
+  const avgWash=days.reduce((s,d)=>s+byDay[d].wash,0)/daysCount;
+  const avgDry =days.reduce((s,d)=>s+byDay[d].dry,0)/daysCount;
+  const MAX_WASH=16, MAX_DRY=14;
+  const wPct=Math.min(100,(avgWash/MAX_WASH)*100);
+  const dPct=Math.min(100,(avgDry/MAX_DRY)*100);
+
+  const occWashPct = document.getElementById('occ-wash-pct');
+  const occWashFill = document.getElementById('occ-wash-fill');
+  const occWashDetail = document.getElementById('occ-wash-detail');
+  const occDryPct = document.getElementById('occ-dry-pct');
+  const occDryFill = document.getElementById('occ-dry-fill');
+  const occDryDetail = document.getElementById('occ-dry-detail');
+
+  if(occWashPct) occWashPct.textContent=fmtN(wPct,1)+'%';
+  if(occWashFill) occWashFill.style.width=wPct+'%';
+  if(occWashDetail) occWashDetail.textContent=`Média ${fmtN(avgWash,1)} lavagens/dia`;
+  if(occDryPct) occDryPct.textContent=fmtN(dPct,1)+'%';
+  if(occDryFill) occDryFill.style.width=dPct+'%';
+  if(occDryDetail) occDryDetail.textContent=`Média ${fmtN(avgDry,1)} secagens/dia`;
+}
+
+// ══════════════════════════════════════════════════════
+// TABLE
+// ══════════════════════════════════════════════════════
+function renderTable(){
+  tableRows=[...filtered];
+  if(tableSearch){
+    const q=tableSearch.toLowerCase();
+    tableRows=tableRows.filter(r=>r.some(c=>(c||'').toLowerCase().includes(q)));
+  }
+  if(tableSortCol>=0){
+    const idxMap=[C.data,C.produto,C.tipo,C.bandeira,C.total,C.auth];
+    const ci=idxMap[tableSortCol];
+    tableRows.sort((a,b)=>{
+      const va=a[ci]||'',vb=b[ci]||'';
+      if(tableSortCol===4) return tableSortDir*(toNum(va)-toNum(vb));
+      if(tableSortCol===0){const da=parseDate(va),db=parseDate(vb);return tableSortDir*((da||0)-(db||0));}
+      return tableSortDir*va.localeCompare(vb,'pt-BR');
+    });
+  }
+  tablePage=0; paintTable();
+}
+
+function paintTable(){
+  const total=tableRows.length;
+  const pages=Math.ceil(total/TABLE_PS)||1;
+  if(tablePage>=pages) tablePage=pages-1;
+  const pageRows=tableRows.slice(tablePage*TABLE_PS,(tablePage+1)*TABLE_PS);
+
+  const isWash=r=>isMaqWash(r);
+  const tipoBadge=t=>{
+    if(!t) return '';
+    const l=t.toLowerCase();
+    if(l==='pix') return `<span class="badge badge-pix">PIX</span>`;
+    if(l==='credit') return `<span class="badge badge-credit">Crédito</span>`;
+    return `<span class="badge badge-debit">Débito</span>`;
+  };
+
+  document.getElementById('tbody-transactions').innerHTML=pageRows.map(r=>`<tr>
+    <td>${fmtDate(r[C.data])} ${r[C.hora]||''}</td>
+    <td>${isWash(r)?'<span class="badge badge-wash">🫧 Lavagem</span>':'<span class="badge badge-dry">💨 Secagem</span>'}</td>
+    <td>${tipoBadge(r[C.tipo])}</td>
+    <td>${r[C.bandeira]||(r[C.tipo]==='Pix'?'PIX':'–')}</td>
+    <td class="td-mono">${r[C.total]?fmtBRL(toNum(r[C.total])):'–'}</td>
+    <td style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">${(r[C.auth]||'–').substring(0,10)}</td>
+  </tr>`).join('');
+
+  document.getElementById('pg-info').textContent=`Exibindo ${tablePage*TABLE_PS+1}–${Math.min((tablePage+1)*TABLE_PS,total)} de ${total} transações`;
+
+  // pagination
+  let pgHtml=`<button class="pg-btn" onclick="goPage(${tablePage-1})" ${tablePage===0?'disabled':''}>‹</button>`;
+  const maxBtns=7;
+  for(let i=0;i<Math.min(pages,maxBtns);i++)
+    pgHtml+=`<button class="pg-btn ${i===tablePage?'active':''}" onclick="goPage(${i})">${i+1}</button>`;
+  if(pages>maxBtns) pgHtml+=`<button class="pg-btn" disabled>…</button>`;
+  pgHtml+=`<button class="pg-btn" onclick="goPage(${tablePage+1})" ${tablePage>=pages-1?'disabled':''}>›</button>`;
+  document.getElementById('pg-btns').innerHTML=pgHtml;
+}
+
+function goPage(p){
+  const pages=Math.ceil(tableRows.length/TABLE_PS)||1;
+  if(p<0||p>=pages) return;
+  tablePage=p; paintTable();
+}
+function doSearch(v){ tableSearch=v; renderTable(); }
+function sortTable(col){
+  if(tableSortCol===col) tableSortDir*=-1;
+  else{ tableSortCol=col; tableSortDir=1; }
+  renderTable();
+}
+
+// ══════════════════════════════════════════════════════
+// EXPORT CSV
+// ══════════════════════════════════════════════════════
+function exportCSV(){
+  const headers=['Data','Hora','Máquina','Produto','Pagamento','Total','Tipo','Bandeira','Autorização'];
+  const rows=filtered.map(r=>[fmtDate(r[C.data]),r[C.hora],r[C.maquina],r[C.produto],r[C.pagamento],
+    r[C.total],r[C.tipo],r[C.bandeira],r[C.auth]].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(','));
+  const csv=[headers.join(','),...rows].join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='lavai_cunha_gago.csv'; a.click();
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+function initFlatpickr() {
+  const commonCfg = {
+    dateFormat: "d/m/Y",
+    locale: "pt",
+    allowInput: true,
+    onChange: function(selectedDates, dateStr, instance) {
+      instance.element.dispatchEvent(new Event('change'));
+    }
+  };
+  fpStart = flatpickr("#date-start", commonCfg);
+  fpEnd = flatpickr("#date-end", commonCfg);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initFlatpickr();
+  // Carregar dados diretamente, sem autenticação
+  document.getElementById('loader').classList.remove('hidden');
+  loadData();
+  setInterval(loadData, 15*60*1000);
+});
+</script>
+</body>
+</html>
