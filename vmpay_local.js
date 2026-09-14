@@ -12241,4 +12241,5 @@ Estoque - LAVAÍ;14# Extra São Bernardo;;VMPay;VMPay;Lavadora;1;14,99;Não Info
 Estoque - LAVAÍ;37# Mini Extra Rio Branco;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;14/09/2026;16:30:58;;1004841048;;Crédito;Vertipay;Mastercard;;;
 Estoque - LAVAÍ;37# Mini Extra Rio Branco;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;14/09/2026;16:30:22;;1004840268;;Crédito;Vertipay;Mastercard;;;
 Estoque - LAVAÍ;8# Lopes - Jacu Pessego;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;14/09/2026;16:53:59;;1004860790;;Crédito;Vertipay;Mastercard;;;
-Estoque - LAVAÍ;11# Extra Barra Funda;;VMPay;VMPay;Secadora;2;16,0;Não Informado;16,0;Não utilizado;14/09/2026;16:51:07;;1004857720;;Débito;Vertipay;Visa;;;`;
+Estoque - LAVAÍ;11# Extra Barra Funda;;VMPay;VMPay;Secadora;2;16,0;Não Informado;16,0;Não utilizado;14/09/2026;16:51:07;;1004857720;;Débito;Vertipay;Visa;;;
+Estoque - LAVAÍ;14# Extra São Bernardo;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;14/09/2026;16:59:27;;1004866975;;Crédito;Vertipay;Visa;;;`;
