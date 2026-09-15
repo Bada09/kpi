@@ -2123,6 +2123,7 @@ def publicar_dados_github():
         "sqi_local.js",
         "custos_pdv_local.js",
         "dados_relatorios.json",
+        "dados_relatorios_local.js",
     ]
 
     for f in files_root:
@@ -2200,6 +2201,7 @@ def publicar_dados_github():
             "sqi_local.js",
             "custos_pdv_local.js",
             "dados_relatorios.json",
+            "dados_relatorios_local.js",
         ]
 
         src_json = script_dir / "dados_relatorios.json"
@@ -2209,6 +2211,14 @@ def publicar_dados_github():
                 dest_json.write_text(src_json.read_text(encoding="utf-8"), encoding="utf-8")
             except Exception as e:
                 log.error(f"Erro ao copiar dados_relatorios.json para kpi: {e}")
+
+        src_js_status = script_dir / "dados_relatorios_local.js"
+        dest_js_status = cwd_kpi / "dados_relatorios_local.js"
+        if src_js_status.exists():
+            try:
+                dest_js_status.write_text(src_js_status.read_text(encoding="utf-8"), encoding="utf-8")
+            except Exception as e:
+                log.error(f"Erro ao copiar dados_relatorios_local.js para kpi: {e}")
 
         for f in files_kpi:
             f_path = cwd_kpi / f
@@ -2488,19 +2498,16 @@ async def coletar_tudo():
             return False
 
     # 1. Mesclagem VendTEF / Portal
-    # Preserva o histórico completo de 2023-2026 e adiciona novas transações do portal
-    portal_rows_dedup = merge_and_deduplicate(vendtef_antigos + rows + gateway_vendpago_rows, [])
+    # Novas transações do portal e do gateway têm precedência sobre o histórico antigo
+    portal_rows_dedup = merge_and_deduplicate(rows + gateway_vendpago_rows + vendtef_antigos, [])
 
     # 2. Mesclagem VMPay
-    # Preserva o histórico completo de 2020-2026 e adiciona novas transações da API VMPay
-    vmpay_rows_dedup = merge_and_deduplicate(vmpay_antigos + api_rows_to_merge + gateway_vmpay_rows, [])
+    # Novas transações da API VMPay e gateway têm precedência sobre o histórico antigo
+    vmpay_rows_dedup = merge_and_deduplicate(api_rows_to_merge + gateway_vmpay_rows + vmpay_antigos, [])
 
     # 3. Mesclagem SQInsights
-    # <= 31/05/2026: usar temp_sq_rows
-    sq_lte_may = [r for r in temp_sq_rows if is_on_or_before_may_2026(r)]
-    # >= 01/06/2026: usar sqi_antigos e gateway_sq_rows
-    sq_gte_june = [r for r in (sqi_antigos + gateway_sq_rows) if not is_on_or_before_may_2026(r)]
-    sq_rows_dedup = merge_and_deduplicate(sq_lte_may + sq_gte_june, [])
+    # A planilha ativa do gateway (gateway_sq_rows) tem precedência máxima para que correções/edições feitas na planilha sobreponham o cache antigo
+    sq_rows_dedup = merge_and_deduplicate(gateway_sq_rows + temp_sq_rows + sqi_antigos, [])
 
     # 4. Mesclagem PayBlu
     payblu_antigos = []
@@ -2513,8 +2520,8 @@ async def coletar_tudo():
     payblu_lte_may_temp = [r for r in temp_yougo_rows if is_on_or_before_may_2026(r)]
     payblu_lte_may_antigos = [r for r in payblu_antigos if is_on_or_before_may_2026(r)]
     payblu_lte_may = merge_and_deduplicate(payblu_lte_may_temp + payblu_lte_may_antigos, [])
-    # >= 01/06/2026: usar payblu_rows, payblu_antigos e gateway_yougo_rows
-    payblu_gte_june = [r for r in (payblu_antigos + payblu_rows + gateway_yougo_rows) if not is_on_or_before_may_2026(r)]
+    # >= 01/06/2026: novas transações do payblu e gateway têm precedência sobre payblu_antigos
+    payblu_gte_june = [r for r in (payblu_rows + gateway_yougo_rows + payblu_antigos) if not is_on_or_before_may_2026(r)]
     payblu_rows_dedup = merge_and_deduplicate(payblu_lte_may + payblu_gte_june, [])
 
     total_count = (len(portal_rows_dedup) + len(vmpay_rows_dedup) + len(sq_rows_dedup)
@@ -2534,8 +2541,11 @@ async def coletar_tudo():
     }
     
     (root_dir / "dados_relatorios.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    js_status_content = f"window.LAVAI_STATUS = {json.dumps(payload, ensure_ascii=False, indent=2)};\n"
+    (root_dir / "dados_relatorios_local.js").write_text(js_status_content, encoding="utf-8")
     if kpi_dir.is_dir() and kpi_dir != root_dir:
         (kpi_dir / "dados_relatorios.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        (kpi_dir / "dados_relatorios_local.js").write_text(js_status_content, encoding="utf-8")
 
     # ── Processar Custo operação.xlsx ──
     try:

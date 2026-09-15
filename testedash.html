@@ -1536,6 +1536,7 @@ async function loadData(){
   detectDateFormat(allRows);
   buildFilters();
   applyFilter();
+  updateLastUpdateBadge(allRows);
   document.getElementById('loader').classList.add('hidden');
 }
 
@@ -1919,10 +1920,74 @@ async function syncVmpayAPI() {
 
 function loadScript(src) { return new Promise((resolve, reject) => { const s = document.createElement('script'); s.src = window.location.protocol === 'file:' ? src : (src + '?v=' + Date.now()); s.onload = resolve; s.onerror = reject; document.head.appendChild(s); }); }
 
+let lastKnownGeradoEm = null;
+
+function updateLastUpdateBadge(rows = null, geradoEm = null) {
+  const badge = document.getElementById('last-update');
+  if (!badge) return;
+  const pad = n => String(n).padStart(2, '0');
+
+  if (geradoEm) {
+    lastKnownGeradoEm = geradoEm;
+  } else if (!lastKnownGeradoEm && window.LAVAI_STATUS && window.LAVAI_STATUS.gerado_em) {
+    lastKnownGeradoEm = window.LAVAI_STATUS.gerado_em;
+  }
+
+  let statusDt = null;
+  if (lastKnownGeradoEm) {
+    const dt = new Date(lastKnownGeradoEm);
+    if (!isNaN(dt.getTime())) statusDt = dt;
+  }
+
+  let maxTxDt = null;
+  const sourceRows = (rows && rows.length > 0) ? rows : allRows;
+  if (sourceRows && sourceRows.length > 0) {
+    for (let i = 0; i < sourceRows.length; i++) {
+      const r = sourceRows[i];
+      const dStr = r[C.data];
+      if (!dStr) continue;
+      const d = parseDate(dStr);
+      if (!d || isNaN(d.getTime())) continue;
+      const hStr = r[C.hora] || '00:00:00';
+      const hp = hStr.split(':');
+      const hh = parseInt(hp[0] || '0', 10);
+      const mm = parseInt(hp[1] || '0', 10);
+      const ss = parseInt(hp[2] || '0', 10);
+      const txDt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), isNaN(hh)?0:hh, isNaN(mm)?0:mm, isNaN(ss)?0:ss);
+      if (!maxTxDt || txDt > maxTxDt) maxTxDt = txDt;
+    }
+  }
+
+  // Prioriza a maior data entre o status gerado e as transações reais encontradas
+  let finalDt = statusDt;
+  if (!finalDt || (maxTxDt && maxTxDt > finalDt)) {
+    finalDt = maxTxDt;
+  }
+
+  if (finalDt) {
+    badge.innerHTML = `<i class="fas fa-clock" style="font-size:10px"></i> Atualizado em: ${pad(finalDt.getDate())}/${pad(finalDt.getMonth() + 1)}/${finalDt.getFullYear()} às ${pad(finalDt.getHours())}:${pad(finalDt.getMinutes())}`;
+  }
+}
+
 async function integrarVmpayAPI() {
   allRows = [];
-  try { const res = await fetch('dados_relatorios.json'); if (res.ok) { const data = await res.json(); if (data.gerado_em) { const dt = new Date(data.gerado_em); if (!isNaN(dt.getTime())) { const pad = n => String(n).padStart(2, '0'); document.getElementById('last-update').innerHTML = `<i class="fas fa-clock" style="font-size:10px"></i> Atualizado em: ${pad(dt.getDate())}/${pad(dt.getMonth() + 1)}/${dt.getFullYear()} às ${pad(dt.getHours())}:${pad(dt.getMinutes())}`; } } } } catch(e){}
   async function tryLoad(varName, src) { if (!window[varName]) { try { await loadScript(src); } catch(e) {} } }
+
+  await tryLoad('LAVAI_STATUS', 'dados_relatorios_local.js');
+  if (window.LAVAI_STATUS && window.LAVAI_STATUS.gerado_em) {
+    updateLastUpdateBadge(null, window.LAVAI_STATUS.gerado_em);
+  }
+
+  try {
+    const res = await fetch('dados_relatorios.json?v=' + Date.now(), { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.gerado_em) {
+        updateLastUpdateBadge(null, data.gerado_em);
+      }
+    }
+  } catch(e){}
+
   function enrichAll(rows) { return enrichVmpayLocations(enrichVendtefMachineStack(enrichRowsFromMatricula(rows))); }
 
   await tryLoad('LAVAI_CUSTOS_PDV', 'custos_pdv_local.js'); if (window.LAVAI_CUSTOS_PDV && window.LAVAI_CUSTOS_PDV.length > 0) CUSTOS_PDV = window.LAVAI_CUSTOS_PDV;
