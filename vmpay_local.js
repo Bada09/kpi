@@ -12347,4 +12347,7 @@ Estoque - LAVAÍ;13# Extra São Caetano;;VMPay;VMPay;Lavadora;1;14,99;Não Infor
 Estoque - LAVAÍ;14# Extra São Bernardo;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;15/09/2026;15:46:50;;1005620203;;Crédito;Vertipay;Visa;;;
 Estoque - LAVAÍ;7# Dia - Maria Luiza;;VMPay;VMPay;Secadora;2;16,0;Não Informado;16,0;Não utilizado;15/09/2026;16:00:58;;1005634745;;Crédito;Vertipay;Visa;;;
 Estoque - LAVAÍ;8# Lopes - Jacu Pessego;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;15/09/2026;16:07:07;;1005640100;;Débito;Vertipay;Visa;;;
-Estoque - LAVAÍ;8# Lopes - Jacu Pessego;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;15/09/2026;16:02:27;;1005635185;;Débito;Vertipay;Visa;;;`;
+Estoque - LAVAÍ;8# Lopes - Jacu Pessego;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;15/09/2026;16:02:27;;1005635185;;Débito;Vertipay;Visa;;;
+Estoque - LAVAÍ;13# Extra São Caetano;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;15/09/2026;16:19:36;;1005653080;;Débito;Vertipay;Mastercard;;;
+Estoque - LAVAÍ;4# Extra Palmeiras;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;15/09/2026;16:18:55;;1005652365;;Crédito;Vertipay;Mastercard;;;
+Estoque - LAVAÍ;13# Extra São Caetano;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;15/09/2026;16:15:12;;1005647915;;Débito;Vertipay;Mastercard;;;`;
