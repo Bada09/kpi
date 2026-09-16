@@ -1,0 +1,2570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Operacional — You Go Vila Mariana (PayBlu) | LAVAÍ</title>
+
+<!-- Bibliotecas Externas -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<!-- Tipografia Moderna -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+<!-- Dados Locais -->
+<script src="dados_relatorios_local.js"></script>
+<script src="payblu_local.js" charset="latin1"></script>
+
+<style>
+/* ── Reset & Variáveis de Design ─────────────────────────────── */
+:root {
+  --bg: #f8f9fc;
+  --bg2: #ffffff;
+  --bg3: #f1f4f9;
+  --bg4: #e8edf5;
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --cyan: #0ea5e9;
+  --teal: #14b8a6;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --purple: #8b5cf6;
+  --pink: #ec4899;
+  --color-wash: #2563eb;
+  --color-dry: #0ea5e9;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --font-heading: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --r: 14px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px -2px rgba(0,0,0,0.06);
+  --shadow-lg: 0 12px 24px -4px rgba(0,0,0,0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { min-height: 100%; background: var(--bg); font-family: var(--font-body); }
+body {
+  min-height: 100%;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    linear-gradient(to right, #2563eb, transparent 40px) left/40px 100% no-repeat,
+    linear-gradient(to left, #2563eb, transparent 40px) right/40px 100% no-repeat,
+    linear-gradient(to bottom, #2563eb, transparent 50px) top/100% 50px no-repeat;
+  opacity: 0.12;
+}
+
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: var(--font-body); border: none; outline: none; }
+input, select { font-family: var(--font-body); }
+
+/* ── Loader ──────────────────────────────────────────────────── */
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  transition: opacity 0.35s ease, visibility 0.35s;
+}
+.loader-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.loader-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e2e8f0;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+}
+.loader-title { font-size: 16px; font-weight: 700; color: var(--text); }
+.loader-text { font-size: 13px; color: var(--text-muted); }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Container ───────────────────────────────────────────────── */
+.app-container {
+  max-width: 1420px;
+  margin: 0 auto;
+  padding: 20px 24px 60px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Header Principal ────────────────────────────────────────── */
+header {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 22px 26px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-sm);
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.brand-logo {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #2563eb 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(236,72,153,0.3);
+}
+.brand-info h1 {
+  font-size: 21px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.brand-tag {
+  background: rgba(236,72,153,0.12);
+  color: #db2777;
+  border: 1px solid rgba(236,72,153,0.25);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0;
+}
+.brand-info p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.badge-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: var(--bg3);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.badge-header.source-payblu {
+  background: rgba(236,72,153,0.08);
+  color: #db2777;
+  border-color: rgba(236,72,153,0.25);
+}
+.badge-header.elapsed {
+  background: rgba(37,99,235,0.08);
+  color: #2563eb;
+  border-color: rgba(37,99,235,0.2);
+}
+
+.btn-nav-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--bg3);
+  color: var(--text);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+.btn-nav-back:hover {
+  background: var(--bg4);
+  transform: translateY(-1px);
+  color: var(--primary);
+  border-color: rgba(37,99,235,0.3);
+}
+
+/* ── Barra de Filtros Operacionais ───────────────────────────── */
+.filter-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filters-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.filter-group label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+.filter-group select, .filter-group input {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  outline: none;
+  min-width: 130px;
+  transition: border-color 0.2s;
+}
+.filter-group select:focus, .filter-group input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+.quick-ranges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.btn-range {
+  background: #fff;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+.btn-range:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+.btn-range.active {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 2px 6px rgba(37,99,235,0.25);
+}
+
+.btn-clear-filter {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-clear-filter:hover {
+  background: #fee2e2;
+  color: #ef4444;
+  border-color: #fca5a5;
+}
+
+/* ── Seção de Rótulos ────────────────────────────────────────── */
+.section-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  font-weight: 800;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-label i { color: var(--primary); font-size: 12px; }
+
+/* ── KPI Grid ────────────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.kpi-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.kpi-revenue::before    { background: linear-gradient(90deg, #10b981, #34d399); }
+.kpi-projection::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.kpi-today::before      { background: linear-gradient(90deg, #ec4899, #f43f5e); }
+.kpi-compare::before    { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+.kpi-wash::before       { background: linear-gradient(90deg, #2563eb, #0ea5e9); }
+.kpi-dry::before        { background: linear-gradient(90deg, #0ea5e9, #14b8a6); }
+.kpi-machine::before    { background: linear-gradient(90deg, #8b5cf6, #a855f7); }
+.kpi-apts::before       { background: linear-gradient(90deg, #f97316, #fb923c); }
+.kpi-residents::before  { background: linear-gradient(90deg, #10b981, #06b6d4); }
+.kpi-ticket::before     { background: linear-gradient(90deg, #0ea5e9, #3b82f6); }
+.kpi-weekday::before    { background: linear-gradient(90deg, #ef4444, #f87171); }
+.kpi-weather::before    { background: linear-gradient(90deg, #0ea5e9, #38bdf8); }
+
+.kpi-content { flex: 1; overflow: hidden; }
+.kpi-content h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kpi-value {
+  font-size: 22px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: #0f172a;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+.kpi-subtext {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kpi-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.kpi-revenue .kpi-icon    { background: rgba(16,185,129,0.12); color: var(--green); }
+.kpi-projection .kpi-icon { background: rgba(245,158,11,0.12); color: var(--amber); }
+.kpi-today .kpi-icon      { background: rgba(236,72,153,0.12); color: var(--pink); }
+.kpi-compare .kpi-icon    { background: rgba(99,102,241,0.12); color: #6366f1; }
+.kpi-wash .kpi-icon       { background: rgba(37,99,235,0.12);  color: var(--cyan); }
+.kpi-dry .kpi-icon        { background: rgba(14,165,233,0.12); color: var(--teal); }
+.kpi-machine .kpi-icon    { background: rgba(139,92,246,0.12); color: var(--purple); }
+.kpi-apts .kpi-icon       { background: rgba(249,115,22,0.12); color: #f97316; }
+.kpi-residents .kpi-icon  { background: rgba(16,185,129,0.12); color: var(--green); }
+.kpi-ticket .kpi-icon     { background: rgba(14,165,233,0.12); color: var(--cyan); }
+.kpi-weekday .kpi-icon    { background: rgba(239,68,68,0.12);  color: var(--red); }
+.kpi-weather .kpi-icon    { background: rgba(14,165,233,0.12); color: var(--cyan); }
+
+/* ── Inteligência Operacional (Insights Cards) ───────────────── */
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.kpi-insight {
+  border-radius: var(--r);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease;
+}
+.kpi-insight:hover { transform: translateY(-2px); }
+.kpi-insight .kpi-content h3 {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: rgba(255,255,255,0.75);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.kpi-insight .kpi-value {
+  font-size: 17px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: #ffffff;
+}
+.kpi-insight .kpi-subtext {
+  color: rgba(255,255,255,0.7);
+  font-size: 11px;
+  margin-top: 5px;
+}
+.kpi-insight .kpi-icon {
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  font-size: 16px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ins-busiest-day { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
+.ins-quiet-day   { background: linear-gradient(135deg, #334155 0%, #475569 100%); }
+.ins-busiest-hr  { background: linear-gradient(135deg, #0369a1 0%, #0ea5e9 100%); }
+.ins-quiet-hr    { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
+.ins-best-dow    { background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%); }
+.ins-worst-dow   { background: linear-gradient(135deg, #374151 0%, #4b5563 100%); }
+
+/* ── Grid de Gráficos ────────────────────────────────────────── */
+.charts-grid-row {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+@media (max-width: 1060px) {
+  .charts-grid-row { grid-template-columns: 1fr; }
+}
+
+.card-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.card-header h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-header h2 i {
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.badge-tag {
+  background: rgba(37,99,235,0.09);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(37,99,235,0.2);
+}
+
+/* Ranking de Torres / Apartamentos */
+.ranking-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 270px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.ranking-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg3);
+  padding: 9px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+.ranking-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.04);
+  border-color: rgba(37,99,235,0.25);
+}
+.ranking-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ranking-title {
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ranking-val {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green);
+}
+.ranking-sub {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.ranking-bar-bg {
+  height: 5px;
+  background: var(--bg4);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 3px;
+}
+.ranking-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #2563eb, #0ea5e9);
+  transition: width 0.5s ease;
+}
+.ranking-bar-fill.pink {
+  background: linear-gradient(90deg, #ec4899, #8b5cf6);
+}
+
+/* ── Tabela de Movimentações ─────────────────────────────────── */
+.table-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 22px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.table-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-wrapper i {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.search-input {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px 8px 34px;
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+  width: 250px;
+  transition: all 0.2s;
+}
+.search-input:focus {
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  width: 280px;
+}
+
+.btn-export {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  box-shadow: 0 2px 6px rgba(16,185,129,0.25);
+  transition: all 0.2s ease;
+}
+.btn-export:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(16,185,129,0.35);
+}
+
+.table-responsive {
+  overflow-x: auto;
+  max-height: 480px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+thead th {
+  position: sticky;
+  top: 0;
+  background: #f1f4f9;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  z-index: 2;
+  transition: color 0.15s;
+}
+thead th:hover { color: var(--primary); }
+thead th i { font-size: 10px; margin-left: 4px; }
+
+tbody tr {
+  border-bottom: 1px solid var(--border-light);
+  transition: background 0.12s ease;
+}
+tbody tr:hover { background: #f8faff; }
+tbody tr:last-child { border-bottom: none; }
+tbody td {
+  padding: 10px 14px;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.td-mono { font-family: var(--font-mono); font-weight: 700; color: #059669; }
+
+/* Badges da Tabela */
+.badge-wash {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: rgba(37,99,235,0.1);
+  color: #2563eb;
+  font-weight: 700;
+  font-size: 11px;
+  border: 1px solid rgba(37,99,235,0.2);
+}
+.badge-dry {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: rgba(14,165,233,0.1);
+  color: #0284c7;
+  font-weight: 700;
+  font-size: 11px;
+  border: 1px solid rgba(14,165,233,0.2);
+}
+.badge-torre {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8b5cf6;
+  background: rgba(139,92,246,0.1);
+  border: 1px solid rgba(139,92,246,0.25);
+  padding: 3px 9px;
+  border-radius: 8px;
+  display: inline-block;
+}
+.badge-apt {
+  background: rgba(245,158,11,0.12);
+  color: #b45309;
+  border: 1px solid rgba(245,158,11,0.3);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  display: inline-block;
+}
+.badge-payment {
+  background: rgba(236,72,153,0.08);
+  color: #be185d;
+  border: 1px solid rgba(236,72,153,0.2);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Paginação */
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.pagination-info { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+.pagination-buttons { display: flex; gap: 5px; }
+.pg-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg3);
+  color: var(--text);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.pg-btn:hover:not(:disabled) {
+  background: var(--bg4);
+  color: var(--primary);
+  border-color: rgba(37,99,235,0.3);
+}
+.pg-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Modal: Clima São Paulo ──────────────────────────────────── */
+.op-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.op-modal-overlay.open { display: flex; }
+.op-modal {
+  background: #fff;
+  border-radius: var(--r);
+  box-shadow: 0 24px 48px rgba(0,0,0,0.2);
+  width: 100%;
+  max-width: 700px;
+  overflow: hidden;
+  animation: modalScale 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalScale { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.op-modal-header {
+  padding: 18px 24px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.op-modal-header h2 { font-size: 16px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+.op-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+.op-modal-close:hover { color: var(--red); }
+.op-modal-body { padding: 20px 24px; }
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div class="loader-overlay" id="loader">
+  <div class="loader-spinner"></div>
+  <div class="loader-title">Carregando Painel You Go...</div>
+  <div class="loader-text" id="loader-status">Processando base de dados PayBlu...</div>
+</div>
+
+<div class="app-container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand-section">
+      <div class="brand-logo"><i class="fas fa-building-user"></i></div>
+      <div class="brand-info">
+        <h1>
+          LAVAÍ · You Go Vila Mariana
+          <span class="brand-tag"><i class="fas fa-credit-card"></i> PayBlu Exclusivo</span>
+        </h1>
+        <p>
+          <span><i class="fas fa-layer-group" style="color:var(--primary)"></i> 3 Torres (6 Máquinas)</span>
+          <span>·</span>
+          <span><i class="fas fa-shield-halved" style="color:#db2777"></i> Private Label</span>
+          <span>·</span>
+          <span id="last-update"><i class="fas fa-clock"></i> Carregando atualização...</span>
+        </p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <span class="badge-header source-payblu">
+        <i class="fas fa-circle-check"></i> Fonte: PayBlu (100%)
+      </span>
+      <span class="badge-header elapsed" id="badge-last-sale">
+        <i class="fas fa-bolt"></i> Última venda há: <strong id="time-last-sale" style="margin-left:3px">...</strong>
+      </span>
+    </div>
+  </header>
+
+  <!-- BARRA DE FILTROS OPERACIONAIS -->
+  <div class="filter-panel">
+    <div class="filters-row">
+      <div class="filter-group">
+        <label>Ano</label>
+        <select id="filter-year">
+          <option value="all">Todos os anos</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Mês</label>
+        <select id="filter-month">
+          <option value="all">Todos os meses</option>
+          <option value="1">01 - Janeiro</option>
+          <option value="2">02 - Fevereiro</option>
+          <option value="3">03 - Março</option>
+          <option value="4">04 - Abril</option>
+          <option value="5">05 - Maio</option>
+          <option value="6">06 - Junho</option>
+          <option value="7">07 - Julho</option>
+          <option value="8">08 - Agosto</option>
+          <option value="9">09 - Setembro</option>
+          <option value="10">10 - Outubro</option>
+          <option value="11">11 - Novembro</option>
+          <option value="12">12 - Dezembro</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Torre / Equipamento</label>
+        <select id="filter-torre">
+          <option value="all">Todas as Torres e Máquinas</option>
+          <option value="torre_1">Torre 1 (Lavadora + Secadora)</option>
+          <option value="torre_2">Torre 2 (Lavadora + Secadora)</option>
+          <option value="torre_3">Torre 3 (Lavadora + Secadora)</option>
+          <option value="only_wash">🫧 Apenas Lavadoras</option>
+          <option value="only_dry">💨 Apenas Secadoras</option>
+          <option value="maq_359476934">You Go 1 — Lavadora (359476934)</option>
+          <option value="maq_707316858">You Go 1 — Secadora (707316858)</option>
+          <option value="maq_359479550">You Go 2 — Lavadora (359479550)</option>
+          <option value="maq_707317086">You Go 2 — Secadora (707317086)</option>
+          <option value="maq_707317126">You Go 3 — Lavadora (707317126)</option>
+          <option value="maq_707317098">You Go 3 — Secadora (707317098)</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>De</label>
+        <input type="text" id="date-start" placeholder="dd/mm/aaaa">
+      </div>
+      <div class="filter-group">
+        <label>Até</label>
+        <input type="text" id="date-end" placeholder="dd/mm/aaaa">
+      </div>
+    </div>
+
+    <div class="quick-ranges">
+      <button class="btn-range" id="btn-range-all" onclick="setRange('all')">Ver Tudo</button>
+      <button class="btn-range active" id="btn-range-mes" onclick="setRange('mes')">Mês Atual</button>
+      <button class="btn-range" id="btn-range-hoje" onclick="setRange('hoje')">Hoje</button>
+      <button class="btn-range" id="btn-range-ontem" onclick="setRange('ontem')">Ontem</button>
+      <button class="btn-range" id="btn-range-15" onclick="setRange(15)">Últimos 15d</button>
+      <button class="btn-range" id="btn-range-7" onclick="setRange(7)">Últimos 7d</button>
+      <button class="btn-clear-filter" onclick="resetFilters()" title="Limpar todos os filtros">
+        <i class="fas fa-rotate-left"></i> Limpar
+      </button>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 1: KPIS OPERACIONAIS -->
+  <div class="section-label">
+    <i class="fas fa-chart-line"></i> Desempenho Operacional — You Go Vila Mariana
+  </div>
+  <div class="kpi-grid">
+    <!-- Faturamento Total -->
+    <div class="kpi-card kpi-revenue">
+      <div class="kpi-content">
+        <h3>Faturamento Acumulado</h3>
+        <div class="kpi-value" id="kpi-revenue-val">R$ 0,00</div>
+        <div class="kpi-subtext">
+          <i class="fas fa-arrow-trend-up" style="color:var(--green)"></i>
+          <span>Receita total no período</span>
+        </div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-wallet"></i></div>
+    </div>
+
+    <!-- Projeção de Faturamento -->
+    <div class="kpi-card kpi-projection">
+      <div class="kpi-content">
+        <h3>Projeção de Faturamento</h3>
+        <div class="kpi-value" id="kpi-projection-val">R$ 0,00</div>
+        <div class="kpi-subtext" id="kpi-projection-sub">
+          <i class="fas fa-calculator" style="color:var(--amber)"></i>
+          <span>Calculando projeção...</span>
+        </div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+    </div>
+
+    <!-- Vendas Hoje / Período -->
+    <div class="kpi-card kpi-today">
+      <div class="kpi-content">
+        <h3 id="kpi-today-title">Vendas no Período</h3>
+        <div class="kpi-value" id="kpi-today-val">0</div>
+        <div class="kpi-subtext" id="kpi-today-sub">
+          <i class="fas fa-bullseye" style="color:var(--pink)"></i>
+          <span>Meta calculada...</span>
+        </div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-shopping-bag"></i></div>
+    </div>
+
+    <!-- Hoje vs Ontem -->
+    <div class="kpi-card kpi-compare">
+      <div class="kpi-content">
+        <h3>Hoje & Ontem</h3>
+        <div class="kpi-value" style="font-size:15px;line-height:1.4;margin-top:2px">
+          Hoje: <span id="kpi-today-count" style="color:#10b981;font-weight:800">0</span> &nbsp;·&nbsp;
+          Ontem: <span id="kpi-yesterday-count" style="color:#ef4444;font-weight:800">0</span>
+        </div>
+        <div class="kpi-subtext" id="kpi-today-yesterday-sub">
+          <i class="fas fa-calendar-check" style="color:#6366f1"></i>
+          <span>Comparativo diário</span>
+        </div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-scale-balanced"></i></div>
+    </div>
+
+    <!-- Ciclos Lavagem -->
+    <div class="kpi-card kpi-wash">
+      <div class="kpi-content">
+        <h3>Ciclos de Lavagem</h3>
+        <div class="kpi-value" id="kpi-wash-val">0</div>
+        <div class="kpi-subtext">
+          <i class="fas fa-rotate" style="color:var(--cyan)"></i>
+          <span>Lavadoras (3 máquinas)</span>
+        </div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-soap"></i></div>
+    </div>
+
+    <!-- Ciclos Secagem -->
+    <div class="kpi-card kpi-dry">
+      <div class="kpi-content">
+        <h3>Ciclos de Secagem</h3>
+        <div class="kpi-value" id="kpi-dry-val">0</div>
+        <div class="kpi-subtext">
+          <i class="fas fa-wind" style="color:var(--teal)"></i>
+          <span>Secadoras (3 máquinas)</span>
+        </div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-wind"></i></div>
+    </div>
+
+    <!-- Ciclos por Máquina/Dia -->
+    <div class="kpi-card kpi-machine">
+      <div class="kpi-content">
+        <h3>Ciclos por Máq./Dia</h3>
+        <div class="kpi-value" id="kpi-machine-cycles-val">0,0</div>
+        <div class="kpi-subtext">
+          <i class="fas fa-calculator" style="color:var(--purple)"></i>
+          <span>(Lav + Sec) ÷ 6 máq. ÷ dias</span>
+        </div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-gears"></i></div>
+    </div>
+
+    <!-- Apartamentos Únicos Atendidos -->
+    <div class="kpi-card kpi-apts">
+      <div class="kpi-content">
+        <h3>Apartamentos Ativos</h3>
+        <div class="kpi-value" id="kpi-apts-val">0</div>
+        <div class="kpi-subtext">
+          <i class="fas fa-door-open" style="color:#f97316"></i>
+          <span>Unidades residenciais</span>
+        </div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-door-open"></i></div>
+    </div>
+
+    <!-- Moradores Únicos -->
+    <div class="kpi-card kpi-residents">
+      <div class="kpi-content">
+        <h3>Moradores Atendidos</h3>
+        <div class="kpi-value" id="kpi-residents-val">0</div>
+        <div class="kpi-subtext">
+          <i class="fas fa-users" style="color:var(--green)"></i>
+          <span>Condôminos cadastrados</span>
+        </div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-users"></i></div>
+    </div>
+
+    <!-- Ticket Médio -->
+    <div class="kpi-card kpi-ticket">
+      <div class="kpi-content">
+        <h3>Ticket Médio / Ciclo</h3>
+        <div class="kpi-value" id="kpi-ticket-val">R$ 0,00</div>
+        <div class="kpi-subtext">
+          <i class="fas fa-tag" style="color:var(--cyan)"></i>
+          <span>Média por acionamento</span>
+        </div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-receipt"></i></div>
+    </div>
+
+    <!-- Dia da Semana -->
+    <div class="kpi-card kpi-weekday">
+      <div class="kpi-content">
+        <h3>Dia da Semana</h3>
+        <div class="kpi-value" id="kpi-weekday-val" style="font-size:18px">--</div>
+        <div class="kpi-subtext" id="kpi-weekday-sub">
+          <i class="fas fa-calendar-day" style="color:var(--red)"></i>
+          <span>Período selecionado</span>
+        </div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-calendar-day"></i></div>
+    </div>
+
+    <!-- Clima São Paulo -->
+    <div class="kpi-card kpi-weather" style="cursor:pointer" onclick="abrirModalClima()" title="Clique para ver previsão e histórico de clima">
+      <div class="kpi-content">
+        <h3>Clima São Paulo</h3>
+        <div class="kpi-value" id="kpi-weather-temp">--°C</div>
+        <div class="kpi-subtext" id="kpi-weather-sub">
+          <i class="fas fa-cloud-sun" style="color:var(--cyan)"></i>
+          <span>Carregando clima...</span>
+        </div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-cloud-sun"></i></div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 2: INTELIGÊNCIA OPERACIONAL -->
+  <div class="section-label" style="margin-top:8px">
+    <i class="fas fa-brain"></i> Inteligência Operacional — Padrões de Uso do Condomínio
+  </div>
+  <div class="insights-grid">
+    <div class="kpi-insight ins-busiest-day">
+      <div class="kpi-content">
+        <h3>Dia de Maior Movimento</h3>
+        <div class="kpi-value" id="kpi-busiest-day-val">--/--</div>
+        <div class="kpi-subtext" id="kpi-busiest-day-sub">Carregando...</div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-fire"></i></div>
+    </div>
+
+    <div class="kpi-insight ins-quiet-day">
+      <div class="kpi-content">
+        <h3>Dia de Menor Movimento</h3>
+        <div class="kpi-value" id="kpi-quietest-day-val">--/--</div>
+        <div class="kpi-subtext" id="kpi-quietest-day-sub">Carregando...</div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-snowflake"></i></div>
+    </div>
+
+    <div class="kpi-insight ins-busiest-hr">
+      <div class="kpi-content">
+        <h3>Horário de Pico</h3>
+        <div class="kpi-value" id="kpi-busiest-hour-val">--:--</div>
+        <div class="kpi-subtext" id="kpi-busiest-hour-sub">Carregando...</div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-bolt"></i></div>
+    </div>
+
+    <div class="kpi-insight ins-quiet-hr">
+      <div class="kpi-content">
+        <h3>Horário de Menor Uso</h3>
+        <div class="kpi-value" id="kpi-quietest-hour-val">--:--</div>
+        <div class="kpi-subtext" id="kpi-quietest-hour-sub">Carregando...</div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-moon"></i></div>
+    </div>
+
+    <div class="kpi-insight ins-best-dow">
+      <div class="kpi-content">
+        <h3>Melhor Dia da Semana</h3>
+        <div class="kpi-value" id="kpi-best-dow-val">--</div>
+        <div class="kpi-subtext" id="kpi-best-dow-sub">Carregando...</div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-crown"></i></div>
+    </div>
+
+    <div class="kpi-insight ins-worst-dow">
+      <div class="kpi-content">
+        <h3>Pior Dia da Semana</h3>
+        <div class="kpi-value" id="kpi-worst-dow-val">--</div>
+        <div class="kpi-subtext" id="kpi-worst-dow-sub">Carregando...</div>
+      </div>
+      <div class="kpi-icon"><i class="fas fa-bed"></i></div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 3: GRÁFICOS OPERACIONAIS (LINHA 1) -->
+  <div class="charts-grid-row">
+    <!-- Gráfico 1: Ciclos por Dia -->
+    <div class="card-panel">
+      <div class="card-header">
+        <h2><i class="fas fa-chart-area"></i> Ciclos Diários (Lavagem + Secagem)</h2>
+        <span class="badge-tag" id="average-cycles-badge">Média: 0,0 ciclos/dia</span>
+      </div>
+      <div id="chart-cycles-daily"></div>
+    </div>
+
+    <!-- Ranking por Torre & Equipamento -->
+    <div class="card-panel">
+      <div class="card-header">
+        <h2><i class="fas fa-trophy" style="color:var(--amber)"></i> Utilização por Torre</h2>
+        <span class="badge-tag" style="background:rgba(245,158,11,0.1);color:#d97706;border-color:rgba(245,158,11,0.25)">3 Torres Ativas</span>
+      </div>
+      <div class="ranking-container" id="torre-ranking-list">
+        <!-- Renderizado dinamicamente -->
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 3: GRÁFICOS OPERACIONAIS (LINHA 2) -->
+  <div class="charts-grid-row">
+    <!-- Gráfico 2: Horários de Pico -->
+    <div class="card-panel">
+      <div class="card-header">
+        <h2><i class="fas fa-clock"></i> Distribuição por Horário (Peak Times)</h2>
+        <span style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase">24 Horas do Dia</span>
+      </div>
+      <div id="chart-peak-times"></div>
+    </div>
+
+    <!-- Ranking Top Apartamentos -->
+    <div class="card-panel">
+      <div class="card-header">
+        <h2><i class="fas fa-door-closed" style="color:var(--purple)"></i> Top Apartamentos Mais Ativos</h2>
+        <span class="badge-tag" style="background:rgba(139,92,246,0.1);color:#8b5cf6;border-color:rgba(139,92,246,0.25)">Frequência de Uso</span>
+      </div>
+      <div class="ranking-container" id="apt-ranking-list">
+        <!-- Renderizado dinamicamente -->
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 4: TABELA DE MOVIMENTAÇÕES E HISTÓRICO -->
+  <div class="table-panel">
+    <div class="table-header-bar">
+      <div class="card-header" style="margin-bottom:0;padding:0">
+        <h2>
+          <i class="fas fa-list-check"></i>
+          Movimentações e Histórico — PayBlu You Go
+        </h2>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn-export" onclick="exportExcel()">
+          <i class="fas fa-file-excel"></i> Exportar Excel
+        </button>
+        <div class="search-wrapper">
+          <i class="fas fa-search"></i>
+          <input type="text" id="table-search" class="search-input" placeholder="Buscar morador, apto, hora..." oninput="doSearch(this.value)">
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortTable(0)">Data e Hora <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(1)">Torre <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(2)">Equipamento / Ciclo <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(3)">Morador / Usuário <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(4)">Apartamento <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(5)">Pagamento <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(6)">Bandeira <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(7)">Valor <i class="fas fa-sort"></i></th>
+            <th onclick="sortTable(8)">Matrícula / NSU <i class="fas fa-sort"></i></th>
+          </tr>
+        </thead>
+        <tbody id="tbody-transactions"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination-container">
+      <div class="pagination-info" id="pg-info">0 transações</div>
+      <div class="pagination-buttons" id="pg-btns"></div>
+    </div>
+  </div>
+
+</div><!-- /app-container -->
+
+<!-- MODAL: CLIMA SÃO PAULO -->
+<div class="op-modal-overlay" id="weather-modal-overlay" onclick="closeWeatherModal(event)">
+  <div class="op-modal" onclick="event.stopPropagation()">
+    <div class="op-modal-header">
+      <h2><i class="fas fa-cloud-sun-rain" style="color:var(--cyan)"></i> Clima em São Paulo</h2>
+      <button class="op-modal-close" onclick="closeWeatherModal()">✕</button>
+    </div>
+    <div class="op-modal-body">
+      <div id="weather-monthly-chart" style="width:100%;min-height:320px;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// MAPEAMENTO E ENRIQUECIMENTO DE EQUIPAMENTOS YOU GO
+// ════════════════════════════════════════════════════════════════
+const MATRICULA_PDV_MAP = {
+  '359476934': { torre: 'You Go 1', maquina: 'Lavadora', tipo: 'wash' },
+  '707316858': { torre: 'You Go 1', maquina: 'Secadora', tipo: 'dry' },
+  '359479550': { torre: 'You Go 2', maquina: 'Lavadora', tipo: 'wash' },
+  '707317086': { torre: 'You Go 2', maquina: 'Secadora', tipo: 'dry' },
+  '707317126': { torre: 'You Go 3', maquina: 'Lavadora', tipo: 'wash' },
+  '707317098': { torre: 'You Go 3', maquina: 'Secadora', tipo: 'dry' },
+};
+
+// Índices das colunas CSV no formato PayBlu
+const C = {
+  cliente: 0,
+  maquina: 1,
+  modelo: 2,
+  fabricante: 3,
+  pagamento: 4,
+  produto: 5,
+  mola: 6,
+  venda: 7,
+  preco: 8,
+  total: 9,
+  codPromo: 10,
+  data: 11,
+  hora: 12,
+  nlogico: 13,
+  nsu: 14,
+  auth: 15,
+  tipoCartao: 16,
+  rede: 17,
+  bandeira: 18,
+  usuario: 19,
+  numCartao: 20,
+  matricula: 21,
+  // Colunas virtuais enriquecidas:
+  torre: 22,
+  tipoCiclo: 23,
+  moradorNorm: 24,
+  aptNorm: 25
+};
+
+// Estado Geral da Aplicação
+let allRows = [];
+let filtered = [];
+let tableRows = [];
+let isFirstLoad = true;
+let tableSearch = '';
+let tablePage = 0;
+const TABLE_PS = 50;
+let tableSortCol = 0;
+let tableSortDir = -1; // Mais recente primeiro por padrão
+
+let chartCycles = null;
+let chartPeak = null;
+let dtFrom = null;
+let dtTo = null;
+let fpStart = null;
+let fpEnd = null;
+
+const DOW = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const WEEKDAYS_PT = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+
+// ── Utilitários de Morador e Apartamento ───────────────────────
+function cleanStrResident(s) {
+  if (!s) return '';
+  return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+
+function tokenizeResident(name) {
+  const clean = cleanStrResident(name).toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+  const stopWords = new Set(['de', 'da', 'do', 'dos', 'das', 'e', 'em', 'para', 'com']);
+  return clean.split(/\s+/).filter(t => t.length > 1 && !stopWords.has(t));
+}
+
+function extractDirectUserAndApt(userRaw, nsuRaw) {
+  let user = (userRaw || '').trim();
+  let nsu = (nsuRaw || '').trim();
+  if (!user && !nsu) return { name: '–', apt: '' };
+
+  let morador = user;
+  let apt = '';
+
+  const aptRegex = /[\s\-–,.:]+(?:\b(?:apto|apt|ap|apartamento|unidade|bloco|apot)\b)[\s\-–.:#]*([a-zA-Z0-9]+(?:\s*[a-zA-Z])?)/i;
+  const match = user.match(aptRegex);
+  if (match) {
+    apt = match[1].trim();
+    morador = user.substring(0, match.index).trim();
+  } else {
+    const mHyphen = user.match(/[\s\-–,.:]+\-\s*([0-9]{1,4}[a-zA-Z]?)$/);
+    if (mHyphen) {
+      apt = mHyphen[1].trim();
+      morador = user.substring(0, mHyphen.index).trim();
+    } else {
+      const nsuMatch = nsu.match(/(?:\b(?:apto|apt|ap|apartamento|unidade|bloco|apot)\b)[\s\-–.:#]*([a-zA-Z0-9]+)/i);
+      if (nsuMatch) {
+        apt = nsuMatch[1].trim();
+        morador = user;
+      }
+    }
+  }
+
+  morador = morador.replace(/[\s\-–,.:]+$/, '').trim();
+  if (apt) apt = apt.replace(/^(?:apto|apt|ap|apartamento|unidade|bloco|apot)[\s\-–.:#]*/i, '').trim();
+  return { name: morador || user || '–', apt: apt || '' };
+}
+
+const MASTER_RESIDENT_APT_MAP = {};
+const MASTER_RESIDENT_TOKENS = [];
+const KNOWN_FIXED_RESIDENTS = {
+  'tabajara tenorio dias': '94', 'tabajara tenorio': '94', 'tabajara': '94',
+  'paulino britto': '87', 'paulino s l bitto neto': '87', 'paulino s l bitto': '87',
+  'kristjan rappu': '82', 'kristjan': '82', 'thamara batista': '14',
+  'bete': '51', 'lpg cultura': '34', 'quadro phigor': '168'
+};
+
+function formatAptNumber(apt) {
+  if (!apt || apt === '–' || apt === 'Não Informado') return '–';
+  const numOnly = String(apt).replace(/^(?:apto|apt|ap|apartamento|unidade|bloco|apot)[\s\-–.:#]*/i, '').trim();
+  return numOnly ? `apto ${numOnly}` : apt;
+}
+
+function buildMasterResidentAptIndex(rows) {
+  rows.forEach(r => {
+    const { name, apt } = extractDirectUserAndApt(r[C.usuario] || '', r[C.nsu] || '');
+    if (name && apt && name.length > 2 && name !== '–' && name.toLowerCase() !== 'unknown') {
+      const norm = cleanStrResident(name).toLowerCase().replace(/\s+/g, ' ').trim();
+      if (!MASTER_RESIDENT_APT_MAP[norm]) {
+        MASTER_RESIDENT_APT_MAP[norm] = apt;
+        const tokens = tokenizeResident(norm);
+        if (tokens.length > 0) {
+          MASTER_RESIDENT_TOKENS.push({ tokenSet: new Set(tokens), tokens, normName: norm, apt });
+        }
+      }
+    }
+  });
+}
+
+function parseUserAndApt(userRaw, nsuRaw) {
+  let user = (userRaw || '').trim(), nsu = (nsuRaw || '').trim();
+  if (!user && !nsu) return { name: '–', apt: '–' };
+  const direct = extractDirectUserAndApt(user, nsu);
+  if (direct.apt) return { name: direct.name, apt: formatAptNumber(direct.apt) };
+
+  const morador = direct.name;
+  if (!morador || morador === '–' || morador.toLowerCase() === 'unknown' || morador.toLowerCase() === 'morador') {
+    return { name: morador || '–', apt: '–' };
+  }
+
+  const norm = cleanStrResident(morador).toLowerCase().replace(/\s+/g, ' ').trim();
+  if (KNOWN_FIXED_RESIDENTS[norm]) return { name: morador, apt: formatAptNumber(KNOWN_FIXED_RESIDENTS[norm]) };
+  if (MASTER_RESIDENT_APT_MAP[norm]) return { name: morador, apt: formatAptNumber(MASTER_RESIDENT_APT_MAP[norm]) };
+
+  const uTokens = tokenizeResident(norm);
+  if (uTokens.length > 0) {
+    let bestApt = null, bestOverlap = 0;
+    for (const item of MASTER_RESIDENT_TOKENS) {
+      if (uTokens.every(t => item.tokenSet.has(t))) return { name: morador, apt: formatAptNumber(item.apt) };
+      let overlap = 0;
+      for (const t of uTokens) if (item.tokenSet.has(t)) overlap++;
+      if (overlap >= 2 && overlap > bestOverlap) { bestOverlap = overlap; bestApt = item.apt; }
+    }
+    if (bestApt) return { name: morador, apt: formatAptNumber(bestApt) };
+  }
+  return { name: morador || '–', apt: '–' };
+}
+
+// ── Utilitários de Conversão e Formatação ─────────────────────
+function toNum(s) {
+  if (!s) return 0;
+  return parseFloat(String(s).replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+}
+
+function parseDate(s) {
+  if (!s) return null;
+  const p = s.split('/');
+  if (p.length === 3) return new Date(+p[2], +p[1] - 1, +p[0]);
+  return null;
+}
+
+function parseInputDate(s, isEnd) {
+  if (!s) return null;
+  let year, month, day;
+  if (s.includes('-')) {
+    const parts = s.split('-');
+    year = parseInt(parts[0], 10);
+    month = parseInt(parts[1], 10) - 1;
+    day = parseInt(parts[2], 10);
+  } else {
+    const parts = s.split('/');
+    if (parts.length === 3) {
+      year = parseInt(parts[2], 10);
+      month = parseInt(parts[1], 10) - 1;
+      day = parseInt(parts[0], 10);
+    } else return null;
+  }
+  return isEnd ? new Date(year, month, day, 23, 59, 59) : new Date(year, month, day, 0, 0, 0);
+}
+
+function fmtDate(s) {
+  if (!s) return '–';
+  const p = s.split('/');
+  if (p.length === 3) {
+    return `${String(p[0]).padStart(2, '0')}/${String(p[1]).padStart(2, '0')}/${p[2]}`;
+  }
+  return s;
+}
+
+function fmtBRL(n) {
+  return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function fmtN(n, d = 1) {
+  return n.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+
+function getTodayStr() {
+  const d = new Date();
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
+function getYesterdayStr() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
+// ── Parsing de CSV PayBlu ────────────────────────────────────
+function parseCSVPayBlu(txt) {
+  const lines = txt.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n');
+  if (lines.length < 2) return [];
+
+  const firstDataLine = lines[1] || '';
+  const delimiter = firstDataLine.includes(';') ? ';' : ',';
+
+  function splitLine(l) {
+    const cells = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < l.length; i++) {
+      const c = l[i];
+      if (c === '"') { inQ = !inQ; continue; }
+      if (c === delimiter && !inQ) { cells.push(cur.trim()); cur = ''; continue; }
+      cur += c;
+    }
+    cells.push(cur.trim());
+    return cells;
+  }
+
+  return lines.slice(1).filter(l => l.trim()).map(splitLine);
+}
+
+// ── Enriquecimento e Desduplicação das Linhas ─────────────────
+function enrichPayBluRows(rawRows) {
+  const enriched = [];
+  const seen = new Set();
+
+  rawRows.forEach(r => {
+    if (r.length < 12) return;
+    while (r.length < 26) r.push('');
+
+    // Limpeza da Matrícula e Nº Lógico
+    let matr = (r[C.matricula] || '').replace(/[`'"]/g, '').trim();
+    let nlogico = (r[C.nlogico] || '').replace(/[`'"]/g, '').trim();
+
+    let info = MATRICULA_PDV_MAP[matr] || MATRICULA_PDV_MAP[nlogico];
+
+    if (!info) {
+      if (matr.startsWith('359') || nlogico.startsWith('359')) {
+        info = { torre: 'You Go 1', maquina: 'Lavadora', tipo: 'wash' };
+      } else if (matr.startsWith('707') || nlogico.startsWith('707')) {
+        info = { torre: 'You Go 1', maquina: 'Secadora', tipo: 'dry' };
+      } else {
+        const prod = (r[C.produto] || '').toUpperCase();
+        if (prod.includes('LAVA')) info = { torre: 'You Go', maquina: 'Lavadora', tipo: 'wash' };
+        else if (prod.includes('SECA')) info = { torre: 'You Go', maquina: 'Secadora', tipo: 'dry' };
+        else info = { torre: 'You Go', maquina: 'Equipamento', tipo: 'wash' };
+      }
+    }
+
+    r[C.torre] = info.torre;
+    r[C.produto] = info.maquina;
+    r[C.tipoCiclo] = info.tipo;
+
+    // Morador e Apartamento
+    const userApt = parseUserAndApt(r[C.usuario], r[C.nsu]);
+    r[C.moradorNorm] = userApt.name;
+    r[C.aptNorm] = userApt.apt;
+
+    // Chave de desduplicação
+    const dt = (r[C.data] || '').trim();
+    const hr = (r[C.hora] || '').trim();
+    const val = (r[C.total] || '').trim();
+    const nsu = (r[C.nsu] || '').trim();
+    const key = `pb:${matr}|${dt}|${hr}|${val}|${nsu}`;
+
+    if (!seen.has(key)) {
+      seen.add(key);
+      enriched.push(r);
+    }
+  });
+
+  return enriched;
+}
+
+// ── Carregamento Assíncrono dos Dados ─────────────────────────
+async function loadPaybluData() {
+  const loader = document.getElementById('loader');
+  const loaderStatus = document.getElementById('loader-status');
+
+  try {
+    if (!window.LAVAI_PAYBLU_DATA) {
+      loaderStatus.textContent = 'Carregando arquivo payblu_local.js...';
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = window.location.protocol === 'file:' ? 'payblu_local.js' : ('payblu_local.js?v=' + Date.now());
+        s.charset = 'latin1';
+        s.onload = resolve;
+        s.onerror = () => {
+          // Fallback fetch
+          fetch('payblu_local.js')
+            .then(res => res.arrayBuffer())
+            .then(buf => {
+              const decoder = new TextDecoder('latin1');
+              const txt = decoder.decode(buf);
+              const m = txt.match(/window\.LAVAI_PAYBLU_DATA\s*=\s*`([\s\S]*?)`;/);
+              if (m) window.LAVAI_PAYBLU_DATA = m[1];
+              resolve();
+            })
+            .catch(reject);
+        };
+        document.head.appendChild(s);
+      });
+    }
+
+    if (!window.LAVAI_PAYBLU_DATA) {
+      throw new Error('Nenhum dado encontrado na variável LAVAI_PAYBLU_DATA.');
+    }
+
+    loaderStatus.textContent = 'Normalizando 11.400+ movimentações do PayBlu...';
+    await new Promise(r => setTimeout(r, 40));
+
+    const parsed = parseCSVPayBlu(window.LAVAI_PAYBLU_DATA);
+    buildMasterResidentAptIndex(parsed);
+    allRows = enrichPayBluRows(parsed);
+
+    loaderStatus.textContent = 'Construindo filtros e métricas operacionais...';
+    buildYearAndMonthFilters();
+    applyFilter();
+    updateLastUpdateBadge();
+    updateElapsedTimes();
+
+    loader.classList.add('hidden');
+  } catch (err) {
+    console.error('Erro ao carregar dados do You Go:', err);
+    loader.innerHTML = `
+      <div style="max-width:420px;text-align:center;padding:30px;background:#fff;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,0.1)">
+        <i class="fas fa-triangle-exclamation" style="font-size:42px;color:#ef4444;margin-bottom:14px;display:block"></i>
+        <h3 style="color:#1e293b;font-weight:800;font-size:17px;margin-bottom:8px">Não foi possível carregar o PayBlu</h3>
+        <p style="color:#64748b;font-size:13px;line-height:1.5">Certifique-se de que o arquivo <code>payblu_local.js</code> está na mesma pasta desta página.</p>
+        <button onclick="location.reload()" style="margin-top:16px;background:#2563eb;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer">
+          <i class="fas fa-rotate-right"></i> Tentar Novamente
+        </button>
+      </div>`;
+  }
+}
+
+// ── Construção dos Filtros ────────────────────────────────────
+function buildYearAndMonthFilters() {
+  const selYear = document.getElementById('filter-year');
+  const years = new Set();
+  allRows.forEach(r => {
+    const d = parseDate(r[C.data]);
+    if (d) years.add(d.getFullYear());
+  });
+
+  selYear.innerHTML = '<option value="all">Todos os anos</option>';
+  [...years].sort((a, b) => b - a).forEach(y => {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = y;
+    selYear.appendChild(opt);
+  });
+
+  if (isFirstLoad) {
+    const now = new Date();
+    const curYearStr = String(now.getFullYear());
+    const curMonthStr = String(now.getMonth() + 1);
+
+    if ([...years].map(String).includes(curYearStr)) selYear.value = curYearStr;
+    else selYear.value = 'all';
+
+    document.getElementById('filter-month').value = curMonthStr;
+
+    document.querySelectorAll('.btn-range').forEach(b => b.classList.remove('active'));
+    const btnMes = document.getElementById('btn-range-mes');
+    if (btnMes) btnMes.classList.add('active');
+
+    isFirstLoad = false;
+  }
+}
+
+function clearDateInputs() {
+  if (fpStart) fpStart.clear(false);
+  if (fpEnd) fpEnd.clear(false);
+  document.getElementById('date-start').value = '';
+  document.getElementById('date-end').value = '';
+  dtFrom = null;
+  dtTo = null;
+}
+
+function setRange(r) {
+  document.querySelectorAll('.btn-range').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('btn-range-' + r);
+  if (btn) btn.classList.add('active');
+
+  clearDateInputs();
+
+  const now = new Date();
+  if (r === 'all') {
+    document.getElementById('filter-year').value = 'all';
+    document.getElementById('filter-month').value = 'all';
+    dtFrom = null;
+    dtTo = null;
+  } else if (r === 'mes') {
+    document.getElementById('filter-year').value = String(now.getFullYear());
+    document.getElementById('filter-month').value = String(now.getMonth() + 1);
+    dtFrom = null;
+    dtTo = null;
+  } else if (r === 'hoje') {
+    document.getElementById('filter-year').value = 'all';
+    document.getElementById('filter-month').value = 'all';
+    dtFrom = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    dtTo = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    if (fpStart) fpStart.setDate(dtFrom, false);
+    if (fpEnd) fpEnd.setDate(dtTo, false);
+  } else if (r === 'ontem') {
+    document.getElementById('filter-year').value = 'all';
+    document.getElementById('filter-month').value = 'all';
+    const yest = new Date(now);
+    yest.setDate(yest.getDate() - 1);
+    dtFrom = new Date(yest.getFullYear(), yest.getMonth(), yest.getDate(), 0, 0, 0);
+    dtTo = new Date(yest.getFullYear(), yest.getMonth(), yest.getDate(), 23, 59, 59);
+    if (fpStart) fpStart.setDate(dtFrom, false);
+    if (fpEnd) fpEnd.setDate(dtTo, false);
+  } else {
+    document.getElementById('filter-year').value = 'all';
+    document.getElementById('filter-month').value = 'all';
+    dtTo = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    dtFrom = new Date(now.getFullYear(), now.getMonth(), now.getDate() - r, 0, 0, 0);
+    if (fpStart) fpStart.setDate(dtFrom, false);
+    if (fpEnd) fpEnd.setDate(dtTo, false);
+  }
+
+  applyFilter();
+}
+
+function resetFilters() {
+  document.getElementById('filter-torre').value = 'all';
+  setRange('mes');
+}
+
+// ── Aplicação dos Filtros ─────────────────────────────────────
+function applyFilter() {
+  const filterYear = document.getElementById('filter-year').value;
+  const filterMonth = document.getElementById('filter-month').value;
+  const filterTorre = document.getElementById('filter-torre').value;
+
+  filtered = allRows.filter(r => {
+    const d = parseDate(r[C.data]);
+    if (!d) return false;
+
+    if (filterYear !== 'all' && d.getFullYear() !== parseInt(filterYear, 10)) return false;
+    if (filterMonth !== 'all' && d.getMonth() + 1 !== parseInt(filterMonth, 10)) return false;
+
+    if (dtFrom && d < dtFrom) return false;
+    if (dtTo && d > dtTo) return false;
+
+    // Filtro de Torre / Equipamento
+    if (filterTorre === 'torre_1' && r[C.torre] !== 'You Go 1') return false;
+    if (filterTorre === 'torre_2' && r[C.torre] !== 'You Go 2') return false;
+    if (filterTorre === 'torre_3' && r[C.torre] !== 'You Go 3') return false;
+    if (filterTorre === 'only_wash' && r[C.tipoCiclo] !== 'wash') return false;
+    if (filterTorre === 'only_dry' && r[C.tipoCiclo] !== 'dry') return false;
+
+    if (filterTorre.startsWith('maq_')) {
+      const targetMatr = filterTorre.replace('maq_', '');
+      const rMatr = (r[C.matricula] || '').replace(/[`'"]/g, '').trim();
+      const rLogico = (r[C.nlogico] || '').replace(/[`'"]/g, '').trim();
+      if (rMatr !== targetMatr && rLogico !== targetMatr) return false;
+    }
+
+    return true;
+  });
+
+  renderAll();
+}
+
+function renderAll() {
+  renderKPIs();
+  renderInsights();
+  renderChartCycles();
+  renderChartPeak();
+  renderTorreRanking();
+  renderAptRanking();
+  renderTable();
+}
+
+// ── Cálculo do Número de Dias no Período ──────────────────────
+function getFilteredDaysCount() {
+  const fv = document.getElementById('date-start').value;
+  const tv = document.getElementById('date-end').value;
+  const filterYear = document.getElementById('filter-year').value;
+  const filterMonth = document.getElementById('filter-month').value;
+
+  let d1 = null, d2 = null;
+  if (fv) d1 = parseInputDate(fv, false);
+  if (tv) d2 = parseInputDate(tv, true);
+
+  if (!fv && !tv) {
+    const now = new Date();
+    if (filterYear !== 'all' && filterMonth !== 'all') {
+      const year = parseInt(filterYear, 10), month = parseInt(filterMonth, 10);
+      d1 = new Date(year, month - 1, 1);
+      if (month === (now.getMonth() + 1) && year === now.getFullYear()) d2 = now;
+      else d2 = new Date(year, month, 0);
+    } else if (filterYear !== 'all') {
+      const year = parseInt(filterYear, 10);
+      d1 = new Date(year, 0, 1);
+      if (year === now.getFullYear()) d2 = now;
+      else d2 = new Date(year, 12, 0);
+    }
+  }
+
+  const dates = filtered.map(r => parseDate(r[C.data])).filter(d => d !== null);
+  if (dates.length === 0) return 1;
+
+  if (!d1) d1 = new Date(Math.min(...dates));
+  if (!d2) d2 = new Date(Math.max(...dates));
+
+  const diffTime = Math.abs(d2.getTime() - d1.getTime());
+  return Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
+}
+
+// ── Renderização dos KPIs ─────────────────────────────────────
+function renderKPIs() {
+  const totalReceita = filtered.reduce((s, r) => s + toNum(r[C.total]), 0);
+  let washCycles = 0, dryCycles = 0;
+  const aptsSet = new Set();
+  const residentsSet = new Set();
+
+  filtered.forEach(r => {
+    if (r[C.tipoCiclo] === 'wash') washCycles++;
+    else if (r[C.tipoCiclo] === 'dry') dryCycles++;
+
+    const apt = r[C.aptNorm];
+    if (apt && apt !== '–') aptsSet.add(apt);
+
+    const morador = r[C.moradorNorm];
+    if (morador && morador !== '–') residentsSet.add(morador.toLowerCase());
+  });
+
+  const totalCycles = washCycles + dryCycles;
+  const numDays = getFilteredDaysCount() || 1;
+
+  // Atualização dos elementos na tela
+  document.getElementById('kpi-revenue-val').textContent = fmtBRL(totalReceita);
+  document.getElementById('kpi-wash-val').textContent = washCycles.toLocaleString('pt-BR');
+  document.getElementById('kpi-dry-val').textContent = dryCycles.toLocaleString('pt-BR');
+  document.getElementById('kpi-apts-val').textContent = aptsSet.size.toLocaleString('pt-BR');
+  document.getElementById('kpi-residents-val').textContent = residentsSet.size.toLocaleString('pt-BR');
+
+  // Ticket Médio
+  const ticketMedio = totalCycles > 0 ? (totalReceita / totalCycles) : 0;
+  document.getElementById('kpi-ticket-val').textContent = fmtBRL(ticketMedio);
+
+  // Média de ciclos por máquina por dia (6 máquinas instaladas no You Go)
+  const mediaCiclos = totalCycles / (6 * numDays);
+  document.getElementById('kpi-machine-cycles-val').textContent = fmtN(mediaCiclos, 1);
+
+  // Metas do Período
+  const filterTorre = document.getElementById('filter-torre').value;
+  let maqCount = 6;
+  if (filterTorre.startsWith('torre_')) maqCount = 2;
+  else if (filterTorre === 'only_wash' || filterTorre === 'only_dry') maqCount = 3;
+  else if (filterTorre.startsWith('maq_')) maqCount = 1;
+
+  const metaDiaria = maqCount * 2.56; // Benchmark operacional da rede LAVAÍ
+  const periodGoal = Math.round(metaDiaria * numDays);
+  const periodSales = totalCycles;
+
+  let pctText = "", pctColor = "";
+  if (periodGoal > 0) {
+    const pct = Math.round((periodSales / periodGoal) * 100);
+    pctText = `${pct}% da meta atingida`;
+    pctColor = pct >= 100 ? '#10b981' : '#ef4444';
+  } else {
+    pctText = "Sem meta";
+    pctColor = 'var(--text-muted)';
+  }
+
+  document.getElementById('kpi-today-title').textContent = numDays === 1 ? 'Vendas do Dia' : 'Ciclos no Período';
+  document.getElementById('kpi-today-val').textContent = periodSales.toLocaleString('pt-BR');
+  document.getElementById('kpi-today-sub').innerHTML = `<i class="fas fa-bullseye" style="color:${pctColor}"></i><span>Meta: ${periodGoal.toLocaleString('pt-BR')} | <strong style="color:${pctColor}">${pctText}</strong></span>`;
+
+  // Hoje vs Ontem
+  const todayStr = getTodayStr(), yesterdayStr = getYesterdayStr();
+  const todayRows = allRows.filter(r => r[C.data] === todayStr);
+  const yesterdayRows = allRows.filter(r => r[C.data] === yesterdayStr);
+
+  document.getElementById('kpi-today-count').textContent = todayRows.length.toLocaleString('pt-BR');
+  document.getElementById('kpi-yesterday-count').textContent = yesterdayRows.length.toLocaleString('pt-BR');
+  document.getElementById('kpi-today-yesterday-sub').querySelector('span').textContent = `Hoje (${todayStr}): ${todayRows.length} ciclos`;
+
+  // Projeção de Faturamento
+  const now = new Date();
+  const filterYear = document.getElementById('filter-year').value;
+  const filterMonth = document.getElementById('filter-month').value;
+  let isPastPeriod = false;
+
+  if (filterYear !== 'all' && parseInt(filterYear, 10) < now.getFullYear()) isPastPeriod = true;
+  else if (filterYear !== 'all' && parseInt(filterYear, 10) === now.getFullYear() && filterMonth !== 'all' && parseInt(filterMonth, 10) < (now.getMonth() + 1)) isPastPeriod = true;
+  if (dtTo && dtTo < new Date(now.getFullYear(), now.getMonth(), now.getDate())) isPastPeriod = true;
+
+  if (isPastPeriod) {
+    document.getElementById('kpi-projection-val').textContent = fmtBRL(totalReceita);
+    document.getElementById('kpi-projection-sub').innerHTML = `<span>Período encerrado · Faturamento consolidado</span>`;
+  } else {
+    const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    const totalAteOntem = filtered.reduce((s, r) => {
+      const d = parseDate(r[C.data]);
+      return (d && new Date(d.getFullYear(), d.getMonth(), d.getDate()) <= yesterday) ? s + toNum(r[C.total]) : s;
+    }, 0);
+
+    const totalDiasMes = new Date(parseInt(filterYear, 10) || now.getFullYear(), parseInt(filterMonth, 10) || (now.getMonth() + 1), 0).getDate();
+    const diasPassados = Math.max(1, now.getDate() - 1);
+    const diasRestantes = Math.max(0, totalDiasMes - diasPassados);
+    const mediaDiariaAteOntem = totalAteOntem / diasPassados;
+    const projTotal = totalAteOntem + (mediaDiariaAteOntem * diasRestantes);
+
+    document.getElementById('kpi-projection-val').textContent = fmtBRL(projTotal);
+    document.getElementById('kpi-projection-sub').innerHTML = `<i class="fas fa-calculator" style="color:var(--amber)"></i><span>Média: ${fmtBRL(mediaDiariaAteOntem)}/dia | ${diasRestantes}d restantes</span>`;
+  }
+
+  // Dia da semana do período
+  let weekdayText = "", weekdaySub = "";
+  if (dtFrom && dtTo) {
+    const diffDays = Math.ceil(Math.abs(dtTo.getTime() - dtFrom.getTime()) / (1000 * 3600 * 24));
+    if (diffDays === 0 || dtFrom.toDateString() === dtTo.toDateString()) {
+      weekdayText = WEEKDAYS_PT[dtFrom.getDay()].replace(/^\w/, c => c.toUpperCase());
+      weekdaySub = `Dia ${String(dtFrom.getDate()).padStart(2,'0')}/${String(dtFrom.getMonth()+1).padStart(2,'0')}/${dtFrom.getFullYear()}`;
+    } else {
+      weekdayText = "Múltiplos";
+      weekdaySub = `Período de ${diffDays + 1} dias`;
+    }
+  } else {
+    const today = new Date();
+    weekdayText = WEEKDAYS_PT[today.getDay()].replace(/^\w/, c => c.toUpperCase());
+    weekdaySub = `Hoje: ${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
+  }
+  document.getElementById('kpi-weekday-val').textContent = weekdayText;
+  document.getElementById('kpi-weekday-sub').querySelector('span').textContent = weekdaySub;
+}
+
+// ── Inteligência Operacional (Insights) ────────────────────────
+function renderInsights() {
+  if (filtered.length === 0) {
+    ['busiest-day', 'quietest-day', 'busiest-hour', 'quietest-hour', 'best-dow', 'worst-dow'].forEach(id => {
+      const valEl = document.getElementById(`kpi-${id}-val`);
+      const subEl = document.getElementById(`kpi-${id}-sub`);
+      if (valEl) valEl.textContent = '--';
+      if (subEl) subEl.textContent = 'Sem dados no período';
+    });
+    return;
+  }
+
+  // Dias com maior e menor movimento
+  const byDay = {};
+  filtered.forEach(r => {
+    const d = r[C.data];
+    if (!d) return;
+    if (!byDay[d]) byDay[d] = { total: 0, count: 0, date: parseDate(d) };
+    byDay[d].total += toNum(r[C.total]);
+    byDay[d].count++;
+  });
+
+  const dayArr = Object.entries(byDay);
+  dayArr.sort((a, b) => b[1].count - a[1].count);
+
+  const busiest = dayArr[0];
+  const quietest = dayArr[dayArr.length - 1];
+
+  if (busiest) {
+    const bDate = busiest[1].date;
+    document.getElementById('kpi-busiest-day-val').textContent = bDate ? `${String(bDate.getDate()).padStart(2, '0')}/${String(bDate.getMonth() + 1).padStart(2, '0')} (${DOW[bDate.getDay()]})` : '--';
+    document.getElementById('kpi-busiest-day-sub').textContent = `${busiest[1].count} ciclos · ${fmtBRL(busiest[1].total)}`;
+  }
+  if (quietest) {
+    const qDate = quietest[1].date;
+    document.getElementById('kpi-quietest-day-val').textContent = qDate ? `${String(qDate.getDate()).padStart(2, '0')}/${String(qDate.getMonth() + 1).padStart(2, '0')} (${DOW[qDate.getDay()]})` : '--';
+    document.getElementById('kpi-quietest-day-sub').textContent = `${quietest[1].count} ciclos · ${fmtBRL(quietest[1].total)}`;
+  }
+
+  // Horários de Pico
+  const byHour = Array(24).fill(0);
+  filtered.forEach(r => {
+    const h = r[C.hora];
+    if (h) {
+      const hr = parseInt(h.split(':')[0], 10);
+      if (!isNaN(hr) && hr >= 0 && hr < 24) byHour[hr]++;
+    }
+  });
+
+  const maxHrCount = Math.max(...byHour);
+  const minHrCount = Math.min(...byHour.filter(v => v > 0));
+  const bHr = byHour.indexOf(maxHrCount);
+  const qHr = byHour.indexOf(minHrCount);
+
+  document.getElementById('kpi-busiest-hour-val').textContent = bHr >= 0 ? `${String(bHr).padStart(2, '0')}:00h` : '--:--';
+  document.getElementById('kpi-busiest-hour-sub').textContent = `${maxHrCount} ciclos realizados`;
+  document.getElementById('kpi-quietest-hour-val').textContent = qHr >= 0 ? `${String(qHr).padStart(2, '0')}:00h` : '--:--';
+  document.getElementById('kpi-quietest-hour-sub').textContent = `${minHrCount || 0} ciclos realizados`;
+
+  // Dias da Semana (DOW)
+  const dowTotal = Array(7).fill(0), dowCount = Array(7).fill(0);
+  Object.values(byDay).forEach(d => {
+    if (d.date) {
+      const dow = d.date.getDay();
+      dowTotal[dow] += d.count;
+      dowCount[dow]++;
+    }
+  });
+
+  const dowAvg = dowTotal.map((t, i) => dowCount[i] ? t / dowCount[i] : 0);
+  const bestDow = dowAvg.indexOf(Math.max(...dowAvg));
+  const worstDow = dowAvg.indexOf(Math.min(...dowAvg.filter(v => v > 0)));
+
+  document.getElementById('kpi-best-dow-val').textContent = DOW[bestDow] || '--';
+  document.getElementById('kpi-best-dow-sub').textContent = `Média de ${fmtN(dowAvg[bestDow] || 0, 1)} ciclos`;
+  document.getElementById('kpi-worst-dow-val').textContent = DOW[worstDow] || '--';
+  document.getElementById('kpi-worst-dow-sub').textContent = `Média de ${fmtN(dowAvg[worstDow] || 0, 1)} ciclos`;
+}
+
+// ── Gráficos ApexCharts ───────────────────────────────────────
+function renderChartCycles() {
+  const byDay = {};
+  filtered.forEach(r => {
+    const d = r[C.data];
+    if (!d) return;
+    if (!byDay[d]) byDay[d] = { wash: 0, dry: 0 };
+    if (r[C.tipoCiclo] === 'wash') byDay[d].wash++;
+    else byDay[d].dry++;
+  });
+
+  const days = Object.keys(byDay).sort((a, b) => parseDate(a) - parseDate(b));
+  const washData = days.map(d => byDay[d].wash);
+  const dryData = days.map(d => byDay[d].dry);
+  const labels = days.map(d => {
+    const p = parseDate(d);
+    return p ? `${String(p.getDate()).padStart(2, '0')}/${String(p.getMonth() + 1).padStart(2, '0')}` : d;
+  });
+
+  const totalCycles = washData.reduce((s, v) => s + v, 0) + dryData.reduce((s, v) => s + v, 0);
+  const numDays = getFilteredDaysCount() || 1;
+  const mediaDia = (totalCycles / numDays).toFixed(1);
+  document.getElementById('average-cycles-badge').textContent = `Média: ${mediaDia} ciclos/dia`;
+
+  const opts = {
+    series: [
+      { name: 'Lavagem', data: washData },
+      { name: 'Secagem', data: dryData }
+    ],
+    chart: {
+      type: 'bar',
+      stacked: true,
+      height: 270,
+      toolbar: { show: false },
+      background: 'transparent'
+    },
+    colors: ['#2563eb', '#0ea5e9'],
+    xaxis: {
+      categories: labels,
+      labels: { style: { colors: '#64748b', fontSize: '11px', fontFamily: 'Inter' }, rotate: -45 }
+    },
+    yaxis: {
+      labels: { style: { colors: '#64748b', fontSize: '11px', fontFamily: 'Inter' } }
+    },
+    grid: { borderColor: '#e8edf5', strokeDashArray: 4 },
+    legend: { position: 'top', labels: { colors: '#475569' }, fontSize: '12px' },
+    plotOptions: { bar: { borderRadius: 4, columnWidth: '60%' } },
+    dataLabels: { enabled: false }
+  };
+
+  if (chartCycles) chartCycles.updateOptions(opts);
+  else {
+    chartCycles = new ApexCharts(document.getElementById('chart-cycles-daily'), opts);
+    chartCycles.render();
+  }
+}
+
+function renderChartPeak() {
+  const byHour = Array(24).fill(0);
+  filtered.forEach(r => {
+    const h = r[C.hora];
+    if (h) {
+      const hr = parseInt(h.split(':')[0], 10);
+      if (!isNaN(hr) && hr >= 0 && hr < 24) byHour[hr]++;
+    }
+  });
+
+  const maxVal = Math.max(...byHour);
+  const opts = {
+    series: [{ name: 'Ciclos no Horário', data: byHour }],
+    chart: {
+      type: 'bar',
+      height: 270,
+      toolbar: { show: false },
+      background: 'transparent'
+    },
+    colors: ['#0ea5e9'],
+    xaxis: {
+      categories: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}h`),
+      labels: { style: { colors: '#64748b', fontSize: '10px', fontFamily: 'Inter' } }
+    },
+    yaxis: {
+      labels: { style: { colors: '#64748b', fontSize: '11px', fontFamily: 'Inter' } }
+    },
+    grid: { borderColor: '#e8edf5', strokeDashArray: 4 },
+    plotOptions: {
+      bar: {
+        borderRadius: 4,
+        columnWidth: '65%',
+        colors: {
+          ranges: [{ from: maxVal, to: maxVal, color: '#2563eb' }]
+        }
+      }
+    },
+    dataLabels: { enabled: false }
+  };
+
+  if (chartPeak) chartPeak.updateOptions(opts);
+  else {
+    chartPeak = new ApexCharts(document.getElementById('chart-peak-times'), opts);
+    chartPeak.render();
+  }
+}
+
+// ── Ranking de Torres & Equipamentos ──────────────────────────
+function renderTorreRanking() {
+  const torres = {
+    'You Go 1': { name: 'Torre 1', wash: 0, dry: 0, revenue: 0, total: 0 },
+    'You Go 2': { name: 'Torre 2', wash: 0, dry: 0, revenue: 0, total: 0 },
+    'You Go 3': { name: 'Torre 3', wash: 0, dry: 0, revenue: 0, total: 0 }
+  };
+
+  filtered.forEach(r => {
+    const t = r[C.torre] || 'You Go 1';
+    if (!torres[t]) torres[t] = { name: t, wash: 0, dry: 0, revenue: 0, total: 0 };
+    if (r[C.tipoCiclo] === 'wash') torres[t].wash++;
+    else torres[t].dry++;
+    torres[t].revenue += toNum(r[C.total]);
+    torres[t].total++;
+  });
+
+  const list = Object.values(torres).sort((a, b) => b.total - a.total);
+  const maxCycles = list.length > 0 ? Math.max(...list.map(x => x.total)) : 1;
+  const container = document.getElementById('torre-ranking-list');
+
+  if (list.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Nenhuma movimentação encontrada</div>';
+    return;
+  }
+
+  container.innerHTML = list.map((item, idx) => {
+    const pct = maxCycles > 0 ? (item.total / maxCycles) * 100 : 0;
+    return `
+      <div class="ranking-item">
+        <div class="ranking-header">
+          <span class="ranking-title">
+            <span style="color:var(--purple);font-weight:800">#${idx + 1}</span> ${item.name}
+          </span>
+          <span class="ranking-val">${fmtBRL(item.revenue)}</span>
+        </div>
+        <div class="ranking-sub">
+          <span>${item.total.toLocaleString('pt-BR')} ciclos (${item.wash} lav / ${item.dry} sec)</span>
+          <span>${fmtN(pct, 0)}% do volume</span>
+        </div>
+        <div class="ranking-bar-bg">
+          <div class="ranking-bar-fill" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Ranking dos Top Apartamentos Mais Ativos ──────────────────
+function renderAptRanking() {
+  const apts = {};
+  filtered.forEach(r => {
+    const apt = r[C.aptNorm];
+    if (!apt || apt === '–') return;
+    if (!apts[apt]) apts[apt] = { apt, count: 0, revenue: 0, wash: 0, dry: 0 };
+    apts[apt].count++;
+    apts[apt].revenue += toNum(r[C.total]);
+    if (r[C.tipoCiclo] === 'wash') apts[apt].wash++;
+    else apts[apt].dry++;
+  });
+
+  const list = Object.values(apts).sort((a, b) => b.count - a.count).slice(0, 10);
+  const maxApt = list.length > 0 ? list[0].count : 1;
+  const container = document.getElementById('apt-ranking-list');
+
+  if (list.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Nenhum apartamento identificado no período</div>';
+    return;
+  }
+
+  container.innerHTML = list.map((item, idx) => {
+    const pct = maxApt > 0 ? (item.count / maxApt) * 100 : 0;
+    return `
+      <div class="ranking-item">
+        <div class="ranking-header">
+          <span class="ranking-title">
+            <span style="color:#d97706;font-weight:800">#${idx + 1}</span>
+            <span class="badge-apt">${item.apt}</span>
+          </span>
+          <span class="ranking-val" style="color:#2563eb">${item.count} ciclos</span>
+        </div>
+        <div class="ranking-sub">
+          <span>${item.wash} lavagens · ${item.dry} secagens</span>
+          <span>Total: ${fmtBRL(item.revenue)}</span>
+        </div>
+        <div class="ranking-bar-bg">
+          <div class="ranking-bar-fill pink" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Tabela de Transações e Paginação ──────────────────────────
+function renderTable() {
+  tableRows = [...filtered];
+
+  if (tableSearch) {
+    const q = tableSearch.toLowerCase();
+    tableRows = tableRows.filter(r => {
+      if ((r[C.moradorNorm] || '').toLowerCase().includes(q)) return true;
+      if ((r[C.aptNorm] || '').toLowerCase().includes(q)) return true;
+      if ((r[C.torre] || '').toLowerCase().includes(q)) return true;
+      if ((r[C.produto] || '').toLowerCase().includes(q)) return true;
+      if ((r[C.data] || '').includes(q)) return true;
+      if ((r[C.hora] || '').includes(q)) return true;
+      if ((r[C.matricula] || '').includes(q)) return true;
+      return r.some(c => (c || '').toLowerCase().includes(q));
+    });
+  }
+
+  if (tableSortCol >= 0) {
+    const idxMap = [C.data, C.torre, C.produto, C.moradorNorm, C.aptNorm, C.pagamento, C.bandeira, C.total, C.matricula];
+    const ci = idxMap[tableSortCol];
+
+    tableRows.sort((a, b) => {
+      const va = a[ci] || '', vb = b[ci] || '';
+      if (tableSortCol === 0) {
+        const da = parseDate(a[C.data]) || 0;
+        const db = parseDate(b[C.data]) || 0;
+        if (da !== db) return tableSortDir * (da - db);
+        return tableSortDir * (a[C.hora] || '').localeCompare(b[C.hora] || '');
+      }
+      if (tableSortCol === 7) {
+        return tableSortDir * (toNum(va) - toNum(vb));
+      }
+      return tableSortDir * va.localeCompare(vb, 'pt-BR');
+    });
+  }
+
+  tablePage = 0;
+  paintTable();
+}
+
+function paintTable() {
+  const total = tableRows.length;
+  const pages = Math.ceil(total / TABLE_PS) || 1;
+  if (tablePage >= pages) tablePage = pages - 1;
+
+  const pageRows = tableRows.slice(tablePage * TABLE_PS, (tablePage + 1) * TABLE_PS);
+  const tbody = document.getElementById('tbody-transactions');
+
+  if (pageRows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-muted)">Nenhuma movimentação encontrada com os filtros atuais.</td></tr>`;
+    document.getElementById('pg-info').textContent = '0 de 0 transações';
+    document.getElementById('pg-btns').innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = pageRows.map(r => {
+    const dt = fmtDate(r[C.data]);
+    const hr = r[C.hora] || '';
+    const torre = r[C.torre] || 'You Go 1';
+    const isWash = r[C.tipoCiclo] === 'wash';
+    const cicloBadge = isWash
+      ? `<span class="badge-wash">🫧 Lavagem</span>`
+      : `<span class="badge-dry">💨 Secagem</span>`;
+
+    const morador = r[C.moradorNorm] && r[C.moradorNorm] !== '–'
+      ? `<span style="font-weight:600;color:var(--text)">${r[C.moradorNorm]}</span>`
+      : `<span style="color:var(--text-muted)">–</span>`;
+
+    const apt = r[C.aptNorm] && r[C.aptNorm] !== '–'
+      ? `<span class="badge-apt">${r[C.aptNorm]}</span>`
+      : `<span style="color:var(--text-muted)">–</span>`;
+
+    const matr = (r[C.matricula] || r[C.nsu] || '–').replace(/[`'"]/g, '').trim();
+
+    return `
+      <tr>
+        <td style="font-family:var(--font-mono);font-size:11px">${dt} <span style="color:var(--text-muted)">${hr}</span></td>
+        <td><span class="badge-torre">${torre}</span></td>
+        <td>${cicloBadge}</td>
+        <td>${morador}</td>
+        <td>${apt}</td>
+        <td><span class="badge-payment">${r[C.pagamento] || 'PRIVATE LABEL'}</span></td>
+        <td style="color:var(--text-muted)">${r[C.bandeira] || 'PayBlu'}</td>
+        <td class="td-mono">${fmtBRL(toNum(r[C.total]))}</td>
+        <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">${matr}</td>
+      </tr>`;
+  }).join('');
+
+  document.getElementById('pg-info').textContent = `Exibindo ${tablePage * TABLE_PS + 1}–${Math.min((tablePage + 1) * TABLE_PS, total)} de ${total.toLocaleString('pt-BR')} transações`;
+
+  let pgHtml = `<button class="pg-btn" onclick="goPage(${tablePage - 1})" ${tablePage === 0 ? 'disabled' : ''}>‹</button>`;
+  for (let i = 0; i < Math.min(pages, 7); i++) {
+    pgHtml += `<button class="pg-btn ${i === tablePage ? 'active' : ''}" onclick="goPage(${i})">${i + 1}</button>`;
+  }
+  if (pages > 7) pgHtml += `<button class="pg-btn" disabled>…</button>`;
+  pgHtml += `<button class="pg-btn" onclick="goPage(${tablePage + 1})" ${tablePage >= pages - 1 ? 'disabled' : ''}>›</button>`;
+  document.getElementById('pg-btns').innerHTML = pgHtml;
+}
+
+function goPage(p) {
+  const pages = Math.ceil(tableRows.length / TABLE_PS) || 1;
+  if (p >= 0 && p < pages) {
+    tablePage = p;
+    paintTable();
+  }
+}
+
+function doSearch(v) {
+  tableSearch = v;
+  renderTable();
+}
+
+function sortTable(col) {
+  if (tableSortCol === col) tableSortDir *= -1;
+  else {
+    tableSortCol = col;
+    tableSortDir = 1;
+  }
+  renderTable();
+}
+
+// ── Exportação para Excel (.xlsx) ─────────────────────────────
+function exportExcel() {
+  if (typeof XLSX === 'undefined') {
+    alert('Biblioteca XLSX ainda não foi carregada. Tente novamente em instantes.');
+    return;
+  }
+
+  const header = [
+    'Data', 'Hora', 'Condomínio', 'Torre', 'Equipamento',
+    'Tipo Ciclo', 'Morador', 'Apartamento', 'Forma de Pagamento',
+    'Bandeira', 'Valor (R$)', 'Matrícula / Nº Lógico', 'NSU'
+  ];
+
+  const rows = filtered.map(r => [
+    fmtDate(r[C.data]),
+    r[C.hora] || '',
+    'You Go Vila Mariana',
+    r[C.torre] || '',
+    r[C.produto] || '',
+    r[C.tipoCiclo] === 'wash' ? 'Lavagem' : 'Secagem',
+    r[C.moradorNorm] || '',
+    r[C.aptNorm] || '',
+    r[C.pagamento] || 'Private Label',
+    r[C.bandeira] || 'PayBlu',
+    toNum(r[C.total]),
+    (r[C.matricula] || '').replace(/[`'"]/g, '').trim(),
+    r[C.nsu] || ''
+  ]);
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+
+  // Largura das colunas
+  ws['!cols'] = [
+    { wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 14 }, { wch: 14 },
+    { wch: 12 }, { wch: 28 }, { wch: 14 }, { wch: 18 }, { wch: 12 },
+    { wch: 12 }, { wch: 20 }, { wch: 14 }
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Histórico You Go (PayBlu)');
+  XLSX.writeFile(wb, `LAVAI_YouGo_PayBlu_${Date.now()}.xlsx`);
+}
+
+// ── Atualização de Tempo Decorrido ────────────────────────────
+function updateElapsedTimes() {
+  if (!allRows || allRows.length === 0) {
+    document.getElementById('time-last-sale').textContent = '–';
+    return;
+  }
+
+  let lastSaleMs = 0;
+  allRows.forEach(r => {
+    const dt = parseDate(r[C.data]);
+    if (dt) {
+      const hrStr = r[C.hora] || '00:00:00';
+      const parts = hrStr.split(':');
+      if (parts.length >= 2) {
+        dt.setHours(+parts[0], +parts[1], parts[2] ? +parts[2] : 0);
+        const ms = dt.getTime();
+        const totalVal = toNum(r[C.total]);
+        if (totalVal > 0 && ms > lastSaleMs) lastSaleMs = ms;
+      }
+    }
+  });
+
+  const fmtElapsed = (ms) => {
+    if (ms === 0) return '–';
+    const diffMs = new Date().getTime() - ms;
+    if (diffMs < 0) return 'Agora';
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return 'menos de 1 min';
+    if (diffMin < 60) return `${diffMin} min`;
+    const diffHr = Math.floor(diffMin / 60);
+    const remMin = diffMin % 60;
+    if (diffHr < 24) return `${diffHr}h e ${remMin}m`;
+    return `${Math.floor(diffHr / 24)}d atrás`;
+  };
+
+  document.getElementById('time-last-sale').textContent = fmtElapsed(lastSaleMs);
+}
+
+function updateLastUpdateBadge() {
+  const badge = document.getElementById('last-update');
+  if (!badge) return;
+
+  let dt = null;
+  if (window.LAVAI_STATUS && window.LAVAI_STATUS.gerado_em) {
+    dt = new Date(window.LAVAI_STATUS.gerado_em);
+  }
+
+  if (!dt || isNaN(dt.getTime())) {
+    // Busca a maior data de transação
+    let maxMs = 0;
+    allRows.forEach(r => {
+      const d = parseDate(r[C.data]);
+      if (d && d.getTime() > maxMs) maxMs = d.getTime();
+    });
+    if (maxMs > 0) dt = new Date(maxMs);
+  }
+
+  if (dt) {
+    const pad = n => String(n).padStart(2, '0');
+    badge.innerHTML = `<i class="fas fa-clock"></i> Atualizado em: ${pad(dt.getDate())}/${pad(dt.getMonth() + 1)}/${dt.getFullYear()} às ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+  }
+}
+
+// ── Clima São Paulo (Open-Meteo) ──────────────────────────────
+let weatherData = null;
+let weatherChart = null;
+
+async function fetchWeatherData() {
+  try {
+    const resCurr = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-23.5505&longitude=-46.6333&current_weather=true&daily=temperature_2m_max,temperature_2m_min,rain_sum&timezone=America/Sao_Paulo');
+    const data = await resCurr.json();
+    weatherData = { current: data.current_weather, daily: data.daily };
+
+    const descMap = {
+      0: "Céu Limpo", 1: "Predom. Limpo", 2: "Parcialmente Nublado",
+      3: "Nublado", 51: "Garoa Leve", 61: "Chuva Leve",
+      63: "Chuva Moderada", 80: "Pancadas", 95: "Tempestade"
+    };
+    const desc = descMap[weatherData.current.weathercode] || "Instável";
+
+    document.getElementById('kpi-weather-temp').textContent = `${Math.round(weatherData.current.temperature)}°C`;
+    document.getElementById('kpi-weather-sub').innerHTML = `<i class="fas fa-cloud-sun" style="color:var(--cyan)"></i> <span>São Paulo: ${desc}</span>`;
+  } catch (err) {}
+}
+
+function abrirModalClima() {
+  document.getElementById('weather-modal-overlay').classList.add('open');
+  setTimeout(renderWeatherChart, 120);
+}
+
+function closeWeatherModal(e) {
+  if (!e || e.target === document.getElementById('weather-modal-overlay')) {
+    document.getElementById('weather-modal-overlay').classList.remove('open');
+  }
+}
+
+function renderWeatherChart() {
+  if (!weatherData || !weatherData.daily) return;
+  if (weatherChart) weatherChart.destroy();
+
+  weatherChart = new ApexCharts(document.querySelector("#weather-monthly-chart"), {
+    series: [
+      { name: 'Temp Máx (°C)', data: weatherData.daily.temperature_2m_max },
+      { name: 'Temp Mín (°C)', data: weatherData.daily.temperature_2m_min },
+      { name: 'Chuva (mm)', type: 'column', data: weatherData.daily.rain_sum }
+    ],
+    chart: { height: 320, type: 'line', toolbar: { show: false }, background: 'transparent' },
+    colors: ['#ef4444', '#0ea5e9', '#3b82f6'],
+    stroke: { width: [3, 3, 0] },
+    xaxis: { categories: weatherData.daily.time.map(d => d.substring(5).replace('-', '/')) },
+    legend: { position: 'top' }
+  });
+  weatherChart.render();
+}
+
+// ── Inicialização de Flatpickr e Eventos ───────────────────────
+function initFlatpickr() {
+  const cfg = {
+    dateFormat: "d/m/Y",
+    locale: "pt",
+    allowInput: true,
+    defaultDate: null,
+    onChange: (dates, str, inst) => inst.element.dispatchEvent(new Event('change'))
+  };
+  fpStart = flatpickr("#date-start", cfg);
+  fpEnd = flatpickr("#date-end", cfg);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initFlatpickr();
+
+  document.getElementById('filter-year').onchange = () => { clearDateInputs(); applyFilter(); };
+  document.getElementById('filter-month').onchange = () => { clearDateInputs(); applyFilter(); };
+  document.getElementById('filter-torre').onchange = () => applyFilter();
+
+  document.getElementById('date-start').onchange =
+  document.getElementById('date-end').onchange = function() {
+    document.querySelectorAll('.btn-range').forEach(b => b.classList.remove('active'));
+    dtFrom = parseInputDate(document.getElementById('date-start').value, false);
+    dtTo = parseInputDate(document.getElementById('date-end').value, true);
+    document.getElementById('filter-year').value = 'all';
+    document.getElementById('filter-month').value = 'all';
+    applyFilter();
+  };
+
+  loadPaybluData();
+  fetchWeatherData();
+  setInterval(updateElapsedTimes, 60000);
+});
+</script>
+</body>
+</html>
