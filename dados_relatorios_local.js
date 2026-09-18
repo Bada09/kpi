@@ -1,10 +1,10 @@
 window.LAVAI_STATUS = {
-  "gerado_em": "2026-09-18T12:43:24.040978-03:00",
+  "gerado_em": "2026-09-18T12:50:15.234920-03:00",
   "proxima_coleta": null,
   "status": "ok",
   "total_transacoes": 113215,
   "portal_transacoes": 86514,
-  "api_transacoes": 187,
+  "api_transacoes": 0,
   "excel_transacoes": 174150,
   "sq_transacoes": 2608,
   "payblu_transacoes": 11521
