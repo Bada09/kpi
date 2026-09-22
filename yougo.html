@@ -2003,7 +2003,14 @@ function renderInsights() {
   dayArr.sort((a, b) => b[1].count - a[1].count);
 
   const busiest = dayArr[0];
-  const quietest = dayArr[dayArr.length - 1];
+  const now = new Date();
+  const isToday = (d) => d && (d instanceof Date) && !isNaN(d.getTime()) &&
+    d.getDate() === now.getDate() &&
+    d.getMonth() === now.getMonth() &&
+    d.getFullYear() === now.getFullYear();
+
+  const quietestCandidates = dayArr.filter(([_, item]) => !isToday(item.date));
+  const quietest = quietestCandidates.length > 0 ? quietestCandidates[quietestCandidates.length - 1] : null;
 
   if (busiest) {
     const bDate = busiest[1].date;
@@ -2014,6 +2021,9 @@ function renderInsights() {
     const qDate = quietest[1].date;
     document.getElementById('kpi-quietest-day-val').textContent = qDate ? `${String(qDate.getDate()).padStart(2, '0')}/${String(qDate.getMonth() + 1).padStart(2, '0')} (${DOW[qDate.getDay()]})` : '--';
     document.getElementById('kpi-quietest-day-sub').textContent = `${quietest[1].count} ciclos · ${fmtBRL(quietest[1].total)}`;
+  } else {
+    document.getElementById('kpi-quietest-day-val').textContent = '--';
+    document.getElementById('kpi-quietest-day-sub').textContent = '--';
   }
 
   // Horários de Pico

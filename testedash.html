@@ -1757,11 +1757,19 @@ function renderKPIs(){
 function renderInsights(){
   const byDay={}; filtered.forEach(r=>{ const d=r[C.data]; if(!d) return; if(!byDay[d]) byDay[d]={total:0,count:0,date:parseDate(d)}; byDay[d].total+=toNum(r[C.total]); byDay[d].count++; });
   const dayArr=Object.entries(byDay); if(!dayArr.length) return; dayArr.sort((a,b)=>b[1].total-a[1].total);
-  const busiest=dayArr[0], quietest=dayArr[dayArr.length-1], bDate=busiest[1].date, qDate=quietest[1].date, WEEKDAYS_PT = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+  const busiest=dayArr[0];
+  const now = new Date();
+  const isToday = (d) => d && (d instanceof Date) && !isNaN(d.getTime()) &&
+    d.getDate() === now.getDate() &&
+    d.getMonth() === now.getMonth() &&
+    d.getFullYear() === now.getFullYear();
+  const quietestCandidates = dayArr.filter(([_, item]) => !isToday(item.date));
+  const quietest = quietestCandidates.length > 0 ? quietestCandidates[quietestCandidates.length - 1] : null;
+  const bDate=busiest[1].date, qDate=quietest ? quietest[1].date : null, WEEKDAYS_PT = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
   document.getElementById('kpi-busiest-day-val').textContent=bDate?`${String(bDate.getDate()).padStart(2,'0')}/${String(bDate.getMonth()+1).padStart(2,'0')} - ${WEEKDAYS_PT[bDate.getDay()]}`:'--';
   document.getElementById('kpi-busiest-day-sub').textContent=`${fmtBRL(busiest[1].total)} · ${busiest[1].count} transações`;
   document.getElementById('kpi-quietest-day-val').textContent=qDate?`${String(qDate.getDate()).padStart(2,'0')}/${String(qDate.getMonth()+1).padStart(2,'0')} - ${WEEKDAYS_PT[qDate.getDay()]}`:'--';
-  document.getElementById('kpi-quietest-day-sub').textContent=`${fmtBRL(quietest[1].total)} · ${quietest[1].count} transações`;
+  document.getElementById('kpi-quietest-day-sub').textContent=quietest?`${fmtBRL(quietest[1].total)} · ${quietest[1].count} transações`:'--';
 
   const byHour=Array(24).fill(0); filtered.forEach(r=>{ const h=r[C.hora]; if(h){ const hr=parseInt(h.split(':')[0]); if(!isNaN(hr)) byHour[hr]++; }});
   const maxHr=Math.max(...byHour), minHr=Math.min(...byHour.filter(v=>v>0)), bHr=byHour.indexOf(maxHr), qHr=byHour.findIndex(v=>v===minHr);
