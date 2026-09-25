@@ -1,5 +1,5 @@
 window.LAVAI_STATUS = {
-  "gerado_em": "2026-09-25T15:05:58.175527-03:00",
+  "gerado_em": "2026-09-25T15:14:39.151816-03:00",
   "proxima_coleta": null,
   "status": "ok",
   "total_transacoes": 114842,
