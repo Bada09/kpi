@@ -1,5 +1,7 @@
 window.LAVAI_VMPAY_DATA = `
 Cliente;Máquina;Modelo;Fabricante;Pagamento;Produtos;Mola;Venda (R$);Preço (R$);Total;Código Promocional;Data;Hora;Nº Logico;NSU;Autorização;Tipo Cartão;Rede;Bandeira;Usuário;Nº Cartão;Matricula
+Estoque - LAVAÍ;13# Extra São Caetano;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;05/10/2026;12:08:05;;1022178679;;Crédito;Vertipay;Visa;;;
+Estoque - LAVAÍ;4# Extra Palmeiras;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;05/10/2026;11:59:14;;1022172958;;Débito;Vertipay;Mastercard;;;
 Estoque - LAVAÍ;38# Condomínio Imigrantes;;VMPay;VMPay;Lavadora;1;16,0;Não Informado;16,0;Não utilizado;05/10/2026;11:45:52;;1022164300;;Débito;Vertipay;Mastercard;;;
 Estoque - LAVAÍ;14# Extra São Bernardo;;VMPay;VMPay;Secadora;2;14,99;Não Informado;14,99;Não utilizado;05/10/2026;10:30:28;;1022118936;;Débito;Vertipay;Visa;;;
 Estoque - LAVAÍ;14# Extra São Bernardo;;VMPay;VMPay;Lavadora;1;14,99;Não Informado;14,99;Não utilizado;05/10/2026;09:49:54;;1022093730;;Débito;Vertipay;Visa;;;
